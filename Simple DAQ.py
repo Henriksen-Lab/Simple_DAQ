@@ -30,9 +30,8 @@ my_note = "2022.02.09 red fridge cool down \n lockin 1V on 1Mohm for Nb resistan
 # tell me about your exp, start a new line by \n
 title = "_" + "225mA_avgs" # some unique feature you want to add in title
 
-axis = "VNA_freqs\t\t\t" + "VNA_log_mag\t\t\t" + "VNA_phase_rad\t\t\t" + "VNA_real\t\t\t" +"VNA_imag\t\t\t" +
-# format output for VNA output
-"SR830_x\t\t\t" + "SR830_y\t\t\t" + "keithley_R\t\t\t" + "timestamp\t\t\t"
+axis = "VNA_freqs\t\t\t" + "VNA_log_mag\t\t\t" + "VNA_phase_rad\t\t\t" + "VNA_real\t\t\t" +"VNA_imag\t\t\t" +\
+       "SR830_x\t\t\t" + "SR830_y\t\t\t" + "keithley_R\t\t\t" + "timestamp\t\t\t"
 # customized, here I have 4 constant value for each VNA sweep, thus I defined 4 constant in the following function my_form
 
 def my_form(smith, constant1, constant2, constant3, constant4):

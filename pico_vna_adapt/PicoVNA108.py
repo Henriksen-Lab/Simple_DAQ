@@ -1,39 +1,63 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright © 2018 Pico Technology Ltd. See LICENSE file for terms.
-#
+# author: Shilling Du, revised from https://github.com/picotech/picosdk-picovna-python-examples
+# Feb 22, 2022
 
 import win32com.client
 import numpy as np
 import matplotlib.pyplot as plt
 
-picoVNACOMObj = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3")
 
-print("Connecting VNA")
-findVNA = picoVNACOMObj.FND()
-print('VNA ' + str(findVNA) + ' Loaded')
+class Smith():
+    def __init__(self,real,imag,logmag,phase,freq):
+        self.real = np.array(real)
+        self.imag = np.array(imag)
+        self.log_mag = np.array(logmag)
+        self.phase_rad = np.array(phase)
+        self.freqs = np.array(freq)
 
-print("Load Calibration")
-ans=picoVNACOMObj.LoadCal('?');
-print("Result " + str(ans))
+def get_picoVNA_smith(port='S21',f_min=0.3,f_max=8500,number_of_points=1001,power=0,bandwidth=1000,Average=1):
 
-print("Making Measurement")
-picoVNACOMObj.Measure('ALL');
+    picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3_2")
+    try:
+        findVNA = picoVNA.FND()
+        ans=picoVNA.LoadCal(r'C:\Users\ICET\Documents\Pico Technology\PicoVNA3\FacCal.cal')
+        freq_step = np.ceil((f_max-f_min)/number_of_points*1E5)/1E5
+        picoVNA.SetFreqPlan(f_min,freq_step,number_of_points,power,bandwidth)
+        picoVNA.SetEnhance('Aver',Average)
 
-print("getting S11 LogMag Data")
-raw = picoVNACOMObj.GetData("S11","logmag",0)
-splitdata = raw.split(',')
-converteddata = np.array(splitdata)
-converteddata = converteddata.astype(np.float)
-frequency = converteddata[: : 2]
-data = converteddata[1 : : 2]
+        picoVNA.Measure('ALL');
 
-plt.plot(frequency, data)
-plt.ylabel("S11 LogMag")
+        raw_logmag = picoVNA.GetData(port,"logmag",0)
+        splitdata_logmag = raw_logmag.split(',')
+        freq =  np.float64(np.array(splitdata_logmag))[: : 2]
+        logmag = np.float64(np.array(splitdata_logmag))[1 : : 2]
+
+        raw_real = picoVNA.GetData(port, "real", 0)
+        splitdata_real = raw_real.split(',')
+        real = np.float64(np.array(splitdata_real))[1 : : 2]
+
+        raw_imag = picoVNA.GetData(port, "imag", 0)
+        splitdata_imag = raw_imag.split(',')
+        imag = np.float64(np.array(splitdata_imag))[1:: 2]
+
+        raw_phase = picoVNA.GetData(port, "phase", 0)
+        splitdata_phase = raw_phase.split(',')
+        phase = np.float64(np.array(splitdata_phase))[1:: 2]
+
+        data = Smith(real,imag,logmag,phase,freq)
+        return data
+    finally:
+        picoVNA.CloseVNA()
+
+
+'''
+data = get_picoVNA_smith()
+
+plt.plot(data.freqs, data.log_mag)
+plt.ylabel("S21 LogMag")
 plt.xlabel("Frequency")
 plt.show()
 
-a = picoVNACOMObj.CloseVNA()
-
-print("VNA Closed")
+'''
