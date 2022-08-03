@@ -4,7 +4,10 @@ Created on Wed Feb 12 10:47:41 2020
 
 @author: J. Monroe
 @date: Feb 12, 2020
+
+=======
 @revised by shilling Feb 12 2020, added function change_vna_settings
+
 """
 import numpy as np
 import time
@@ -132,7 +135,14 @@ def change_vna_settings(vna_start_freq_GHz, vna_end_freq_GHz, vna_power_dBm=0, d
     try:
         vna_handle = rm.open_resource(vna_gpib)
 
+
+        #        # save VNA settings to be reloaded after sweep
+        #        vna_handle.write(':MMEM:STOR "recent_state.sta"')
+
+        # setup source to frequency
+
         # setup source to frequency range
+
         vna_handle.write(f":SOUR:POW {vna_power_dBm}")
         vna_handle.write(f":SENSE:FREQ:STAR {vna_start_freq_GHz * 1E9}")
         vna_handle.write(f":SENSE:FREQ:STOP {vna_end_freq_GHz * 1E9}")
@@ -145,4 +155,8 @@ def change_vna_settings(vna_start_freq_GHz, vna_end_freq_GHz, vna_power_dBm=0, d
 
     finally:
         vna_handle.close()
-        
+
+        # this command would restore settings, but we first need to take data
+        #   perhaps we should make another function called restore_settings() or something...
+        # vna_handle.write(':MMEM:LOAD "recent_state.sta"')
+##END prepare_for_spec

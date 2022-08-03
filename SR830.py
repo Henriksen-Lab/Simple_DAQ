@@ -11,47 +11,42 @@ import pyvisa
 rm = pyvisa.ResourceManager()
 
 def SR830_get_x(address):
-    ovl = SR830_check_ovl(address)
+
     SR830_handle = rm.open_resource(address)
-    SR830_handle.write(f"OUTX? 1")
     try:
-        if ovl==True:
-            numerical_data = "overload"
-        else:
-            string_data = SR830_handle.query(f"OUTP? 1")
-            numerical_data = float(string_data)
+        string_data = SR830_handle.query(f"OUTP? 1")
+        numerical_data = float(string_data)
         return numerical_data
     finally:
         SR830_handle.close()
 
 def SR830_get_y(address):
-    ovl = SR830_check_ovl(address)
     SR830_handle = rm.open_resource(address)
-    SR830_handle.write(f"OUTX 1")
     try:
-        if ovl==True:
-            numerical_data = "overload"
-        else:
-            string_data = SR830_handle.query(f"OUTP? 2")
-            numerical_data = float(string_data)
+        string_data = SR830_handle.query(f"OUTP? 2")
+        numerical_data = float(string_data)
         return numerical_data
     finally:
         SR830_handle.close()
 
-def SR830_check_ovl(address):
+def SR830_get_R(address):
+
     SR830_handle = rm.open_resource(address)
-    ovl0 = SR830_handle.query(f"LIAS? 0")
-    time.sleep(0.02)
-    ovl1 = SR830_handle.query(f"LIAS? 1")
-    time.sleep(0.02)
-    ovl2 = SR830_handle.query(f"LIAS? 2")
-    time.sleep(0.02)
-    SR830_handle.close()
-    if int(ovl0)==1 and int(ovl1)==1 and int(ovl2)==1:
-        ovl =True
-    else:
-        ovl =False
-    return ovl
+    try:
+        string_data = SR830_handle.query(f"OUTP? 3")
+        numerical_data = float(string_data)
+        return numerical_data
+    finally:
+        SR830_handle.close()
+
+def SR830_get_Theta(address):
+    SR830_handle = rm.open_resource(address)
+    try:
+        string_data = SR830_handle.query(f"OUTP? 4")
+        numerical_data = float(string_data)
+        return numerical_data
+    finally:
+        SR830_handle.close()
 
 def SR830_set_frequency(address, frequency):
     '''
@@ -79,7 +74,7 @@ def SR830_set_amplitude(address, amplitude):
     '''
     Set frequency of the local oscillator
     Input:
-        frequency (float) : frequency in Hz
+        amplitude (float) : amplitude in V
     '''
     SR830_handle = rm.open_resource(address)
     SR830_handle.write(f"SLVL {float(amplitude)}")
@@ -97,3 +92,4 @@ def SR830_get_amplitude(address):
     SR830_handle.close()
     return read
 
+#print(SR830_get_x('GPIB20::5::INSTR'))
