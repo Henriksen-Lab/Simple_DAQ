@@ -529,8 +529,7 @@ def pop_window(measurements=8):
             )
             self.content.grid(row=1, sticky='nw')
 
-            self.pid_variable_name = Combobox(self.content, 'PID temp control for', values=
-            ['', 'ICET noise setup', 'NV transfer setup'], box_color=box_color_2)
+            self.pid_variable_name = Combobox(self.content, 'PID temp control for', values=['', 'ICET noise setup', 'NV transfer setup'], box_color=box_color_2)
             self.pid_variable_name.grid(row=1, sticky='e')
             none_config(self)
             self.content_2 = tk.Frame(
@@ -633,7 +632,7 @@ def pop_window(measurements=8):
                 start_measurement()
             def stop():
                 stop_daq()
-                sys.exit()
+                # sys.exit()
             def save_config():
                 global profile
                 screenshoot()

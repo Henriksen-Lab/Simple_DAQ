@@ -571,25 +571,24 @@ def choose_config(profile):
         initialize_profile(profile)
         print('Measurements loaded')
         daq_flag = True
+        data.sweep_on_flag = True
         config_pid()
         if len(profile['sweep_info']['variable_name']) == 0:
             print('Monitor functioning')
             config_no_sweep()
         elif len(profile['sweep_info']['variable_name']) == 1:
             t2 = threading.Thread(target=data.sweep_single)
-            data.sweep_on_flag = True
             t2.start()
             print('Single sweep starting')
             config_no_sweep()
         elif len(profile['sweep_info']['variable_name']) == 2:
             t2 = threading.Thread(target=data.sweep_double)
-            data.sweep_on_flag = True
             t2.start()
             print('Double sweep starting')
             config_no_sweep()
         print('sweep finished')
         data.sweep_on_flag = False
-        sys.exit()
+        # sys.exit()
     mainthread = threading.Thread(target=run_main)
     mainthread.start()
 

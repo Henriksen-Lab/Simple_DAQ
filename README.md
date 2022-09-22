@@ -1,15 +1,27 @@
 # Simple_DAQ
- acquire data from common instrument in lab
+# acquire data from common instrument in lab
 
-including instrument:
-*VNA: vna_analysis.py
-*picoVNA 108: PicoVNA108.py
-*SR830: SR830.py
-*keithley_2400: Keithley_2400.py
-*keithely_2000: Keithley_2400.py
-*hp34461A: hp34461A.py
-*Comparing the fridge log for temp matching （Functions in Plot.py）
+Apps:
+1. Simple_DAQ_beta.py: Main UI
+2. Visa_troubleshooting.py: test connection with single instrument
+3. Datafile editor.py: contatenate same format data in the folder,
+			comparing different tempstamp to match data
 
-Simple_DAQ.py for recording data
+Instrument_Drivers:
+Instrument_dict.py: Includes names and function of following instrument
 
-plot.py for ploting
+environment.yml: contains the relying package for py3.7
+To install the file:
+1. Copy the file to C:\Users\[username]
+2. download anaconda
+3. In anaconda terminal, run: conda env create -f environment.yml
+
+----------------------------------------------------------------------------
+
+To add more instrument/Functions:
+1. Edit/add funtion in Instrument_Drivers folder
+2. if new driver added:
+	open DataManager.py, import the new driver in format:
+		from Instrument_Drivers.[your driver name] import *
+3. if new driver/ function added:
+	change the get_value(), set_value() function accordingly
