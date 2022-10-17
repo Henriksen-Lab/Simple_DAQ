@@ -16,7 +16,7 @@ class MainData():
         if pid_path != None and pid_path != 'Please enter or choose':
             self.read_data_file(file_path=pid_path, label='pid')
         if fridge_log_path != None and fridge_log_path != 'Please enter or choose':
-            self.read_fridge_log()
+            self.read_fridge_log(file_path=fridge_log_path, label='fridge_log')
         self.match_timestamp()
 
 
@@ -56,10 +56,10 @@ class MainData():
                         # for key in self.all_data[label].keys():
                         #     print(key, len(self.all_data[label][key]))
 
-    def read_fridge_log(self):
+    def read_fridge_log(self,file_path,label):
         time = []
         temp = []
-        for root, dirs, files in os.walk(self.fridge_log_path):
+        for root, dirs, files in os.walk(file_path):
             for name in files:
                 print(os.path.join(root, name))
                 x, y = get_fridge_temperature(os.path.join(root, name))
@@ -68,9 +68,9 @@ class MainData():
                 print('done')
         time = np.array(time)
         temp = np.array(temp)
-        self.all_data.update({'fridge_log':{}})
-        self.all_data['fridge_log']['timestamp'] = time
-        self.all_data['fridge_log']['temp'] = temp
+        self.all_data.update({label:{}})
+        self.all_data[label]['timestamp'] = time
+        self.all_data[label]['temp'] = temp
 
 
     def match_timestamp(self):
