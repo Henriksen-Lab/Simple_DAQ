@@ -153,7 +153,17 @@ class Mydata:
             if name != 'vna_data':
                 self.axis += f"{name}_{self.file_order}\t\t\t\t"
                 self.dataToSave += [self.data[name]['data'][self.last_data_length:]]
-        self.dataToSave = np.column_stack(self.dataToSave)
+        try:
+            self.dataToSave = np.column_stack(self.dataToSave)
+        except:
+            final_data_len = []
+            for data_column in self.dataToSave:
+                final_data_len.append(len(data_column))
+            final_len = min(final_data_len)
+            for i in range(0,len(self.dataToSave)):
+                self.dataToSave[i] =  self.dataToSave[i][:final_len]
+            self.dataToSave = np.column_stack(self.dataToSave)
+
         os.makedirs(self.file_path + '\\data' + '\\' + datetime.now().strftime('%Y%m%d'), exist_ok=True)
         file_name = self.file_name + f".{self.file_order}"
         file_real_path = self.file_path + '\\data' + '\\' + datetime.now().strftime('%Y%m%d') + "\\" + file_name

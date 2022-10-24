@@ -1061,16 +1061,44 @@ def pop_window(measurements=8):
     window.mainloop()
 
 def plot_window():
-    global q, reply_1, profile
+    global q, reply_1, profile, temp_save_flag
+    temp_save_flag = False
     # Window
     window = tk.Tk()
     window.title('Realtime ploting')
-    window.geometry('800x450')
+    window.geometry('850x550')
     window.configure(bg=background_color)
     window.columnconfigure(0, weight=1)
     window.columnconfigure(1, weight=4)
     window.rowconfigure(0, weight=1)
     window.rowconfigure(1, weight=4)
+
+    class EntryBox(tk.Frame):
+        def __init__(self, master, label, width=160, height=60, columnspan=1,initial_value='',box_color= box_color):
+            super().__init__(
+                master, width=width, height=height,
+                bg=box_color,
+                bd=3
+            )
+            self.grid_propagate(False)
+
+            self.rowconfigure(0, weight=1)
+            self.rowconfigure(1, weight=1)
+
+            self.label = tk.Label(
+                self,
+                text=label,
+                height=1,
+                bg=box_color
+            )
+            self.label.grid(column=0, row=0, sticky='w',columnspan=columnspan)
+
+            self.entry = tk.Entry(
+                self,
+                width=width
+            )
+            self.entry.grid(column=0, row=1, sticky='ew',columnspan=columnspan)
+            self.entry.insert(0, initial_value)
 
     class Combobox(tk.Frame):
         def __init__(self, master, label, values=[None], width=160, height=60, box_color = box_color):
@@ -1186,6 +1214,30 @@ def plot_window():
                 last_datalength = min(len(plot_name[0].x1),len(plot_name[0].y1))
             self.reset_button = ttk.Button(self.content, text="Reset plot from now", command=Reset_plot, padding=4)
             self.reset_button.grid(row=6, column=0, sticky='ew')
+            def Save_temp():
+                global temp_save_flag
+                if self.dir_entry.entry.get() == 'Please enter or choose':
+                    print('Please choose folder')
+                else:
+                    temp_save_flag = True
+
+            self.dir_entry = EntryBox(self.content, 'Folder path', initial_value='Please enter or choose', width=100,
+                                      box_color=box_color_3)
+            self.dir_entry.grid(row=7, column=0, sticky='ew', columnspan=2)
+            def choose_folder():
+                select_directory = askdirectory(title="choose where to save your file")
+                self.dir_entry.entry.delete(0, 'end')
+                self.dir_entry.entry.insert(0, select_directory)
+
+            self.folder_path = ttk.Button(
+                self.content,
+                text="choose folder",
+                command=choose_folder,
+                padding=4
+            )
+            self.folder_path.grid(row=7, column=0, sticky='ne', columnspan=2)
+            self.savetemp_button = ttk.Button(self.content, text="fast save plotted data", command=Save_temp, padding=4)
+            self.savetemp_button.grid(row=8, column=0, sticky='ew')
 
     plot_name = []
     class PlotFrame(tk.Frame):
@@ -1212,7 +1264,7 @@ def plot_window():
             self.rowconfigure(1, weight=9)
             self.rowconfigure(2, weight=2)
 
-            fg = plt.figure(figsize=(5, 4), dpi=100)
+            fg = plt.figure(figsize=(5.5,5), dpi=100)
             gs = fg.add_gridspec(1, 2, width_ratios=[1, 0])
             global ax,ax1,ax2
             ax = fg.add_subplot(gs[0])
@@ -1231,9 +1283,9 @@ def plot_window():
             self.y1_name = ''
             self.y2 = np.array([None])
             self.y2_name = ''
-
+            self.path = ''
             def drawimg():
-                global ax,ax1,ax2,start_time, last_datalength
+                global ax,ax1,ax2,start_time, last_datalength, temp_save_flag
                 ax.clear()
                 ax1.clear()
                 ax2.clear()
@@ -1246,19 +1298,45 @@ def plot_window():
                 normalize_timestamp(self.x2, self.x2_name)
                 normalize_timestamp(self.y1, self.y1_name)
                 normalize_timestamp(self.y2, self.y2_name)
-
                 data_length = min(len(self.x1),len(self.y1))
+                dataToSave = []
+                axis = ''
                 if self.x1.any() != None and self.y1.any() != None:
                     ax.set_xlabel(self.x1_name)
                     ax.set_ylabel(self.y1_name)
                     ax.plot(self.x1[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.r')
+                    dataToSave += [self.x1[:data_length-1]]
+                    dataToSave += [self.y1[:data_length-1]]
+                    axis += f"{self.x1_name}\t\t\t\t"
+                    axis += f"{self.y1_name}\t\t\t\t"
                     if self.y2.any() != None:
                         ax1.set_ylabel(self.y2_name)
                         ax1.plot(self.x1[last_datalength:data_length-1], self.y2[last_datalength:data_length-1], '.b')
+                        axis += f"{self.y2_name}\t\t\t\t"
+                        dataToSave += [self.y2[:data_length-1]]
                     if self.x2.any() != None:
                         ax2.set_xlabel(self.x2_name)
                         ax2.plot(self.x2[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.g')
+                        axis += f"{self.x2_name}\t\t\t\t"
+                        dataToSave += [self.y1[:data_length-1]]
                 canvas.draw()
+                if temp_save_flag:
+                    try:
+                        if self.path != '' and self.path != 'Please enter or choose':
+                            file_real_path = self.path + '\\temp'
+                            os.makedirs(self.path, exist_ok=True)
+                            np.savetxt(file_real_path,
+                                       np.column_stack(dataToSave),
+                                       delimiter='\t',
+                                       header=f"{datetime.now().strftime('%Y.%m.%d')}" + " " + f"{datetime.now().strftime('%H:%M:%S')}" +
+                                              '\n' + f"{axis}"
+                                       )
+                            print('Fast save complete')
+                            temp_save_flag = False
+                    except:
+                        print('Please double check your folder path entered above')
+                        temp_save_flag = False
+
                 window.after(1000,drawimg)
 
             drawimg()
@@ -1274,6 +1352,7 @@ def plot_window():
             plot_name[0].x2_name = plot_list[0].x_2.combobox.get()
             plot_name[0].y2 = dataToplot['y2']
             plot_name[0].y2_name = plot_list[0].y_2.combobox.get()
+            plot_name[0].path = plot_list[0].dir_entry.entry.get()
             window.after(100, update_plot_axis)
 
 
@@ -1283,7 +1362,7 @@ def plot_window():
                'y1': plot_list[0].y_1.combobox.get(),
                'x2': plot_list[0].x_2.combobox.get(),
                'y2': plot_list[0].y_2.combobox.get(),
-               'selector': plot_list[0].selector.combobox.get()
+               'selector': plot_list[0].selector.combobox.get(),
                 }
               )
         # print('asking for data')
@@ -1306,13 +1385,13 @@ def plot_window():
             window,
             label='Plot display',
             width= 200,
-            height= 420,
+            height= 510,
             column=0, row=0
         )
-        plot_frame =PlotFrame(
+        plot_frame = PlotFrame(
             window,
-            width= 520,
-            height= 420,
+            width= 600,
+            height= 510,
             column=1, row=0
         )
 
