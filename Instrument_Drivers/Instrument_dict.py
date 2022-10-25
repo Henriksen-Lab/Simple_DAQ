@@ -1,13 +1,13 @@
 import time
-from vna_analysis import *
-from SR830 import *
-from keithley import *
-from hp34461A import *
-from PicoVNA108 import *
-from Agilent_infiniVision import *
-from keysightN6700c import *
-from transfer_heater_PID import *
-from noise_probe_PID import *
+from Instrument_Drivers.vna_analysis import *
+from Instrument_Drivers.SR830 import *
+from Instrument_Drivers.keithley import *
+from Instrument_Drivers.hp34461A import *
+from Instrument_Drivers.PicoVNA108 import *
+from Instrument_Drivers.Agilent_infiniVision import *
+from Instrument_Drivers.keysightN6700c import *
+from Instrument_Drivers.transfer_heater_PID import *
+from Instrument_Drivers.noise_probe_PID import *
 
 global instrument_dict
 instrument_dict = {'get':{},
