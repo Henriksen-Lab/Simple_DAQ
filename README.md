@@ -21,7 +21,7 @@ To install the file:
 To add more instrument/Functions:
 1. Edit/add funtion in Instrument_Drivers folder
 2. if new driver added:
-	open DataManager.py, import the new driver in format:
-		from Instrument_Drivers.[your driver name] import *
+	mport the new driver in format:
+		from [your driver name] import *
 3. if new driver/ function added:
 	change the get_value(), set_value() function accordingly

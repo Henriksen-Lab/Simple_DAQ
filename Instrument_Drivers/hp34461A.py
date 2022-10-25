@@ -26,7 +26,7 @@ def hp34461a_get_voltage(address):
 def hp34461a_get_ohm_4pt(address):
     try:
         hp34461a = rm.open_resource(address)
-        hp34461a.write("SENS:FUNC \'FRES\'") # set volt
+        hp34461a.write("SENS:FUNC \'FRES\'") # set 4pt
         hp34461a.write("SENS:FRES:RANG:AUTO ON") # Auto range
         string_data = hp34461a.query("READ?")
         numerical_data = float(string_data)

@@ -12,16 +12,7 @@ folder_path = os.getcwd()
 if folder_path not in sys.path:
     sys.path.append(
         folder_path)  # easier to open driver files as long as Simple_DAQ.py is in the same folder with drivers
-from Instrument_Drivers.vna_analysis import *
-from Instrument_Drivers.SR830 import *
-from Instrument_Drivers.keithley import *
-from Instrument_Drivers.hp34461A import *
-from Instrument_Drivers.PicoVNA108 import *
-from Instrument_Drivers.Agilent_infiniVision import *
-from Instrument_Drivers.keysightN6700c import *
-from Instrument_Drivers.transfer_heater_PID import *
-from Instrument_Drivers.noise_probe_PID import *
-
+from Instrument_Drivers.Instrument_dict import *
 global daq_flag
 
 class Mydata:
@@ -86,25 +77,26 @@ class Mydata:
             for name in self.data.keys():
                 if self.data[name]['instrument_name'] == 'PicoVNA108':
                     # expecting func choosing from S11, S12, S21,S22
-                    self.data_VNA = get_picoVNA_smith(
-                        port=self.data[name]['function'],
-                        f_min=self.f_min,
-                        f_max=self.f_max,
-                        number_of_points=self.points,
-                        power=self.power,
-                        bandwidth=self.bandwidth,
-                        Average=self.average
-                    )
+                    self.data_VNA = get_value(address='',
+                                              name='PicoVNA108',
+                                              func=self.data[name]['function'],
+                                              f_min=self.f_min,
+                                              f_max=self.f_max,
+                                              number_of_points=self.points,
+                                              power=self.power,
+                                              bandwidth=self.bandwidth,
+                                              Average=self.average
+                                              )
                 elif self.data[name]['instrument_name'] == 'vna':
-                    change_vna_settings(
-                        vna_start_freq_GHz=self.f_min,
-                        vna_end_freq_GHz=self.f_max,
-                        vna_power_dBm=self.power,
-                        dwell_sec=1 / self.bandwidth,
-                        num_freq=self.points,
-                        vna_gpib=self.data[name]['instrument_address']
-                    )
-                    self.data_VNA = self.data[name]['instrument_address']
+                    set_value(value=0, address='', name='vna', func='',
+                              vna_start_freq_GHz=self.f_min,
+                              vna_end_freq_GHz=self.f_max,
+                              vna_power_dBm=self.power,
+                              dwell_sec=1 / self.bandwidth,
+                              num_freq=self.points,
+                              vna_gpib=self.data[name]['instrument_address']
+                              )
+                    self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='vna', func='')
             self.data['VNA_freqs']['data'] = self.data_VNA.freqs
             self.data['VNA_log_mag']['data'] = self.data_VNA.log_mag
             self.data['VNA_phase_rad']['data'] = self.data_VNA.phase_rad
@@ -371,18 +363,20 @@ class Mydata:
             noise_pid.reading = get_value(address=self.pid['instrument_address'],
                                             name=self.pid['instrument_name'],
                                             func=self.pid['function'])
-            temp = noise_pid_get(noise_pid.reading)
+            temp = get_value(address='', name='noise pid', func='',
+                             reading=noise_pid.reading)
             self.pid['temp']['data'] += [temp]
             self.pid['time']['data'] += [time.time()]
-            noise_pid_set(noise_pid.reading,
-                    target_temp=setpoint,
-                    step_size=self.pid['step_size'],
-                    lowkp=self.pid['Lowkp'],
-                    lowki=self.pid['Lowki'],
-                    lowkd=self.pid['Lowkd'],
-                    highkp=self.pid['highkp'],
-                    highki=self.pid['highki'],
-                    highkd=self.pid['highkd'])
+            set_value(value=noise_pid.reading, address='', name='noise pid', func='',
+                      target_temp=setpoint,
+                      step_size=self.pid['step_size'],
+                      lowkp=self.pid['Lowkp'],
+                      lowki=self.pid['Lowki'],
+                      lowkd=self.pid['Lowkd'],
+                      highkp=self.pid['highkp'],
+                      highki=self.pid['highki'],
+                      highkd=self.pid['highkd']
+                      )
             if not daq_flag:
                 break
             time.sleep(self.data_interval)
@@ -400,7 +394,7 @@ class Mydata:
                     self.pid_save()
         self.pid_save()
     def pid_get_reading_transfer(self):
-        temp = transfer_pid_get(arduino_address=self.pid['arduino_address'])
+        temp = get_value(address=self.pid['arduino_address'], name='transfer pid', func='')
         temp_initial = temp
         setpoint = self.pid['setpoint']
         sweep_up_flag = True
@@ -410,11 +404,10 @@ class Mydata:
             temp = transfer_pid.reading
             self.pid['temp']['data'] += [temp]
             self.pid['time']['data'] += [time.time()]
-            transfer_pid_set(arduino_address=self.pid['arduino_address'],
-                             kp=self.pid['kp'],
-                             ki=self.pid['ki'],
-                             kd=self.pid['kd'],
-                             set_point=setpoint)
+            set_value(value=setpoint, address=self.pid['arduino_address'], name='transfer pid', func='',
+                      kp=self.pid['kp'],
+                      ki=self.pid['ki'],
+                      kd=self.pid['kd'],)
             time.sleep(self.data_interval)
             if self.pid['sweep_up_and_down_flag']:
                 if temp >= setpoint and sweep_up_flag:
@@ -447,77 +440,7 @@ class Mydata:
             t4.start()
             transfer_pid.run()
 
-global read_write_lock
-read_write_lock = False
 
-def get_value(address='', name='', func=''):
-    global read_write_lock
-    while read_write_lock:
-        time.sleep(0.001)
-    read_write_lock = True
-    if name == 'time':
-        value = time.time()
-    elif name == 'keithley':
-        if func == '2000ohm_4pt':
-            value = keithley2000_get_ohm_4pt(address)
-        elif func == '2400ohm_4pt':
-            value = keithley2400_get_ohm_4pt(address)
-        elif func == '2000ohm_2pt':
-            value = keithley2000_get_ohm_2pt(address)
-        elif func == '2400ohm_2pt':
-            value = keithley2400_get_ohm_2pt(address)
-        elif func == '2000volt':
-            value = keithley2000_get_voltage_V(address)
-        elif func == '2400amp':
-            value = keithley2400_get_sour_currrent_A(address)
-    elif name == 'SR830':
-        if func == 'x':
-            value = SR830_get_x(address)
-        elif func == 'y':
-            value = SR830_get_y(address)
-        elif func == 'R':
-            value = SR830_get_R(address)
-        elif func == 'theta':
-            value = SR830_get_Theta(address)
-        elif func == 'freq':
-            value = SR830_get_frequency(address)
-    elif name == 'hp34461A':
-        if func == 'volt':
-            value = hp34461a_get_voltage(address)
-        elif func == 'ohm_4pt':
-            value = hp34461a_get_ohm_4pt(address)
-    elif name == 'Agilent infiniiVision':
-        if func == 'counter':
-            value = infiniVision_get_counter(address)
-    else:
-        value = 0
-        print('Please input correct instrument name or function name')
-    read_write_lock = False
-    return value
-
-
-def set_value(value, address='', name='', func=''):
-    global read_write_lock
-    while read_write_lock:
-        time.sleep(0.001)
-    read_write_lock = True
-    if name == 'keithley':
-        if func == 'current':
-            keithley2400_set_sour_currrent_A(address, value)
-        elif func == 'voltage':
-            keithley2400_set_sour_voltage_V(address, value)
-    elif name == 'SR830':
-        if func == 'amplitude':
-            SR830_set_amplitude(address, value)
-        elif func == 'freqency':
-            SR830_set_frequency(address, value)
-    elif name == 'keysight N6700c':
-        if func == 'volt @ channel 2':
-            keysight6700c_set_voltage(address, value)
-    else:
-        print('Please input correct instrument name or function name')
-    read_write_lock = False
-    return value
 
 '''-----------------------------------------talk to fromt panel---------------------------------------------------'''
 data = Mydata()
