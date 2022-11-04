@@ -60,5 +60,5 @@ plt.plot(data.freqs, data.log_mag)
 plt.ylabel("S21 LogMag")
 plt.xlabel("Frequency")
 plt.show()
-
 '''
+

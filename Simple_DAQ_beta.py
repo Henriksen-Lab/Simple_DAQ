@@ -76,7 +76,7 @@ def background():
 
 
 def pop_window(measurements=8):
-    global q, reply, profile,start_time
+    global q, reply, profile,start_time,last_datalength
     # Window
     window = tk.Tk()
     window.title('Specify your measurement below')
@@ -768,7 +768,7 @@ def pop_window(measurements=8):
         for instrument in instrument_list:
             if instrument.variable_name.entry.get() != '':
                 instrument_info['instrument_name'] += [instrument.instrument_name.combobox.get()]
-                if instrument.instrument_name.combobox.get() =='PicoVNA108' or instrument.instrument_name.combobox.get() == 'vna':
+                if instrument.instrument_name.combobox.get() in instrument_dict['vna']:
                     instrument_info['variable_name'] += ['vna_data']
                     instrument_info['f_min'] = float(instrument.f_min.entry.get())
                     instrument_info['f_max'] = float(instrument.f_max.entry.get())
@@ -1060,7 +1060,7 @@ def pop_window(measurements=8):
     window.mainloop()
 
 def plot_window():
-    global q, reply_1, profile, temp_save_flag
+    global q, reply_1, profile, temp_save_flag, last_datalength
     temp_save_flag = False
     # Window
     window = tk.Tk()
@@ -1184,7 +1184,11 @@ def plot_window():
             def event_get_axis(event):
                 global profile
                 if self.selector.combobox.get() == 'data':
-                    axis_list = profile['instrument_info']['variable_name'] + ['timestamp']+ ['None']
+                    if 'vna_data' in profile['instrument_info']['variable_name']:
+                        axis_list = profile['instrument_info']['variable_name'] + ['timestamp'] + \
+                                    ['VNA_freqs','VNA_log_mag','VNA_phase_rad','VNA_real','VNA_imag']+ ['None']
+                    else:
+                        axis_list = profile['instrument_info']['variable_name'] + ['timestamp']+ ['None']
                     self.x_1.combobox.config(values=axis_list)
                     self.x_1.combobox.current(0)
                     self.y_1.combobox.config(values=axis_list)
@@ -1284,7 +1288,7 @@ def plot_window():
             self.y2_name = ''
             self.path = ''
             def drawimg():
-                global ax,ax1,ax2,start_time, last_datalength, temp_save_flag
+                global ax,ax1,ax2, start_time, last_datalength, temp_save_flag
                 ax.clear()
                 ax1.clear()
                 ax2.clear()
@@ -1356,6 +1360,8 @@ def plot_window():
 
 
     def update_plot_axis():
+        global last_datalength
+        last_datalength = 0
         q.put({'plot': 'plot',
                'x1': plot_list[0].x_1.combobox.get(),
                'y1': plot_list[0].y_1.combobox.get(),

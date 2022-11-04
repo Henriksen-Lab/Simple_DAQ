@@ -8,7 +8,6 @@ import time, datetime, sys, os, string
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from scipy import interpolate
 import numpy as np
 from math import exp
 from math import log as ln
@@ -44,7 +43,7 @@ def load_data_from_folder(folder_path):
 
 '''------------------------input before run------------------------'''
 
-folder_path = r'C:\Users\ICET\OneDrive - Washington University in St. Louis\wustl\2022spring\data\20220617_SD_004a\SweepField\20220623_sweepfield_DC'
+folder_path = r'C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\with_amp\20221029_sweepfield_DC_Peak3'
 data = load_data_from_folder(folder_path)
 
 '''------------------------plot------------------------'''

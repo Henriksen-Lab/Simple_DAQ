@@ -17,62 +17,60 @@ import matplotlib.pyplot as plt
 folder_path = os.getcwd()
 if folder_path not in sys.path:
     sys.path.append(folder_path) # easier to open driver files as long as Simple_DAQ.py is in the same folder with drivers
-from PicoVNA108 import get_picoVNA_smith
-from SR830 import SR830_set_frequency, SR830_set_amplitude
-from keithley_2400 import set_voltage_V, get_voltage_2000, initialize, output_on
+from Instrument_Drivers.PicoVNA108 import get_picoVNA_smith
+from Instrument_Drivers.SR830 import SR830_set_frequency, SR830_set_amplitude
+from Instrument_Drivers.keithley import keithley2400_set_sour_voltage_V, keithley2000_get_voltage_V, keithley2400_initialize, keithley2400_output_on
+from Instrument_Drivers.hp34461A import hp34461a_get_ohm_4pt
 rm = pyvisa.ResourceManager()
 
 '''---------------------INPUT BEFORE RUN---------------------'''
 
 SR830_gpib = 'GPIB0::5::INSTR'
-keithley2400_gpib = 'GPIB0::25::INSTR'
+keithley2400_gpib = 'GPIB0::24::INSTR'
 keithley2000_gpib = 'GPIB0::18::INSTR'
-data_dir = r"C:\Users\ICET\OneDrive - Washington University in St. Louis\wustl\2022spring\data\20220617_SD_004a\SweepField"
-my_note = "2022.06.18 Icet basetemp_scan peak when field on, DC"
+hp34461a = 'GPIB0::17::INSTR'
+data_dir = r"C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\Spectrum\I_2\vna"
+my_note = "2022.11.4 Icet basetemp_scan peak when field on, AC"
 # tell me about your exp, start a new line by \n
-title = "_" + "sweepfield_DC" # some unique feature you want to add in title
+
+title = "_" + "sweepfield_Peak4_75kHz" # some unique feature you want to add in title
 
 # customized, here I have 4 constant value for each VNA sweep, thus I defined 4 constant in the following function my_form
 
 port ='S21'
 
-def my_form(smith, constant1, constant2):
+def my_form(smith, constant1, constant2, constant3):
     lens = len(smith.freqs)
     data = np.column_stack((smith.freqs, smith.log_mag, smith.phase_rad, smith.real, smith.imag,
-                             np.full(lens, constant1), np.full(lens, constant2)))
+                             np.full(lens, constant1), np.full(lens, constant2), np.full(lens, constant3)))
     return data
 
 
-span = 5
+span = 100
 #(start freq, end freq, power, 1/bandwidth, points to sweep, address), you could skip if you done this manually already
 #time.sleep(200)
 
 '''---------------------Start run---------------------'''
-list = ['VNA_freqs', 'VNA_log_mag', 'VNA_phase_rad', 'VNA_real', 'VNA_imag', 'I_mag','timestamp']
-
-initialize(keithley2400_gpib)
-initialize(keithley2000_gpib)
-output_on(keithley2400_gpib)
-set_voltage_V(keithley2400_gpib, 1.2)
-print("reads: ", get_voltage_2000(keithley2000_gpib))
-output_on(keithley2400_gpib)
-set_voltage_V(keithley2400_gpib, 1.2)
-print("reads: ", get_voltage_2000(keithley2000_gpib))
-time.sleep(10)
+list = ['VNA_freqs', 'VNA_log_mag', 'VNA_phase_rad', 'VNA_real', 'VNA_imag', 'v_sur','timestamp','r_RuOx']
 
 
-for i in range(0,240):
-    v_mag = 1.2-i/100
-    set_voltage_V(keithley2400_gpib, v_mag)
-    v_sur = get_voltage_2000(keithley2000_gpib)
-    time.sleep(3)
+# for i in range(0,300):
+#     v_mag = 1.5-i/100
+#     keithley2400_set_sour_voltage_V(keithley2400_gpib, v_mag)
+#     v_sur = keithley2000_get_voltage_V(keithley2000_gpib)
+SR830_set_frequency(SR830_gpib,75000)
 
+for i in range(1,9):
+    v_sur = 0.5 * i
+    time.sleep(30)
+    SR830_set_amplitude(SR830_gpib,v_sur)
+    r_ruox = hp34461a_get_ohm_4pt(hp34461a)
     timestamp = time.time()
     avg = f"\n average for {span} times"
-    vs = get_picoVNA_smith(port=port,f_min=1000,f_max=8500,number_of_points=1001,power=3,bandwidth=1000,Average=span)
+    vs = get_picoVNA_smith(port=port,f_min=6940,f_max=7010,number_of_points=1001,power=3,bandwidth=1000,Average=span)
     print(f"VNA data for {v_sur}V recorded")
-    data = my_form(vs, v_sur, timestamp)
-    file_name = f"SD_004a_ICET_DC_{v_mag}V.{i}"
+    data = my_form(vs, v_sur, timestamp, r_ruox)
+    file_name = f"SD_004a_ICET_AC_{v_sur}V.{i}"
 
     order = i
     axis = ''
@@ -86,4 +84,4 @@ for i in range(0,240):
                header = f"{datetime.now().strftime('%Y%m%d')}"+" "+f"{datetime.now().strftime('%H%M%S')}"+'\n'+ \
                    my_note + '\n' +avg + '\n'+ f"{axis}")
 
-set_voltage_V(keithley2400_gpib, 0)
+SR830_set_amplitude(SR830_gpib,0)

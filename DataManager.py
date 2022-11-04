@@ -74,43 +74,48 @@ class Mydata:
 
     def data_update(self):
         if 'vna_data' in self.data.keys():
-            for name in self.data.keys():
-                if self.data[name]['instrument_name'] == 'PicoVNA108':
-                    # expecting func choosing from S11, S12, S21,S22
-                    self.data_VNA = get_value(address='',
-                                              name='PicoVNA108',
-                                              func=self.data[name]['function'],
-                                              f_min=self.f_min,
-                                              f_max=self.f_max,
-                                              number_of_points=self.points,
-                                              power=self.power,
-                                              bandwidth=self.bandwidth,
-                                              Average=self.average
-                                              )
-                elif self.data[name]['instrument_name'] == 'vna':
-                    set_value(value=0, address='', name='vna', func='',
-                              vna_start_freq_GHz=self.f_min,
-                              vna_end_freq_GHz=self.f_max,
-                              vna_power_dBm=self.power,
-                              dwell_sec=1 / self.bandwidth,
-                              num_freq=self.points,
-                              vna_gpib=self.data[name]['instrument_address']
-                              )
-                    self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='vna', func='')
-            self.data['VNA_freqs']['data'] = self.data_VNA.freqs
-            self.data['VNA_log_mag']['data'] = self.data_VNA.log_mag
-            self.data['VNA_phase_rad']['data'] = self.data_VNA.phase_rad
-            self.data['VNA_real']['data'] = self.data_VNA.real
-            self.data['VNA_imag']['data'] = self.data_VNA.imag
-            self.vna_data_length = len(self.data_VNA.freqs)
+            for name in self.data.copy().keys():
+                if 'instrument_name' in self.data[name].keys():
+                    if self.data[name]['instrument_name'] == 'PicoVNA108':
+                        # expecting func choosing from S11, S12, S21,S22
+                        self.data_VNA = get_value(address='',
+                                                  name='PicoVNA108',
+                                                  func=self.data[name]['function'],
+                                                  f_min=self.f_min,
+                                                  f_max=self.f_max,
+                                                  number_of_points=self.points,
+                                                  power=self.power,
+                                                  bandwidth=self.bandwidth,
+                                                  Average=self.average
+                                                  )
+                    elif self.data[name]['instrument_name'] == 'vna':
+                        set_value(value=0, address='', name='vna', func='',
+                                  vna_start_freq_GHz=self.f_min,
+                                  vna_end_freq_GHz=self.f_max,
+                                  vna_power_dBm=self.power,
+                                  dwell_sec=1 / self.bandwidth,
+                                  num_freq=self.points,
+                                  vna_gpib=self.data[name]['instrument_address']
+                                  )
+                        self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='vna', func='')
+                    elif self.data[name]['instrument_name'] == 'E4405B':
+                        self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='E4405B', func='',
+                                                  f_min=self.f_min,
+                                                  f_max=self.f_max)
+                    self.data.update({'VNA_freqs':{'data':self.data_VNA.freqs}})
+                    self.data.update({'VNA_log_mag':{'data':self.data_VNA.log_mag}})
+                    if self.data[name]['instrument_name'] in ['vna','PicoVNA108']:
+                        self.data.update({'VNA_phase_rad':{'data':self.data_VNA.phase_rad}})
+                        self.data.update({'VNA_real':{'data':self.data_VNA.real}})
+                        self.data.update({'VNA_imag':{'data':self.data_VNA.imag}})
+                    self.vna_data_length = len(self.data_VNA.freqs)
             for name in self.data.keys():
                 if name != 'vna_data':
-                    for i in range(0, self.vna_data_length):
-                        self.data[name]['data'] += [get_value(
-                            address=self.data[name]['instrument_address'],
-                            name=self.data[name]['instrument_name'],
-                            func=self.data[name]['function'])
-                        ]
+                    if name not in ['VNA_freqs','VNA_log_mag','VNA_phase_rad','VNA_real','VNA_imag']:
+                        value = get_value(address=self.data[name]['instrument_address'],
+                                          name=self.data[name]['instrument_name'],
+                                          func=self.data[name]['function'])
+                        self.data[name]['data'] = np.full(self.vna_data_length, value)
         else:
             for name in self.data.keys():
                 self.data[name]['data'] += [get_value(
@@ -123,6 +128,7 @@ class Mydata:
                 #     address=self.data[name]['instrument_address'],
                 #     name=self.data[name]['instrument_name'],
                 #     func=self.data[name]['function']))
+
     def file_order_update(self):
         order = int(self.file_order)
         order += 1
@@ -180,7 +186,8 @@ class Mydata:
             print(f"{datetime.now().strftime('%Y.%m.%d')}", " ", f"{datetime.now().strftime('%H:%M:%S')}", "  ",
                       file_name)
             print('data file updated')
-        self.last_data_length = len(self.data['timestamp']['data'])
+        if 'vna_data' not in  self.data.keys():
+            self.last_data_length = len(self.data['timestamp']['data'])
 
 
 
@@ -273,7 +280,7 @@ class Mydata:
             flag += [self.sweep[data.sweep_list[i]]['sweep_up_and_down_flag']]
         num_steps = int(np.floor(abs(start[0] - stop[0]) / (step_size[0]))) + 1
         num_steps_1 = int(np.floor(abs(start[1] - stop[1]) / (step_size[1]))) + 1
-        print(num_steps, num_steps_1)
+        # print(num_steps, num_steps_1)
         for val in np.linspace(start[0], stop[0], num_steps):
             set_value(address=address[0], name=name[0], func=func[0], value=val)
             for val_1 in np.linspace(start[1], stop[1], num_steps_1):
@@ -393,6 +400,7 @@ class Mydata:
                     noise_pid.update_flag = False
                     self.pid_save()
         self.pid_save()
+
     def pid_get_reading_transfer(self):
         temp = get_value(address=self.pid['arduino_address'], name='transfer pid', func='')
         temp_initial = temp

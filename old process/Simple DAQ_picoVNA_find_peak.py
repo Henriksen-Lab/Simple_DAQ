@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 folder_path = os.getcwd()
 if folder_path not in sys.path:
     sys.path.append(folder_path) # easier to open driver files as long as Simple_DAQ.py is in the same folder with drivers
-from PicoVNA108 import get_picoVNA_smith
+from Instrument_Drivers.PicoVNA108 import get_picoVNA_smith
 
 
 rm = pyvisa.ResourceManager()
@@ -25,8 +25,8 @@ rm = pyvisa.ResourceManager()
 '''---------------------INPUT BEFORE RUN---------------------'''
 
 SR830_gpib = 'GPIB0::5::INSTR'
-data_dir = r"C:\Users\ICET\OneDrive - Washington University in St. Louis\wustl\2022spring\data\20220617_SD_004a\ScanPeaks"
-my_note = "2022.06.17 Icet basetemp_scan peak"
+data_dir = r"C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\find_peak"
+my_note = "2022.10.27 Icet basetemp_scan peak"
 # tell me about your exp, start a new line by \n
 title = "_" + "base temp" # some unique feature you want to add in title
 
@@ -47,7 +47,7 @@ span = 5
 
 '''---------------------Start run---------------------'''
 list = ['VNA_freqs', 'VNA_log_mag', 'VNA_phase_rad', 'VNA_real', 'VNA_imag', 'timestamp']
-for i in range(1,61):
+for i in range(1,81):
     timestamp = time.time()
     avg = f"\n average for {span} times"
     vs = get_picoVNA_smith(port=port,f_min=4000+i*50-26,f_max=4000+i*50+26,number_of_points=1001,power=3,bandwidth=1000,Average=span)
@@ -73,6 +73,6 @@ for i in range(1,61):
     plt.xlabel('freq(Hz)')
     plt.ylabel('log_mag(dB)')
     plt.title(f"SD_004a_ICET_{4000+i*50}GHZ")
-    fg.savefig(r"C:\Users\ICET\OneDrive - Washington University in St. Louis\wustl\2022spring\data\20220617_SD_004a\ScanPeaks\pic" + f'\SD_004a_ICET_{4000+i*50}GHZ.{i}.jpg', bbox_inches='tight', dpi=150)
+    fg.savefig(r"C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\find_peak" + f'\SD_004a_ICET_{4000+i*50}GHZ.{i}.jpg', bbox_inches='tight', dpi=150)
     plt.close()
     time.sleep(0.1)

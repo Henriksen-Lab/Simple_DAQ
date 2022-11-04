@@ -8,19 +8,21 @@ from Instrument_Drivers.Agilent_infiniVision import *
 from Instrument_Drivers.keysightN6700c import *
 from Instrument_Drivers.transfer_heater_PID import *
 from Instrument_Drivers.noise_probe_PID import *
+from Instrument_Drivers.E4405B import *
 
 global instrument_dict
 instrument_dict = {'get':{},
                    'set':{},
-                   'vna':['vna', 'PicoVNA108'],
+                   'vna':['vna', 'PicoVNA108','E4405B'],
                    'pid_noise':['keithley', 'SR830', 'hp34461A']} #the instrument for temp acq
 
 instrument_dict['get'].update({'keithley': ['2000ohm_4pt', '2400ohm_4pt', '2000ohm_2pt', '2400ohm_2pt', '2000volt', '2400amp']})
-instrument_dict['get'].update({'SR830': ['x', 'y', 'R', 'theta', 'freq']})
+instrument_dict['get'].update({'SR830': ['x', 'y', 'R', 'theta', 'freq','amplitude']})
 instrument_dict['get'].update({'hp34461A': ['volt', 'ohm_4pt']})
 instrument_dict['get'].update({'PicoVNA108': ['S21', 'S12', 'S11', 'S22']})
 instrument_dict['get'].update({'vna': ['please input the VNA_settings']})
 instrument_dict['get'].update({'Agilent infiniiVision': ['counter']})
+instrument_dict['get'].update({'E4405B': ['please input the VNA_settings']})
 
 instrument_dict['set'].update({'keithley': ['current', 'voltage']})
 instrument_dict['set'].update({'SR830': ['amplitude', 'freqency']})
@@ -60,6 +62,8 @@ def get_value(address='', name='', func='', **kwargs):
             value = SR830_get_Theta(address)
         elif func == 'freq':
             value = SR830_get_frequency(address)
+        elif func == 'amplitude':
+            value = SR830_get_amplitude(address)
     elif name == 'hp34461A':
         if func == 'volt':
             value = hp34461a_get_voltage(address)
@@ -80,6 +84,10 @@ def get_value(address='', name='', func='', **kwargs):
                     )
     elif name == 'vna':
         value = get_smith_data(address)
+    elif name == 'E4405B':
+        value = E4405B_get_spectrum(address,
+                                    start_freq = kwargs['f_min'],
+                                    stop_freq = kwargs['f_max'])
     elif name == 'noise pid':
         value = noise_pid_get(kwargs['reading'])
     elif name == 'transfer pid':

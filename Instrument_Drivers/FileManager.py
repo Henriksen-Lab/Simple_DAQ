@@ -91,8 +91,9 @@ class MainData():
                         func = interpolate.interp1d(
                             self.all_data[key][self.match_timestamp],
                             self.all_data[key][name],
-                            kind='nearest',
-                            bounds_error=False)
+                            kind='nearest-up',
+                            bounds_error=False,
+                            fill_value="extrapolate")
                         self.all_data['data'][key+'_'+name] = func(self.all_data['data'][self.data_timestamp])
         print("matching completed")
 
