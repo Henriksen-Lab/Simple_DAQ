@@ -5,7 +5,7 @@ import tkinter as tk
 
 from DataManager import get_value,set_value
 from Instrument_Drivers.Instrument_dict import instrument_dict
-
+                                                                                                                                                                                                                                                                                                                
 global instrument_dict
 # Size
 sizex = 1500

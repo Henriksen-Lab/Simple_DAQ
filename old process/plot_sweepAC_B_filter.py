@@ -63,11 +63,12 @@ def get_ordered_file_name_dict(folder_path):
     for root, dirs, files in os.walk(folder_path, topdown=False):
         # go through every file inside the folder, even inside subfolders
         for name in files:
-            file_name_dict.update({name: {}})
-            file_name_dict[name].update({'path': os.path.join(root, name),
-                                         'time': os.path.getmtime(os.path.join(root, name)),
-                                         'dir': root,
-                                         })
+            if '.' in name:
+                file_name_dict.update({name: {}})
+                file_name_dict[name].update({'path': os.path.join(root, name),
+                                             'time': os.path.getctime(os.path.join(root, name)),
+                                             'dir': root,
+                                             })
     # Reorder the file name dict with the modified time, if want to use the created time order, change the getmtime -> getctime
     ordered_file_name_dict = OrderedDict(sorted(file_name_dict.items(),
                                                 key=lambda x: getitem(x[1], 'time')))
@@ -77,139 +78,247 @@ def calc_average(x,y):
     return np.average(x),np.average(y)
 
 def calc_average_spectrum(x,y):
+    x = np.array(x)
+    y = np.array(y)
     x_sweep = list(dict.fromkeys(x))
     y_sweep = []
     for each_x in x_sweep:
         each_y = np.average(y[x == each_x])
         y_sweep += [each_y]
-    print('     Avg = ', len(y[x == x_sweep[0]]), ' times')
+    # print('     Avg = ', len(y[x == x_sweep[0]]), ' times')
     return np.array(x_sweep),np.array(y_sweep)
-'''------------------------input before run------------------------'''
 
-# folder_path = r'C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\Spectrum\temp\data'
-# file_path = r"C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\Spectrum\temp\data\20221103\Vmag_f_temp_fine.001"
-folder_path = r'C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\Spectrum\Q\data\20221104'
-# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\Spectrum\I_2\vna\20221104_sweepfield_Peak4_75kHz"
-data = load_data_from_folder(folder_path)
-print(data.keys())
+def get_color_cycle(NUM_COLORS, cmap = 'gist_rainbow'):
+    cm = plt.get_cmap(cmap)
+    custom_cycler = [cm(1.*x/NUM_COLORS) for x in range(NUM_COLORS)]
+    return custom_cycler
 
-# data = load_data_from_file(file_path)
-# folder_path = r'C:\Users\ICET\Desktop\Data\SD\20221020_SD_004d\with_amp\20221028_sweepfield_DC_Peak2'
-# dcData = load_data_from_folder(folder_path)
-# print(dcData.keys())
-
-'''------------------------filter------------------------'''
-sweep1 = data['amp']
-sweep2 = data['f']
-sweep_1 = list(dict.fromkeys(sweep1))
-sweep_2 = list(dict.fromkeys(sweep2))
-mask = {}
-for ssweep1 in sweep_1:
-    mask.update({ssweep1:{}})
-    for ssweep2 in sweep_2:
-        mask[ssweep1].update({ssweep2 : np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)})
-
-# sweep1 = data['v_sur']
-# sweep_1 = list(dict.fromkeys(sweep1))
-# mask = {}
-# for ssweep1 in sweep_1:
-#     mask.update({ssweep1: sweep1 == ssweep1})
-
-# dcData['I_mag'] = np.abs(dcData['I_mag'])/1.3
-
-'''------------------------plot 0------------------------'''
-# fg = plt.figure()
-# legend = []
-# for ssweep1 in sweep_1:
-#     current_mask = mask[ssweep1]
-#     plt.plot(data['VNA_freqs'][current_mask],data['VNA_log_mag'][current_mask], lw=1)
-#     legend += [f"v = {ssweep1}"]
-# plt.legend(legend)
-# # plt.xlim(6.98e9,6.99e9)
-# # plt.ylim(,)
-# plt.xlabel('freq(Hz)')
-# plt.ylabel('S21(dB)')
-# plt.show()
-
-
-'''------------------------plot 1------------------------'''
-# fg = plt.figure()
-#
-# legend =[]
-# for i in range(0,len(sweep_2)):
-#     x = []
-#     y = []
-#     for j in range(0,len(sweep_1)):
-#         current_mask = mask[sweep_1[j]][sweep_2[i]]
-#         # xx, yy = calc_average(data['I_x'][current_mask],data['r_RuOx'][current_mask])
-#         xx, yy = calc_average(data['amp'][current_mask], data['r_RuOx'][current_mask])
-#         x.append(xx)
-#         y.append(yy)
-#     plt.plot(x, y, ls='--', marker='o', ms=5, mfc='none')
-#     legend += [f'{sweep_2[i]/1000}'+'kHz']
-#
-# # add plot trace for DC values
-# # plt.scatter(dcData['I_mag'], dcData['r_RuOx'],c='r')
-# # legend += ['DC']
-# # plt.xscale('log')
-# # plt.xlim(0.01,1)
-# # plt.legend(legend,loc='lower left')
-#
-# plt.legend(legend)
-# plt.xlabel('AC modulation Amplitude(V)')
-# plt.ylabel('RuOx resistance(ohm)')
-# plt.show()
-
-'''------------------------plot 2------------------------'''
-for i in range(0,len(sweep_2)):
-    print(f'Modulation at freq = {sweep_2[i]/1000} kHz')
+"""------------------Plot configs-----------------------------------"""
+def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag',save=False):
+    # filter mask for single sweep
+    data[sweep_tag_1] = np.array([round(x, 5) for x in
+                         data[sweep_tag_1]])  # round sweep para, avoiding multiple value at same sweep value
+    sweep1 = data[sweep_tag_1]  # sweep para
+    sweep_1 = list(dict.fromkeys(sweep1))  # sweep para list
+    mask = {}  # mask dictionary
+    for ssweep1 in sweep_1:
+        mask.update({ssweep1: sweep1 == ssweep1})
+    # Plot
     fg = plt.figure()
     legend = []
-    for j in range(0, len(sweep_1)):
-        current_mask = mask[sweep_1[j]][sweep_2[i]]
-        print(f'    for V= {sweep_1[j]} V')
-        x, y = calc_average_spectrum(data['VNA_freqs'][current_mask],data['VNA_log_mag'][current_mask])
-        plt.plot(x, y, lw=1)
-        legend += [f'V= {sweep_1[j]}V']
-    plt.title(f'Modulation at freq = {sweep_2[i]/1000} kHz')
-    plt.legend(legend, loc='lower left')
-    plt.xlabel('Spectrum analyzer Sweep freq (Hz)')
-    # plt.xlim(sweep_2[i]-2000,sweep_2[i]+2000)
+    i = 0
+    # print(sorted(sweep_1))
+    x = []
+    y = []
+    for ssweep1 in sorted(sweep_1):
+        current_mask = mask[ssweep1]
+        xx, yy = calc_average_spectrum(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask])
+        if 'freq' in plot_tag_x:
+            x += [float(ssweep1)]
+            y += [xx[yy == min(yy)]] # find dip freq
+            plt.xlabel('Vg(V)')
+            plt.ylabel('Resonance freq(Hz)')
+        else:
+            x += [np.average(xx)]
+            y += [np.average(yy)]
+            plt.xlabel(plot_tag_x)
+            plt.ylabel(plot_tag_y)
+    plt.plot(x, y, ls='--', marker='o', ms=5, mfc='none')
+    if 'freq' in plot_tag_x:
+        dataToSave = np.column_stack((x,y))
+        file_path = folder_path + '\\' + 'f_vs_v'
+        if save:
+            np.savetxt(file_path, dataToSave, delimiter='\t',
+                   header="gate voltage(V) and resonance freq" + '\n' + "Vg\t\t\t\tfreqs\t\t\t\t"
+                   )
+    plt.show()
+
+def plot_single_sweep_spectrum(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag',legendcol=2):
+    # filter mask for single sweep
+    data[sweep_tag_1] = [round(x, 5) for x in
+                         data[sweep_tag_1]]  # round sweep para, avoiding multiple value at same sweep value
+    sweep1 = data[sweep_tag_1]  # sweep para
+    sweep_1 = list(dict.fromkeys(sweep1))  # sweep para list
+    mask = {}  # mask dictionary
+    for ssweep1 in sweep_1:
+        mask.update({ssweep1: sweep1 == ssweep1})
+    # Plot
+    fg = plt.figure()
+    legend = []
+    i = 0
+    # print(sorted(sweep_1))
+    for ssweep1 in sorted(sweep_1):
+        current_mask = mask[ssweep1]
+        zero_mask = mask[(sweep_1)[0]]
+        x, y = calc_average_spectrum(np.array(data[plot_tag_x])[current_mask], np.array(data[plot_tag_y])[current_mask])
+        x0, y0 = calc_average_spectrum(data[plot_tag_x][zero_mask], data[plot_tag_y][zero_mask])
+        plt.plot(x, y, lw=0.5, color=get_color_cycle(len(sweep_1))[i])
+        legend += [sweep_tag_1 + f" = {ssweep1}"]
+        i += 1
+    plt.legend(legend, loc='lower left', fontsize=5, ncol=legendcol)
+    # plt.xlim(5.185e9, 5.21e9)
+    # plt.ylim(-2, 2.5)
+    # plt.ylim(-50, -35)
+    plt.xlabel('freq(Hz)')
+    plt.ylabel('S21(dB)')
+    plt.show()
+
+def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp', plot_tag_y='r_ruox'):
+    # filter mask for double sweep
+    sweep1 = data[sweep_tag_1]
+    sweep2 = data[sweep_tag_2]
+    sweep_1 = list(dict.fromkeys(sweep1))
+    sweep_2 = list(dict.fromkeys(sweep2))
+    mask = {}
+    for ssweep1 in sweep_1:
+        mask.update({ssweep1:{}})
+        for ssweep2 in sweep_2:
+            mask[ssweep1].update({ssweep2 : np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)})
+    fg = plt.figure()
+    legend =[]
+    for i in range(0,len(sweep_2)):
+        x = []
+        y = []
+        for j in range(0,len(sweep_1)):
+            current_mask = mask[sweep_1[j]][sweep_2[i]]
+            xx, yy = calc_average(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask])
+            x.append(xx)
+            y.append(yy)
+        plt.plot(x, y, ls='--', marker='o', ms=5, mfc='none')
+        legend += [f'{sweep_2[i]/1000}'+'kHz']
+    plt.legend(legend)
+    plt.xlabel('AC modulation Amplitude(V)')
+    plt.ylabel('RuOx resistance(ohm)')
+
+    # # add plot trace for DC values
+    # dcData = load_data_from_folder(folder_path)
+    # dcData['I_mag'] = np.abs(dcData['I_mag'])/1.3
+    # plt.scatter(dcData['I_mag'], dcData['r_RuOx'],c='r')
+    # legend += ['DC']
+    # plt.xscale('log')
+    # plt.xlim(0.01,1)
+    # plt.legend(legend,loc='lower left')
+    plt.show()
+
+def plot_double_sweep_spectrum(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag'):
+    # filter mask for double sweep
+    sweep1 = data[sweep_tag_1]
+    sweep2 = data[sweep_tag_2]
+    sweep_1 = list(dict.fromkeys(sweep1))
+    sweep_2 = list(dict.fromkeys(sweep2))
+    mask = {}
+    for ssweep1 in sweep_1:
+        mask.update({ssweep1:{}})
+        for ssweep2 in sweep_2:
+            mask[ssweep1].update({ssweep2 : np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)})
+
+    for i in range(0,len(sweep_2)):
+        fg = plt.figure()
+        legend = []
+        for j in range(0, len(sweep_1)):
+            current_mask = mask[sweep_1[j]][sweep_2[i]]
+            x, y = calc_average_spectrum(data[plot_tag_x][current_mask],data[plot_tag_y][current_mask])
+            plt.plot(x, y, lw=0.5, color=get_color_cycle(len(sweep_1))[i])
+            legend += [sweep_tag_1 + f'= {sweep_1[i]}']
+        plt.legend(legend)
+        plt.xlabel('freq(hz)')
+        plt.ylabel('Spectrum analyzer output (dBm)')
+        plt.show()
+
+def plot_double_sweep_spectrum_peak(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag',save=False):
+    # filter mask for double sweep
+    sweep1 = data[sweep_tag_1]
+    sweep2 = data[sweep_tag_2]
+    sweep_1 = list(dict.fromkeys(sweep1))
+    sweep_2 = list(dict.fromkeys(sweep2))
+    mask = {}
+    for ssweep1 in sweep_1:
+        mask.update({ssweep1:{}})
+        for ssweep2 in sweep_2:
+            mask[ssweep1].update({ssweep2 : np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)})
+
+    fg = plt.figure()
+    legend = []
+    dataToSave = []
+    for i in range(0,len(sweep_2)):
+        xx = []
+        yy = []
+        for j in range(0, len(sweep_1)):
+            current_mask = mask[sweep_1[j]][sweep_2[i]]
+            x, y = calc_average_spectrum(data[plot_tag_x][current_mask],data[plot_tag_y][current_mask])
+            xx += [sweep_1[j]]
+            yy += [np.average(y[np.logical_and(x > sweep_2[i]-1000,x < sweep_2[i]+1000)])]
+        dataToSave += [xx]
+        dataToSave += [yy]
+        plt.plot(xx, yy, ls='--', marker='o', ms=5, mfc='none')
+        legend += [f'Modulation at freq = {sweep_2[i]/1000} kHz']
+    dataToSave = np.column_stack(dataToSave)
+    file_path = folder_path + '\\' + 'amp_vs_v'
+    if save:
+        np.savetxt(file_path, dataToSave, delimiter='\t',
+                           header="AC modulation Amplitude(V) and Spectrum analyzer output (dBm) for 1: 60KHZ, 2: 75KHz" + '\n' + "v1\t\t\t\t P1\t\t\t\tv2\t\t\t\t P2\t\t\t\t"
+                           )
+    plt.title('Amplitude vs modulation')
+    plt.legend(legend)
+    plt.xlabel('AC modulation Amplitude(V)')
     plt.ylabel('Spectrum analyzer output (dBm)')
     plt.show()
 
-'''------------------------plot 3------------------------'''
-fg = plt.figure()
-legend = []
-for i in range(0,len(sweep_2)):
-    xx = []
-    yy = []
-    for j in range(0, len(sweep_1)):
-        current_mask = mask[sweep_1[j]][sweep_2[i]]
-        x, y = calc_average_spectrum(data['VNA_freqs'][current_mask],data['VNA_log_mag'][current_mask])
-        xx += [sweep_1[j]]
-        yy += [np.average(y[np.logical_and(x>sweep_2[i]-1000,x<sweep_2[i]+1000)])]
-    plt.plot(xx, yy, ls='--', marker='o', ms=5, mfc='none')
-    legend += [f'Modulation at freq = {sweep_2[i]/1000} kHz']
-plt.title('Amplitude vs modulation')
-plt.legend(legend)
-plt.xlabel('AC modulation Amplitude(V)')
-plt.ylabel('Spectrum analyzer output (dBm)')
-plt.show()
+def plot_cmap(data,plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA_log_mag'):
+    fg = plt.figure()
+    gs = fg.add_gridspec(1,2,width_ratios=[1,0.1])
+    ax = fg.add_subplot(gs[0])
+    ax.scatter(data[plot_tag_x], data[plot_tag_y], c=data[plot_tag_z], s=5, cmap='magma', marker='|')
+    #ax.set_ylim([0,5])
+    cax = fg.add_subplot(gs[1])
+    norm = mpl.colors.Normalize(vmin=np.min(data[plot_tag_z]), vmax=np.max(data[plot_tag_z]))
+    cb = plt.colorbar(cm.ScalarMappable(norm=norm, cmap='magma'), cax=cax,
+                      ticks=np.linspace(np.min(data[plot_tag_z]), np.max(data[plot_tag_z]), 10),
+                      label='Transmission(dB)')
+    ax.set_xlabel('Freq(Hz)')
+    ax.set_ylabel('r_ruOx')
+    plt.show()
 
-'''------------------------plot 4------------------------'''
-# fg = plt.figure()
-# gs = fg.add_gridspec(1,2,width_ratios=[1,0.1])
-# ax = fg.add_subplot(gs[0])
-#
-# ax.set_xlabel('Freq(Hz)')
-# ax.set_ylabel('V_mag(V)')
-# ax.scatter(data.VNA_freqs, data.V_mag, c=data.VNA_log_mag, s=0.05, cmap='magma')
-# #ax.set_ylim([0,5])
-# cax = fg.add_subplot(gs[1])
-# norm = mpl.colors.Normalize(vmin=np.min(data.VNA_log_mag), vmax=np.max(data.VNA_log_mag))
-# cb = plt.colorbar(cm.ScalarMappable(norm=norm, cmap='magma'), cax=cax,
-#                   ticks=np.linspace(np.min(data.VNA_log_mag), np.max(data.VNA_log_mag), 10),
-#                   label='Transmission(dB)')
-#
-# plt.show()
+'''------------------------input before run------------------------'''
+
+# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20221110_SD_006a\sweepV\20221113_sweepV_4GTo8G"
+# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20221110_SD_006a\sweepV\20221114_sweepV_5GTo6G"
+folder_path = r"C:\Users\ICET\Desktop\Data\SD\20221110_SD_006a\sweepV_fine"
+# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20221110_SD_006a\up"
+
+data = load_data_from_folder(folder_path)
+print(data.keys())
+
+# mask = np.logical_and(data['VNA_freqs']>5.2e9,data['VNA_freqs']<5.2045e9)
+# mask = np.logical_and(data['VNA_freqs']>4e9,data['VNA_freqs']<4.2e9)
+mask = np.logical_and(data['VNA_freqs']>5.2e9,data['VNA_freqs']<5.205e9)
+for key in data.keys():
+    data[key] = np.array(data[key])[mask]
+
+plot_single_sweep_spectrum(data,
+                           sweep_tag_1='vg',
+                           plot_tag_x='VNA_freqs',
+                           plot_tag_y='VNA_log_mag',
+                           legendcol=2
+                           )
+
+plot_single_sweep(data,
+                  sweep_tag_1='vg',
+                  plot_tag_x='VNA_freqs',
+                  plot_tag_y='VNA_log_mag',
+                  save=True
+                  )
+
+# plot_single_sweep(data,
+#                   sweep_tag_1='vg',
+#                   plot_tag_x='vg',
+#                   plot_tag_y='r_RuOx'
+#                   )
+plot_cmap(data,
+          plot_tag_x='VNA_freqs',
+          plot_tag_y='vg',
+          plot_tag_z='VNA_log_mag')
+
+
+
+

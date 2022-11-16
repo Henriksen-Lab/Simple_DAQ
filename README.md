@@ -10,11 +10,7 @@ Apps:
 Instrument_Drivers:
 Instrument_dict.py: Includes names and function of following instrument
 
-environment.yml: contains the relying package for py3.7
-To install the file:
-1. Copy the file to C:\Users\[username]
-2. download anaconda
-3. In anaconda terminal, run: conda env create -f environment.yml
+requirements.txt: contains the relying package
 
 ----------------------------------------------------------------------------
 

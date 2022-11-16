@@ -1,0 +1,5 @@
+PyVISA>=1.12.0
+matplotlib>=3.6.2
+numpy>=1.23.4
+pywin32>=305
+serial>=0.0.97
