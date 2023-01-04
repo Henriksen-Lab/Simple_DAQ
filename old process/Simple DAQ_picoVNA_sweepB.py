@@ -26,21 +26,29 @@ rm = pyvisa.ResourceManager()
 '''---------------------INPUT BEFORE RUN---------------------'''
 
 keithley2400_gpib = 'GPIB0::24::INSTR'
+keithley2000_gpib = 'GPIB0::18::INSTR'
 hp34461a = 'GPIB0::17::INSTR'
-data_dir = r'C:\Users\ICET\Desktop\Data\SD\20221110_SD_006a\sweepV_fine'
-my_note = "2022.11.14 Icet basetemp_scan V when field off, DC, [-0.05,0.05,0.002]"
+data_dir = r'C:\Users\ICET\Desktop\Data\SD\20221110_SD_006a\sweepV\20221210_sweep_6GTo7G'
+my_note = "2022.12.10 Icet basetemp_scan V when field off, DC, [0,1.5,0.02]"
 # tell me about your exp, start a new line by \n
 
-title = "_" + "sweepV" # some unique feature you want to add in title
+title = "_" + "sweepV_wide" # some unique feature you want to add in title
 
 # customized, here I have 4 constant value for each VNA sweep, thus I defined 4 constant in the following function my_form
 
 port ='S21'
 
-def my_form(smith, constant1, constant2, constant3):
+def my_form(smith, **kwargs):
     lens = len(smith.freqs)
-    data = np.column_stack((smith.freqs, smith.log_mag, smith.phase_rad, smith.real, smith.imag,
-                             np.full(lens, constant1), np.full(lens, constant2), np.full(lens, constant3)))
+    dataToSave = []
+    dataToSave += [smith.freqs]
+    dataToSave += [smith.log_mag]
+    dataToSave += [smith.phase_rad]
+    dataToSave += [smith.real]
+    dataToSave += [smith.imag]
+    for key in kwargs:
+        dataToSave += [np.full(lens, kwargs[key])]
+    data = np.column_stack(dataToSave)
     return data
 
 
@@ -49,20 +57,23 @@ span = 250
 #time.sleep(200)
 
 '''---------------------Start run---------------------'''
-list = ['VNA_freqs', 'VNA_log_mag', 'VNA_phase_rad', 'VNA_real', 'VNA_imag', 'vg','timestamp','r_RuOx']
+# list = ['VNA_freqs', 'VNA_log_mag', 'VNA_phase_rad', 'VNA_real', 'VNA_imag', 'vg','timestamp','r_RuOx']
+list = ['VNA_freqs', 'VNA_log_mag', 'VNA_phase_rad', 'VNA_real', 'VNA_imag', 'vg_sur','vg','timestamp']
 
 def run_single(v_sur,order):
     keithley2400_set_sour_voltage_V(keithley2400_gpib, v_sur)
     time.sleep(30)
-    r_ruox = hp34461a_get_ohm_2pt(hp34461a)
+    # r_ruox = hp34461a_get_ohm_2pt(hp34461a)
+    v_get = keithley2000_get_voltage_V(keithley2000_gpib)
     timestamp = time.time()
     avg = f"\n average for {span} times"
     print(f"{datetime.now().strftime('%Y.%m.%d')}", " ", f"{datetime.now().strftime('%H:%M:%S')}", "  ",
           order, " . started")
-    vs = get_picoVNA_smith(port=port, f_min=5195, f_max=5210, number_of_points=1001, power=3, bandwidth=1000,
+    vs = get_picoVNA_smith(port=port, f_min=6000, f_max=7000, number_of_points=1001, power=3, bandwidth=1000,
                            Average=span)
     print(f"VNA data for {v_sur}V recorded")
-    data = my_form(vs, v_sur, timestamp, r_ruox)
+    # data = my_form(vs, v_sur, timestamp, r_ruox)
+    data = my_form(smith=vs, v_sur=v_sur, v_get=v_get, timestamp=timestamp)
     file_name = f"SD_006a_ICET_Vg_{v_sur}V.{order}"
     axis = ''
     for x in list:
@@ -75,20 +86,14 @@ def run_single(v_sur,order):
                       my_note + '\n' + avg + '\n' + f"{axis}")
 
 order = 0
-for i in range(0, 26):
+for i in range(0, 75):
+    v_sur = 0.02 * i
     order += 1
-    v_sur = 0.004 * i
     run_single(v_sur, order)
-
-for i in range(0, 51):
+for i in range(0, 75):
+    v_sur = 0.02 * (75-i)
     order += 1
-    v_sur = 0.1 - 0.004 * i
-    run_single(v_sur,order)
-
-for i in range(0, 26):
-    order += 1
-    v_sur = -0.1 + 0.004 * i
-    run_single(v_sur,order)
+    run_single(v_sur, order)
 
 keithley2400_set_sour_voltage_V(keithley2400_gpib,0)
 print('done')

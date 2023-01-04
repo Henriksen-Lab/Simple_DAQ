@@ -16,7 +16,7 @@ instrument_dict = {'get':{},
                    'vna':['vna', 'PicoVNA108','E4405B'],
                    'pid_noise':['keithley', 'SR830', 'hp34461A']} #the instrument for temp acq
 
-instrument_dict['get'].update({'keithley': ['2000ohm_4pt', '2400ohm_4pt', '2000ohm_2pt', '2400ohm_2pt', '2000volt', '2400amp']})
+instrument_dict['get'].update({'keithley': ['2000ohm_4pt', '2400ohm_4pt', '2000ohm_2pt', '2400ohm_2pt', '2000volt', '2400_sur_current', '2400_sur_volt']})
 instrument_dict['get'].update({'SR830': ['x', 'y', 'R', 'theta', 'freq','amplitude']})
 instrument_dict['get'].update({'hp34461A': ['volt', 'ohm_4pt']})
 instrument_dict['get'].update({'PicoVNA108': ['S21', 'S12', 'S11', 'S22']})
@@ -49,8 +49,10 @@ def get_value(address='', name='', func='', **kwargs):
             value = keithley2400_get_ohm_2pt(address)
         elif func == '2000volt':
             value = keithley2000_get_voltage_V(address)
-        elif func == '2400amp':
+        elif func == '2400_sur_current':
             value = keithley2400_get_sour_currrent_A(address)
+        elif func == '2400_sur_volt':
+            value = keithley2400_get_sour_voltage_V(address)
     elif name == 'SR830':
         if func == 'x':
             value = SR830_get_x(address)

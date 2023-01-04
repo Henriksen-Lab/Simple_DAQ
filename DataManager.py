@@ -159,7 +159,7 @@ class Mydata:
                 final_data_len.append(len(data_column))
             final_len = min(final_data_len)
             for i in range(0,len(self.dataToSave)):
-                self.dataToSave[i] =  self.dataToSave[i][:final_len]
+                self.dataToSave[i] = self.dataToSave[i][:final_len]
             self.dataToSave = np.column_stack(self.dataToSave)
 
         os.makedirs(self.file_path + '\\data' + '\\' + datetime.now().strftime('%Y%m%d'), exist_ok=True)

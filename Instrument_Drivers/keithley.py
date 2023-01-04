@@ -128,8 +128,7 @@ def keithley2000_get_voltage_V(address):
         keithley = rm.open_resource(address)
         keithley.write("SENS:FUNC \"volt\"") # set volt
         keithley.write("SENS:volt:RANG:AUTO 1") # Auto range
-        keithley.write("FORM:ELEM VOLT")
-        string_data = keithley.query("READ?")
+        string_data = keithley.query("FETC?")
         numerical_data = float(string_data)
     finally:
         keithley.close()
@@ -140,8 +139,8 @@ def keithley2000_get_ohm_4pt(address):
         keithley = rm.open_resource(address)
         keithley.write("SENS:FUNC \"FRES\"") # measure 4 wire Resistance for 2000
         keithley.write("SENS:FRES:RANG:AUTO 1") # Auto range
-        keithley.write("FORM:ELEM FRES") # only output R
-        string_data = keithley.query("READ?")
+        # keithley.write("FORM:ELEM FRES") # only output R
+        string_data = keithley.query("FETC?")
 
         numerical_data = float(string_data)
     finally:
@@ -153,8 +152,7 @@ def keithley2000_get_ohm_2pt(address):
         keithley = rm.open_resource(address)
         keithley.write("SENS:FUNC \"RES\"") # measure 2 wire Resistance for 2000
         keithley.write("SENS:RES:RANG:AUTO 1") # Auto range
-        keithley.write("FORM:ELEM RES") # only output R
-        string_data = keithley.query("READ?")
+        string_data = keithley.query("FETC?")
 
         numerical_data = float(string_data)
     finally:
