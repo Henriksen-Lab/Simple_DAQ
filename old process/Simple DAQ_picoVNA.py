@@ -16,18 +16,20 @@ if folder_path not in sys.path:
 from Instrument_Drivers.PicoVNA108 import get_picoVNA_smith
 from Instrument_Drivers.SR830 import SR830_get_x, SR830_get_y
 from Instrument_Drivers.hp34461A import hp34461a_get_ohm_2pt
+from Instrument_Drivers.keithley import keithley2000_get_ohm_4pt
 
 
 rm = pyvisa.ResourceManager()
 
 '''---------------------INPUT BEFORE RUN---------------------'''
 
-SR830_gpib = 'GPIB0::5::INSTR'
-hp34461a = 'GPIB0::17::INSTR'
+# SR830_gpib = 'GPIB0::5::INSTR'
+# hp34461a = 'GPIB0::17::INSTR'
+keithley = 'GPIB0::18::INSTR'
 
-data_dir = r"C:\Users\ICET\Desktop\Data\SD\20221110_SD_006a\cooling_2" # the path you want to save all your datas
+data_dir = r"C:\Users\ICET\Desktop\Data\SD\20230126_SD_006b\cooling" # the path you want to save all your datas
 
-my_note = "2022.11.12 Icet cool down \n RuOx temp for temp, picoVNA for transimission"
+my_note = "2023.0126 Icet cool down \n RuOx temp for temp, picoVNA for transimission"
 # tell me about your exp, start a new line by \n
 title = "_" + "cooling" # some unique feature you want to add in title
 
@@ -43,14 +45,15 @@ def my_form(smith, constant1, constant2):
 
 
 
-span = 100
+span = 10
 #(start freq, end freq, power, 1/bandwidth, points to sweep, address), you could skip if you done this manually already
 #time.sleep(200)
 
 '''---------------------Start run---------------------'''
-i = 22
+i = 1
 while True:
-    x = hp34461a_get_ohm_2pt(hp34461a)
+    # x = hp34461a_get_ohm_2pt(hp34461a)
+    x = keithley2000_get_ohm_4pt(keithley)
     timestamp = time.time()
     avg = f"\n average for {span} times"
     print(f"x y data for {i} recorded")

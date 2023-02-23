@@ -246,15 +246,15 @@ class Mydata:
         for val in np.linspace(float(start), float(stop), num_steps):
             if not daq_flag:
                 break
-            set_value(address=address, name=name, func=func, value=val)
             time.sleep(delay)
+            set_value(address=address, name=name, func=func, value=val)
             self.sweep_update(value=[val])
         if flag:
             for val in np.linspace(float(stop), float(start), num_steps):
                 if not daq_flag:
                     break
-                set_value(address=address, name=name, func=func, value=val)
                 time.sleep(delay)
+                set_value(address=address, name=name, func=func, value=val)
                 self.sweep_update(value=[val])
         self.sweep_save()
         self.sweep_on_flag = False
@@ -282,42 +282,43 @@ class Mydata:
         num_steps_1 = int(np.floor(abs(start[1] - stop[1]) / (step_size[1]))) + 1
         # print(num_steps, num_steps_1)
         for val in np.linspace(start[0], stop[0], num_steps):
+            time.sleep(delay[0])
             set_value(address=address[0], name=name[0], func=func[0], value=val)
             for val_1 in np.linspace(start[1], stop[1], num_steps_1):
                 if not daq_flag:
                     break
-                set_value(address=address[1], name=name[1], func=func[1], value=val_1)
                 time.sleep(delay[1])
+                set_value(address=address[1], name=name[1], func=func[1], value=val_1)
                 self.sweep_update(value=[val, val_1])
             if flag[1]:
                 for val_1 in np.linspace(stop[1], start[1], num_steps_1):
                     if not daq_flag:
                         break
-                    set_value(address=address[1], name=name[1], func=func[1], value=val_1)
                     time.sleep(delay[1])
+                    set_value(address=address[1], name=name[1], func=func[1], value=val_1)
                     self.sweep_update(value=[val, val_1])
             if not daq_flag:
                 break
-            time.sleep(delay[0])
         if flag[0]:
             for val in np.linspace(stop[0], start[0], num_steps):
+                time.sleep(delay[0])
                 set_value(address=address[0], name=name[0], func=func[0], value=val)
                 for val_1 in np.linspace(start[1], stop[1], num_steps_1):
                     if not daq_flag:
                         break
-                    set_value(address=address[1], name=name[1], func=func[1], value=val_1)
                     time.sleep(delay[1])
+                    set_value(address=address[1], name=name[1], func=func[1], value=val_1)
                     self.sweep_update(value=[val, val_1])
                 if flag[1]:
                     for val_1 in np.linspace(stop[1], start[1], num_steps_1):
                         if not daq_flag:
                             break
-                        set_value(address=address[1], name=name[1], func=func[1], value=val_1)
                         time.sleep(delay[1])
+                        set_value(address=address[1], name=name[1], func=func[1], value=val_1)
                         self.sweep_update(value=[val, val_1])
                 if not daq_flag:
                     break
-                time.sleep(delay[0])
+
         self.sweep_save()
         self.sweep_on_flag = False
 
