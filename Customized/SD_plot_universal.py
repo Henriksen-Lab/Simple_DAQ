@@ -7,6 +7,7 @@
 import time, datetime, sys, os, string
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import text
 from matplotlib import cm
 import numpy as np
 from collections import OrderedDict
@@ -14,17 +15,26 @@ from operator import getitem
 import re
 from io import StringIO
 import scipy
-# from scipy.optimize import curve_fit
-# from scipy import signal
-# from scipy import interpolate
+from scipy.optimize import curve_fit
+from scipy import signal
+from scipy import interpolate
 import pickle
 
 def my_data_dict(data, read_data, axis):
-    for i in range(len(axis)):
-        if axis[i] not in data.keys():
+    if len(list(data)) == 0:
+        for i in range(len(axis)):
             data.update({axis[i]:np.array(read_data[:, i])})
-        else:
-            data[axis[i]]= np.append(data[axis[i]],np.array(read_data[:, i]))
+    else:
+        for col in range(read_data.shape[1]):
+            if axis[col] in data.keys():
+                data[axis[col]] = np.append(data[axis[col]], np.array(read_data[:, col]))
+            else:
+                data.update({axis[col]: np.array(read_data[:, col])})
+        length = [len(item) for key, item in data.items()]
+        if min(length)!= max(length):
+            for key in data.keys():
+                if len(data[key])<max(length):
+                    data[key] = np.append(np.zeros(max(length)-len(data[key])),data[key])
     return data
 
 def load_data_from_file(name):
@@ -81,8 +91,12 @@ def get_ordered_file_name_dict(folder_path):
                                                 key=lambda x: getitem(x[1], 'time')))
     return ordered_file_name_dict
 
-def calc_average(x,y):
-    return np.average(x),np.average(y)
+def calc_average(x,y,type=None):
+    yy = np.average(y)
+    if type == 'logmag':
+        yy = np.average(np.power(10, y / 20))
+        yy = 20 * np.log10(yy)
+    return np.average(x),yy
 
 def calc_average_spectrum(x,y,type='logmag'):
     x = np.array(x)
@@ -323,7 +337,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     legend =[]
     vg=[]
     slope=[]
-    if baseline is not None:
+    if baseline is not None and baseline!='difference':
         y0 = []
         for j in range(0, len(sweep_1)):
             current_mask = mask[sweep_1[j]][baseline]
@@ -337,7 +351,10 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
         y = []
         for j in range(0,len(sweep_1)):
             current_mask = mask[sweep_1[j]][sweep_2[i]]
-            xx, yy = calc_average(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask])
+            if 'log_mag' in plot_tag_y:
+                xx, yy = calc_average(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask],type='logmag')
+            else:
+                xx, yy = calc_average(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask])
             x.append(xx)
             y.append(yy)
         x = np.array(x)
@@ -350,25 +367,48 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
             vg += [float(sweep_2[i])]
             slope += [para[0]]
         else:
+
             # difference = np.remainder(y - y_previous + 180, 360)
             difference = y
             if baseline is not None:
                 difference = y-y0
-            elif baseline == 'difference':
-                difference = np.remainder(y - y_previous + 180, 360)
+            if baseline == 'difference':
+                # difference = np.remainder(y - y_previous + 180, 360)
+                difference = y-y_previous
             plt.plot(x, difference + i * offset, ls='-', marker='o', ms=0, mfc='none', color=get_color_cycle(len(sweep_2),cmap='coolwarm')[i])
         legend += [f'{round(sweep_2[i], 2)}']
-        newdata.update({f'{round(sweep_2[i], 2)}': (x, y- y_previous)})
+        # newdata.update({f'{round(sweep_2[i], 2)}': (x, y- y_previous)})
         y_previous = y
     plt.xlim(min(x), max(x) + abs(max(x) - min(x)) / 5)
-    with open(folder_path + '\\'+ 'temp', 'wb') as f:
-        pickle.dump(newdata, f)
-
+    # with open(folder_path + '\\'+ 'temp', 'wb') as f:
+    #     pickle.dump(newdata, f)
 
     plt.legend(legend, loc='upper right', fontsize=10, ncol=1)
     plt.xlabel(plot_tag_x)
     plt.ylabel(plot_tag_y)
-    plt.show()
+    # plt.xlabel('B(mT)')
+    # plt.ylabel('Rxy(ohm)')
+    # vlines = [4.435e9,5.924e9,6.968e9,7.869e9] #sd006c
+    # plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='grey', ls='--')
+    # for i, x in enumerate(vlines):
+    #     text(x, min(y), f'{(x/1e9)}', rotation=90, verticalalignment='bottom')
+    #
+    # vlines = [6.104e9, 6.414e9, 6.642e9, 7.138e9] #sd004
+    # plt.vlines(x=vlines,ymin=min(y), ymax=max(y), color='green', ls='-',alpha=0.5)
+    # for i, x in enumerate(vlines):
+    #     text(x, max(y), f'sd004:{(x/1e9)}', rotation=90, verticalalignment='bottom')
+
+    # vlines = [4.420e9, 4.274e9, 6.583e9, 6.992e9] #sd006d
+    # plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='red', ls='-',alpha=0.5)
+    # for i, x in enumerate(vlines):
+    #     text(x, max(y), f'{(x/1e9)}', rotation=90, verticalalignment='bottom')
+
+    # vlines = [6032.4e6,6335e6,6620e6,7104e6]  # sd003a
+    # plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='grey', ls='-', alpha=0.5)
+    # for i, x in enumerate(vlines):
+    #     text(x, max(y), f'sd003a:{(x / 1e9)}', rotation=90, verticalalignment='bottom')
+    # plt.show()
+
     if plot_Rxy:
         fg = plt.figure()
         plt.scatter(vg, slope, label='data')
@@ -376,8 +416,8 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
         print(para, np.sum(np.diag(cov)))
         x_fit = np.linspace(min(vg),max(vg),100)
         plt.plot(x_fit,convolution_gaussian_func(x_fit, *para), '-', label= 'Fit')
-        plt.xlabel(sweep_tag_2)
-        plt.ylabel('slope')
+        plt.xlabel('Gate Voltage(V)')
+        plt.ylabel('Hall resistance(m^3/C)')
         plt.show()
 
     if save:
@@ -489,16 +529,17 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 '''------------------------input before run------------------------'''
 
 
-# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230126_SD_006b\transport\Hall\data"
-folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230126_SD_006b\DC_field_transmission\02182023_wiggle_field\20230218_long_avg_0V'
+folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230126_SD_006b\transport\Hall\data"
+# folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230225_SD_003a_mag_probe\20230226_sweep_B_5900to7200MHz'
 data = load_data_from_folder(folder_path)
 print(data.keys())
 
-# data = limitdata(data, low_limit=3.61e9, high_limit=3.65e9, tag='VNA_freqs')
+# data = limitdata(data, low_limit=7.10e9, high_limit=7.11e9, tag='VNA_freqs')
+
 # data = limitdata(data, low_limit=0.4, high_limit=0.9, tag='vg_sur')
 # data.update({'I': np.sqrt(data['I_x'] ** 2 + data['I_y'] ** 2)})
-# data = limitdata(data, low_limit=20e-9, high_limit=150e-9, tag='I_x')
-# data = calculate_R(data, tag_I='I_x',tag_V='V_x')
+#
+
 
 # plot_single_sweep_spectrum(data,
 #                            sweep_tag_1='vg_sur',
@@ -552,19 +593,23 @@ print(data.keys())
 #           plot_tag_z='R',
 #           baseline=None)
 
-plot_double_sweep(data,
-                  sweep_tag_1='VNA_freqs',
-                  sweep_tag_2='vg_sur',
-                  plot_tag_x='VNA_freqs',
-                  plot_tag_y='VNA_log_mag',
-                  baseline=0.0,
-                  offset=0.0,
-                  save=True)
-
 # plot_double_sweep(data,
-#              sweep_tag_1='V_B',
-#              sweep_tag_2='V_gate',
-#              plot_tag_x='V_B',
-#              plot_tag_y='R',
-#              offset=0.0,
-#              save=True)
+#                   sweep_tag_1='VNA_freqs',
+#                   sweep_tag_2='wiggle_B',
+#                   plot_tag_x='VNA_freqs',
+#                   plot_tag_y='VNA_log_mag',
+#                   baseline=None,
+#                   offset=0,
+#                   save=False)
+
+data = limitdata(data, low_limit=20e-9, high_limit=150e-9, tag='I_x')
+data = calculate_R(data, tag_I='I_x',tag_V='V_x')
+data['V_B'] = data['V_B']/1.4*44
+plot_double_sweep(data,
+             sweep_tag_1='V_B',
+             sweep_tag_2='V_gate',
+             plot_tag_x='V_B',
+             plot_tag_y='R',
+             offset=0.0,
+             save=True,
+                  plot_Rxy=True)
