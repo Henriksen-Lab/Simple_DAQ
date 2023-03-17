@@ -58,6 +58,11 @@ def SR830_set_frequency(address, frequency):
     SR830_handle.write(f"FREQ {float(frequency)}")
     SR830_handle.close()
 
+def SR830_set_harmonic(address, harm):
+    SR830_handle = rm.open_resource(address)
+    SR830_handle.write(f"HARM {int(harm)}")
+    SR830_handle.close()
+
 def SR830_get_frequency(address):
     '''
     Get the frequency of the local oscillator
@@ -67,6 +72,13 @@ def SR830_get_frequency(address):
     SR830_handle = rm.open_resource(address)
     SR830_handle.write(f"OUTX 1")
     read = float(SR830_handle.query('FREQ?'))
+    SR830_handle.close()
+    return read
+
+def SR830_get_harmonic(address):
+    SR830_handle = rm.open_resource(address)
+    SR830_handle.write(f"OUTX 1")
+    read = int(SR830_handle.query("HARM?"))
     SR830_handle.close()
     return read
 
