@@ -20,6 +20,38 @@ from scipy import signal
 from scipy import interpolate
 import pickle
 
+
+def plot_fig(name = 'temp',folder_path = r'/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/MLG_calc/plot'):
+#	plt.show()
+  plt.tight_layout()
+  folder_path = folder_path
+  real_path = os.path.join(folder_path, name)
+  plt.savefig(real_path)
+  
+# Font
+font = {'family': "Arial",
+  "weight": 'bold',
+  "size":14}
+mpl.rc("font",**font)
+mpl.rcParams['mathtext.fontset'] = 'custom'
+mpl.rcParams['mathtext.bf'] = 'sans:italic:bold'
+
+# Linewidth
+linewidth = 1
+mpl.rcParams['axes.linewidth'] = linewidth
+mpl.rcParams['axes.labelweight'] = 'bold'
+mpl.rcParams['lines.linewidth'] = linewidth
+mpl.rcParams['xtick.major.width'] = linewidth
+mpl.rcParams['xtick.major.size'] = 2
+mpl.rcParams['ytick.major.width'] = linewidth
+mpl.rcParams['ytick.major.size'] = 2
+mpl.rcParams['legend.fontsize'] = 9
+
+# layout
+fig_size = np.asarray([12,8.5])
+fig_size = fig_size / 2.54
+
+
 def my_data_dict(data, read_data, axis):
     if len(list(data)) == 0:
         for i in range(len(axis)):
@@ -56,23 +88,24 @@ def load_data_from_folder(folder_path):
     ordered_file_name_dict = get_ordered_file_name_dict(folder_path)
     data = {}
     for name in ordered_file_name_dict.keys():
-        matrix = []
-        order += 1
-        file = ordered_file_name_dict[name]['path']
-        # dummy way of getting axis
-        with open(file, 'rb') as f:
-            file_content = f.readlines()
-        for i in range(0, len(file_content)):
-            if b'#' not in file_content[i]:
-                break
-        axis = str(file_content[i - 1][1:].decode('utf-8')).split()
-        axis = ['_'.join(x.split('_')[:-1]) for x in axis]
-        print(' ', order ,". ", name)
-        readout = np.loadtxt(file)
-        [matrix.append(x) for x in readout]
-        matrix = np.array(matrix)
-        data = my_data_dict(data, matrix, axis)
-        print('done')
+        if 'DS' not in name:
+            matrix = []
+            order += 1
+            file = ordered_file_name_dict[name]['path']
+            # dummy way of getting axis
+            with open(file, 'rb') as f:
+                file_content = f.readlines()
+            for i in range(0, len(file_content)):
+                if b'#' not in file_content[i]:
+                    break
+            axis = str(file_content[i - 1][1:].decode('utf-8')).split()
+            axis = ['_'.join(x.split('_')[:-1]) for x in axis]
+            print(' ', order ,". ", name)
+            readout = np.loadtxt(file)
+            [matrix.append(x) for x in readout]
+            matrix = np.array(matrix)
+            data = my_data_dict(data, matrix, axis)
+            print('done')
     return data
 
 def get_ordered_file_name_dict(folder_path):
@@ -187,7 +220,7 @@ def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA
     for ssweep1 in sweep_1:
         mask.update({ssweep1: sweep1 == ssweep1})
     # Plot
-    fg = plt.figure()
+    fg = plt.figure(figsize=fig_size,dpi=300)
     legend = []
     i = 0
     # print(sorted(sweep_1))
@@ -246,7 +279,7 @@ def plot_single_sweep_calc_R(data, sweep_tag_1, plot_tag_x='VNA_freqs',plot_tag_
     for ssweep1 in sweep_1:
         mask.update({ssweep1: sweep1 == ssweep1})
     # Plot
-    fg = plt.figure()
+    fg = plt.figure(figsize=fig_size,dpi=300)
     legend = []
     i = 0
     # print(sorted(sweep_1))
@@ -297,7 +330,7 @@ def plot_single_sweep_spectrum(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_t
     for ssweep1 in sweep_1:
         mask.update({ssweep1: sweep1 == ssweep1})
     # Plot
-    fg = plt.figure()
+    fg = plt.figure(figsize=fig_size,dpi=300)
     legend = []
     i = 0
     # print(sorted(sweep_1))
@@ -333,7 +366,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
         mask.update({ssweep1:{}})
         for ssweep2 in sweep_2:
             mask[ssweep1].update({ssweep2 : np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)})
-    fg = plt.figure()
+    fg = plt.figure(figsize=fig_size,dpi=300)
     legend =[]
     vg=[]
     slope=[]
@@ -383,11 +416,13 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     # with open(folder_path + '\\'+ 'temp', 'wb') as f:
     #     pickle.dump(newdata, f)
 
-    plt.legend(legend, loc='upper right', fontsize=10, ncol=1)
-    plt.xlabel(plot_tag_x)
-    plt.ylabel(plot_tag_y)
-    # plt.xlabel('B(mT)')
-    # plt.ylabel('Rxy(ohm)')
+    plt.legend(legend, loc='upper right', fontsize=7, ncol=1)
+#   plt.xlabel(plot_tag_x)
+#   plt.ylabel(plot_tag_y)
+    
+    plt.xlabel('B(mT)')
+    plt.ylabel('Rxy(ohm)')
+    plot_fig(name = 'Rxy_vs_B')
     # vlines = [4.435e9,5.924e9,6.968e9,7.869e9] #sd006c
     # plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='grey', ls='--')
     # for i, x in enumerate(vlines):
@@ -410,15 +445,15 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     # plt.show()
 
     if plot_Rxy:
-        fg = plt.figure()
+        fg = plt.figure(figsize=np.asarray([10,8.5])/2.54,dpi=300)
         plt.scatter(vg, slope, label='data')
         para, cov = curve_fit(convolution_gaussian_func, vg, slope, p0=[0.35,13.5,0.27412054])
         print(para, np.sum(np.diag(cov)))
         x_fit = np.linspace(min(vg),max(vg),100)
-        plt.plot(x_fit,convolution_gaussian_func(x_fit, *para), '-', label= 'Fit')
+        plt.plot(x_fit,convolution_gaussian_func(x_fit, *para), '--', label= 'Fit', c='grey')
         plt.xlabel('Gate Voltage(V)')
         plt.ylabel('Hall resistance(m^3/C)')
-        plt.show()
+        plot_fig(name = 'Vg_vs_RH')
 
     if save:
         file_path = folder_path + '\\' + 'slope' + '_vs_' + 'Vg'
@@ -437,7 +472,7 @@ def plot_double_sweep_spectrum(data, sweep_tag_1='amp', sweep_tag_2='f', plot_ta
             mask[ssweep1].update({ssweep2 : np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)})
 
     for i in range(0,len(sweep_2)):
-        fg = plt.figure()
+        fg = plt.figure(figsize=fig_size,dpi=300)
         legend = []
         for j in range(0, len(sweep_1)):
             current_mask = mask[sweep_1[j]][sweep_2[i]]
@@ -461,7 +496,7 @@ def plot_double_sweep_spectrum_peak(data, sweep_tag_1='amp', sweep_tag_2='f', pl
         for ssweep2 in sweep_2:
             mask[ssweep1].update({ssweep2 : np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)})
 
-    fg = plt.figure()
+    fg = plt.figure(figsize=fig_size,dpi=300)
     legend = []
     dataToSave = []
     for i in range(0,len(sweep_2)):
@@ -489,7 +524,7 @@ def plot_double_sweep_spectrum_peak(data, sweep_tag_1='amp', sweep_tag_2='f', pl
     plt.show()
 
 def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA_log_mag', baseline=None):
-    fg = plt.figure()
+    fg = plt.figure(figsize=fig_size,dpi=300)
     gs = fg.add_gridspec(1,2,width_ratios=[0.9,0.1])
     ax = fg.add_subplot(gs[0])
     sweep1 = data[plot_tag_x]  # sweep para
@@ -530,6 +565,7 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 
 
 folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230126_SD_006b\transport\Hall\data"
+folder_path = r"/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/data/20230126_SD_006b_ICET/transport/Hall/data"
 # folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230225_SD_003a_mag_probe\20230226_sweep_B_5900to7200MHz'
 data = load_data_from_folder(folder_path)
 print(data.keys())
