@@ -3,7 +3,7 @@ import sys, os, time, threading
 from tkinter import ttk
 import tkinter as tk
 
-from DataManager import get_value,set_value
+from UI_manager.DataManager import get_value,set_value
 from Instrument_Drivers.Instrument_dict import instrument_dict
                                                                                                                                                                                                                                                                                                                 
 global instrument_dict

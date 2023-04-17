@@ -9,6 +9,7 @@ from Instrument_Drivers.keysightN6700c import *
 from Instrument_Drivers.transfer_heater_PID import *
 from Instrument_Drivers.noise_probe_PID import *
 from Instrument_Drivers.E4405B import *
+from Instrument_Drivers.DC205 import *
 
 global instrument_dict
 instrument_dict = {'get':{},
@@ -23,10 +24,12 @@ instrument_dict['get'].update({'PicoVNA108': ['S21', 'S12', 'S11', 'S22']})
 instrument_dict['get'].update({'vna': ['please input the VNA_settings']})
 instrument_dict['get'].update({'Agilent infiniiVision': ['counter']})
 instrument_dict['get'].update({'E4405B': ['please input the VNA_settings']})
+instrument_dict['get'].update({'DC205': ['sur_volt']})
 
 instrument_dict['set'].update({'keithley': ['current', 'voltage']})
 instrument_dict['set'].update({'SR830': ['amplitude', 'freqency','harmonic']})
 instrument_dict['set'].update({'keysight N6700c': ['volt @ channel 2']})
+instrument_dict['set'].update({'DC205': ['voltage']})
 
 global read_write_lock
 read_write_lock = False
@@ -76,16 +79,16 @@ def get_value(address='', name='', func='', **kwargs):
     elif name == 'Agilent infiniiVision':
         if func == 'counter':
             value = infiniVision_get_counter(address)
-    elif name == 'PicoVNA108':
-        value = get_picoVNA_smith(
-                        port=func,
-                        f_min=kwargs['f_min'],
-                        f_max=kwargs['f_max'],
-                        number_of_points=kwargs['number_of_points'],
-                        power=kwargs['power'],
-                        bandwidth=kwargs['bandwidth'],
-                        Average=kwargs['Average']
-                    )
+    # elif name == 'PicoVNA108':
+    #     value = get_picoVNA_smith(
+    #                     port=func,
+    #                     f_min=kwargs['f_min'],
+    #                     f_max=kwargs['f_max'],
+    #                     number_of_points=kwargs['number_of_points'],
+    #                     power=kwargs['power'],
+    #                     bandwidth=kwargs['bandwidth'],
+    #                     Average=kwargs['Average']
+    #                 )
     elif name == 'vna':
         value = get_smith_data(address)
     elif name == 'E4405B':
@@ -96,6 +99,9 @@ def get_value(address='', name='', func='', **kwargs):
         value = noise_pid_get(kwargs['reading'])
     elif name == 'transfer pid':
         value = transfer_pid_get(arduino_address=address)
+    elif name == 'DC205':
+        if func == 'sur_volt':
+            value = dc205_get_sour_voltage_V(address)
     else:
         value = 0
         print('Please input correct instrument name or function name')
@@ -148,6 +154,9 @@ def set_value(value, address='', name='', func='', **kwargs):
                          ki=kwargs['ki'],
                          kd=kwargs['kd'],
                          set_point=value)
+    elif name == 'DC205':
+        if func == 'voltage':
+            dc205_set_sour_voltage_V(address, value)
     else:
         print('Please input correct instrument name or function name')
     read_write_lock = False
