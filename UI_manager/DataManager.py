@@ -7,7 +7,6 @@
 import numpy as np
 from datetime import datetime
 import time, sys, os, pyvisa
-
 folder_path = os.getcwd()
 if folder_path not in sys.path:
     sys.path.append(
@@ -33,30 +32,30 @@ class Mydata:
         for i in range(0, len(self.variable_name_list)):
             self.data.update({self.variable_name_list[i]: {}})
             self.data[self.variable_name_list[i]].update({'data':[]})
-            self.data[self.variable_name_list[i]]['instrument_address'] = instrument_info['instrument_address'][i]
-            self.data[self.variable_name_list[i]]['instrument_name'] = instrument_info['instrument_name'][i]
-            self.data[self.variable_name_list[i]]['function'] = instrument_info['function'][i]
+            for key, value in instrument_info.items():
+                self.data[self.variable_name_list[i]][key] = value[i]
         self.data['timestamp'] = {'data': [], 'instrument_address': '', 'instrument_name': 'time', 'function': ''}
-        self.f_min = float(instrument_info['f_min'])
-        self.f_max = float(instrument_info['f_max'])
-        self.points = int(instrument_info['points'])
-        self.power = float(instrument_info['power'])
-        self.bandwidth = float(instrument_info['bandwidth'])
-        self.average = int(instrument_info['average'])
+
+    def add_vna(self, vna_info):
+        self.vna_list = vna_info['variable_name']
+        for i in range(0, len(self.vna_list)):
+            self.data.update({self.vna_list[i]: {}})
+            self.data[self.vna_list[i]].update({'data':[]})
+            for key, value in vna_info.items():
+                if key in ['f_min', 'f_max', 'power', 'bandwidth']:
+                    self.data[self.vna[i]][key] = float(value[i])
+                elif key in ['points', 'average']:
+                    self.data[self.vna[i]][key] = int(value[i])
+                else:
+                    self.data[self.vna[i]][key] = value[i]
 
     def add_sweep(self, sweep_info):
         self.sweep_list = sweep_info['variable_name']
         for i in range(0, len(self.sweep_list)):
             self.sweep.update({self.sweep_list[i]: {}})
             self.sweep[self.sweep_list[i]].update({'data': []})
-            self.sweep[self.sweep_list[i]]['instrument_address'] = sweep_info['instrument_address'][i]
-            self.sweep[self.sweep_list[i]]['instrument_name'] = sweep_info['instrument_name'][i]
-            self.sweep[self.sweep_list[i]]['function'] = sweep_info['function'][i]
-            self.sweep[self.sweep_list[i]]['sweep_bottom_limit'] = sweep_info['sweep_bottom_limit'][i]
-            self.sweep[self.sweep_list[i]]['sweep_up_limit'] = sweep_info['sweep_up_limit'][i]
-            self.sweep[self.sweep_list[i]]['sweep_step_size'] = sweep_info['sweep_step_size'][i]
-            self.sweep[self.sweep_list[i]]['sweep_delay'] = sweep_info['sweep_delay'][i]
-            self.sweep[self.sweep_list[i]]['sweep_up_and_down_flag'] = sweep_info['sweep_up_and_down_flag'][i]
+            for key, value in sweep_info.items():
+                self.sweep[self.sweep_list[i]][key] = value[i]
         self.sweep['timestamp'] = {'data': [], 'instrument_address': '', 'instrument_name': 'time', 'function': ''}
 
     def add_pid(self, pid_info):
@@ -73,49 +72,51 @@ class Mydata:
         self.data_size = file_info['data_size']
 
     def data_update(self):
-        if 'vna_data' in self.data.keys():
-            for name in self.data.copy().keys():
-                if 'instrument_name' in self.data[name].keys():
-                    if self.data[name]['instrument_name'] == 'PicoVNA108':
-                        # expecting func choosing from S11, S12, S21,S22
-                        self.data_VNA = get_value(address='',
-                                                  name='PicoVNA108',
-                                                  func=self.data[name]['function'],
-                                                  f_min=self.f_min,
-                                                  f_max=self.f_max,
-                                                  number_of_points=self.points,
-                                                  power=self.power,
-                                                  bandwidth=self.bandwidth,
-                                                  Average=self.average
-                                                  )
-                    elif self.data[name]['instrument_name'] == 'vna':
-                        set_value(value=0, address='', name='vna', func='',
-                                  vna_start_freq_GHz=self.f_min,
-                                  vna_end_freq_GHz=self.f_max,
-                                  vna_power_dBm=self.power,
-                                  dwell_sec=1 / self.bandwidth,
-                                  num_freq=self.points,
-                                  vna_gpib=self.data[name]['instrument_address']
-                                  )
-                        self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='vna', func='')
-                    elif self.data[name]['instrument_name'] == 'E4405B':
-                        self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='E4405B', func='',
-                                                  f_min=self.f_min,
-                                                  f_max=self.f_max)
-                    self.data.update({'VNA_freqs':{'data':self.data_VNA.freqs}})
-                    self.data.update({'VNA_log_mag':{'data':self.data_VNA.log_mag}})
-                    if self.data[name]['instrument_name'] in ['vna','PicoVNA108']:
-                        self.data.update({'VNA_phase_rad':{'data':self.data_VNA.phase_rad}})
-                        self.data.update({'VNA_real':{'data':self.data_VNA.real}})
-                        self.data.update({'VNA_imag':{'data':self.data_VNA.imag}})
-                    self.vna_data_length = len(self.data_VNA.freqs)
+        vna_exist = False
+        for name in self.data.keys():
+            if self.data[name]['instrument_name'] in instrument_dict['vna']:
+                vna_exist = True
+                if self.data[name]['instrument_name'] == 'PicoVNA108':
+                    # expecting func choosing from S11, S12, S21,S22
+                    self.data_VNA = get_value(address='',
+                                              name='PicoVNA108',
+                                              func=self.data[name]['function'],
+                                              f_min=self.data[name]['f_min'],
+                                              f_max=self.data[name]['f_max'],
+                                              number_of_points=self.data[name]['points'],
+                                              power=self.data[name]['power'],
+                                              bandwidth=self.data[name]['bandwidth'],
+                                              Average=self.data[name]['average']
+                                              )
+                elif self.data[name]['instrument_name'] == 'vna':
+                    set_value(value=0, address='', name='vna', func='',
+                              vna_start_freq_GHz=self.data[name]['f_min'],
+                              vna_end_freq_GHz=self.data[name]['f_max'],
+                              vna_power_dBm=self.data[name]['power'],
+                              dwell_sec=1 / self.data[name]['bandwidth'],
+                              num_freq=self.data[name]['points'],
+                              vna_gpib=self.data[name]['instrument_address']
+                              )
+                    self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='vna', func='')
+                elif self.data[name]['instrument_name'] == 'E4405B':
+                    self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='E4405B', func='',
+                                              f_min=self.data[name]['f_min'],
+                                              f_max=self.data[name]['f_max'])
+                self.data.update({'VNA_freqs':{'data':self.data_VNA.freqs}})
+                self.data.update({'VNA_log_mag':{'data':self.data_VNA.log_mag}})
+                if self.data[name]['instrument_name'] in ['vna','PicoVNA108']:
+                    self.data.update({'VNA_phase_rad':{'data':self.data_VNA.phase_rad}})
+                    self.data.update({'VNA_real':{'data':self.data_VNA.real}})
+                    self.data.update({'VNA_imag':{'data':self.data_VNA.imag}})
+                self.vna_data_length = len(self.data_VNA.freqs)
+        if vna_exist:
             for name in self.data.keys():
-                if name != 'vna_data':
-                    if name not in ['VNA_freqs','VNA_log_mag','VNA_phase_rad','VNA_real','VNA_imag']:
-                        value = get_value(address=self.data[name]['instrument_address'],
-                                          name=self.data[name]['instrument_name'],
-                                          func=self.data[name]['function'])
-                        self.data[name]['data'] = np.full(self.vna_data_length, value)
+                if (self.data[name]['instrument_name'] not in instrument_dict['vna']) and \
+                        (name not in ['VNA_freqs','VNA_log_mag','VNA_phase_rad','VNA_real','VNA_imag']):
+                    value = get_value(address=self.data[name]['instrument_address'],
+                                      name=self.data[name]['instrument_name'],
+                                      func=self.data[name]['function'])
+                    self.data[name]['data'] = np.full(self.vna_data_length, value)
         else:
             for name in self.data.keys():
                 self.data[name]['data'] += [get_value(
@@ -232,92 +233,65 @@ class Mydata:
 
         self.sweep_order_update()
 
-    def sweep_single(self):
-        global daq_flag
-        start = self.sweep[data.sweep_list[0]]['sweep_bottom_limit']
-        stop = self.sweep[data.sweep_list[0]]['sweep_up_limit']
-        step_size = self.sweep[data.sweep_list[0]]['sweep_step_size']
-        delay = self.sweep[data.sweep_list[0]]['sweep_delay']
-        name = self.sweep[data.sweep_list[0]]['instrument_name']
-        address = self.sweep[data.sweep_list[0]]['instrument_address']
-        func = self.sweep[data.sweep_list[0]]['function']
-        flag = self.sweep[data.sweep_list[0]]['sweep_up_and_down_flag']
-        num_steps = int(np.floor(abs(float(start) - float(stop)) / float(step_size))) + 1
-        for val in np.linspace(float(start), float(stop), num_steps):
-            if not daq_flag:
-                break
-            time.sleep(delay)
-            set_value(address=address, name=name, func=func, value=val)
-            self.sweep_update(value=[val])
-        if flag:
-            for val in np.linspace(float(stop), float(start), num_steps):
-                if not daq_flag:
-                    break
-                time.sleep(delay)
-                set_value(address=address, name=name, func=func, value=val)
-                self.sweep_update(value=[val])
-        self.sweep_save()
-        self.sweep_on_flag = False
 
-    def sweep_double(self):
+    def sweep_universal(self):
         global daq_flag
-        start = []
-        stop = []
-        step_size = []
         delay = []
+        delayback = []
         name = []
         address = []
         func = []
         flag = []
+        sweep_up = []
+        sweep_down = []
         for i in range(0, len(self.sweep_list)):
-            start += [self.sweep[data.sweep_list[i]]['sweep_bottom_limit']]
-            stop += [self.sweep[data.sweep_list[i]]['sweep_up_limit']]
-            step_size += [self.sweep[data.sweep_list[i]]['sweep_step_size']]
             delay += [self.sweep[data.sweep_list[i]]['sweep_delay']]
             name += [self.sweep[data.sweep_list[i]]['instrument_name']]
             address += [self.sweep[data.sweep_list[i]]['instrument_address']]
             func += [self.sweep[data.sweep_list[i]]['function']]
             flag += [self.sweep[data.sweep_list[i]]['sweep_up_and_down_flag']]
-        num_steps = int(np.floor(abs(start[0] - stop[0]) / (step_size[0]))) + 1
-        num_steps_1 = int(np.floor(abs(start[1] - stop[1]) / (step_size[1]))) + 1
-        # print(num_steps, num_steps_1)
-        for val in np.linspace(start[0], stop[0], num_steps):
-            time.sleep(delay[0])
-            set_value(address=address[0], name=name[0], func=func[0], value=val)
-            for val_1 in np.linspace(start[1], stop[1], num_steps_1):
-                if not daq_flag:
-                    break
-                time.sleep(delay[1])
-                set_value(address=address[1], name=name[1], func=func[1], value=val_1)
-                self.sweep_update(value=[val, val_1])
-            if flag[1]:
-                for val_1 in np.linspace(stop[1], start[1], num_steps_1):
+            if self.sweep[data.sweep_list[i]]['sweep_up_and_down_flag']:
+                delayback += [self.sweep[data.sweep_list[i]]['sweepback_delay']]
+                stepback_size = self.sweep[data.sweep_list[i]]['sweepback_step_size']
+            else:
+                delayback += [self.sweep[data.sweep_list[i]]['sweep_delay']]
+                stepback_size = self.sweep[data.sweep_list[i]]['sweep_step_size']
+            start = self.sweep[data.sweep_list[i]]['sweep_bottom_limit']
+            stop = self.sweep[data.sweep_list[i]]['sweep_up_limit']
+            step_size = self.sweep[data.sweep_list[i]]['sweep_step_size']
+            if self.sweep[data.sweep_list[i]]['log_scale_flag']:
+                num_steps_up = int(np.floor(abs(np.log10(start) - np.log10(stop)) / np.log10(step_size))) + 1
+                num_steps_down = int(np.floor(abs(np.log10(start) - np.log10(stop)) / np.log10(stepback_size))) + 1
+                sweep_up += [np.logspace(float(start), float(stop), num_steps_up)]
+                sweep_up += [np.logspace(float(stop), float(start), num_steps_down)]
+            else:
+                num_steps_up = int(np.floor(abs(start - stop) / (step_size))) + 1
+                num_steps_down = int(np.floor(abs(start - stop) / (stepback_size))) + 1
+                sweep_up += [np.linspace(float(start), float(stop), num_steps_up)]
+                sweep_down += [np.linspace(float(start), float(stop), num_steps_down)]
+
+        def loop(i,value):
+            if i < len(sweep_up):
+                for val in sweep_up[i]:
                     if not daq_flag:
                         break
-                    time.sleep(delay[1])
-                    set_value(address=address[1], name=name[1], func=func[1], value=val_1)
-                    self.sweep_update(value=[val, val_1])
-            if not daq_flag:
-                break
-        if flag[0]:
-            for val in np.linspace(stop[0], start[0], num_steps):
-                time.sleep(delay[0])
-                set_value(address=address[0], name=name[0], func=func[0], value=val)
-                for val_1 in np.linspace(start[1], stop[1], num_steps_1):
-                    if not daq_flag:
-                        break
-                    time.sleep(delay[1])
-                    set_value(address=address[1], name=name[1], func=func[1], value=val_1)
-                    self.sweep_update(value=[val, val_1])
-                if flag[1]:
-                    for val_1 in np.linspace(stop[1], start[1], num_steps_1):
+                    time.sleep(delay[i])
+                    set_value(address=address[i], name=name[i], func=func[i], value=val)
+                    value[i]= val
+                    loop(i+1)
+                    self.sweep_update(value=value)
+                if flag[i]:
+                    for val_1 in sweep_down[i]:
                         if not daq_flag:
                             break
-                        time.sleep(delay[1])
-                        set_value(address=address[1], name=name[1], func=func[1], value=val_1)
-                        self.sweep_update(value=[val, val_1])
-                if not daq_flag:
-                    break
+                        time.sleep(delayback[i])
+                        set_value(address=address[i], name=name[i], func=func[i], value=val)
+                        value[i] = val
+                        loop(i+1)
+                        self.sweep_update(value=value)
+            else:
+                pass
+        loop(0, np.zeros(len(sweep_up)))
 
         self.sweep_save()
         self.sweep_on_flag = False
@@ -455,8 +429,24 @@ class Mydata:
 data = Mydata()
 
 def initialize_profile(profile):
+    if 'vna_info' in profile.keys():
+        if len(profile['vna_info']['variable_name']) > 0 :
+            data.add_vna(profile['vna_info'])
     if len(profile['instrument_info']['variable_name']) > 0:
-        data.add_instrument(profile['instrument_info'])
+        intrument_info = {}
+        vna_info = {}
+        for name in profile['instrument_info']['instrument_name']:
+            if name in instrument_dict['vna']:
+                i = instrument_dict['vna'].index(name)
+                for key, value in profile['instrument_info'].items():
+                    vna_info.update({key: value[i]})
+                    del(value[i])
+                    intrument_info.update({key: value})
+                data.add_vna(vna_info)
+                data.add_instrument(intrument_info)
+            else:
+                data.add_instrument(profile['instrument_info'])
+
     if len(profile['sweep_info']['variable_name']) > 0:
         data.add_sweep(profile['sweep_info'])
     if profile['pid_info']['pid_variable_name'] != None:
@@ -518,15 +508,16 @@ def choose_config(profile):
         if len(profile['sweep_info']['variable_name']) == 0:
             print('Monitor functioning')
             config_no_sweep()
-        elif len(profile['sweep_info']['variable_name']) == 1:
-            t2 = threading.Thread(target=data.sweep_single)
+        else:
+            t2 = threading.Thread(target=data.sweep_universal)
             t2.start()
-            print('Single sweep starting')
-            config_no_sweep()
-        elif len(profile['sweep_info']['variable_name']) == 2:
-            t2 = threading.Thread(target=data.sweep_double)
-            t2.start()
-            print('Double sweep starting')
+            layer = len(profile['sweep_info']['variable_name'])
+            if layer == 1:
+                layer = 'Single'
+            elif layer == 2:
+                layer = 'Double'
+            print(f'{layer} Sweep starting')
+
             config_no_sweep()
         print('sweep finished')
         data.sweep_on_flag = False
@@ -534,37 +525,17 @@ def choose_config(profile):
     mainthread = threading.Thread(target=run_main)
     mainthread.start()
 
-def return_axis(x1=None,
-                y1=None,
-                x2=None,
-                y2=None,
-                selector=None):
-    def get_axis(x,selector):
-        if selector == 'data':
-            if x in data.data.keys():
-                dataToReturn = np.array(data.data[x]['data'])
-            else:
-                dataToReturn = np.array([None])
-        elif selector == 'sweep':
-            if x in data.sweep.keys():
-                dataToReturn = np.array(data.sweep[x]['data'])
-            else:
-                dataToReturn = np.array([None])
-        elif selector == 'pid':
-            if x in data.pid.keys():
-                dataToReturn = np.array(data.pid[x]['data'])
-            else:
-                dataToReturn = np.array([None])
-        else:
-            dataToReturn = np.array([None])
-            print('Not such trace with name: ',x )
-        return dataToReturn
+def return_axis(selector=None):
+    if selector == 'data':
+        all_data = data.data
+    elif selector == 'sweep':
+        all_data = data.sweep
+    elif selector == 'pid':
+        all_data = data.pid
+    else:
+        print('Not such data type: ', selector)
 
-    x_1 = get_axis(x1,selector)
-    x_2 = get_axis(x2,selector)
-    y_1 = get_axis(y1,selector)
-    y_2 = get_axis(y2,selector)
-    return x_1,y_1,x_2,y_2
+    return all_data
 
 def stop_daq():
     print('Data acquistion stopped, please wait until final data saved')

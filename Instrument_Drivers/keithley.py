@@ -31,7 +31,7 @@ def keithley2400_output_on(address):
         keithley = rm.open_resource(address)
         keithley.write("OUTP ON")
         keithley.write("SENS:CURR:PROT MAX")
-        keithley.write("SYST:KEY 23")
+        keithley.write("SYST:KEY 23") # press local key
         print("keithley out put on")
     finally:
         keithley.close()
@@ -83,6 +83,7 @@ def keithley2400_set_sour_currrent_A(address, target_value_A):
         keithley.write("sour:func curr")
         keithley.write("sour:curr:rang:auto 1")
         keithley.write(f"sour:curr {target_value_A}")
+        keithley.write("SYST:KEY 23")  # press local key
     finally:
         keithley.close()
 
@@ -92,6 +93,7 @@ def keithley2400_set_sour_voltage_V(address, target_value_V):
         keithley.write("sour:func volt")
         keithley.write("sour:volt:rang:auto 1")
         keithley.write(f"sour:volt {target_value_V}")
+        keithley.write("SYST:KEY 23")  # press local key
     finally:
         keithley.close()
 

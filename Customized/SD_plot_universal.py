@@ -20,18 +20,21 @@ from scipy import signal
 from scipy import interpolate
 import pickle
 
+global global_legend
+global_legend = []
 
 def plot_fig(name = 'temp',folder_path = r'/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/MLG_calc/plot'):
-#	plt.show()
-  plt.tight_layout()
-  folder_path = folder_path
-  real_path = os.path.join(folder_path, name)
-  plt.savefig(real_path)
+  print('plot')
+# plt.show()
+# plt.tight_layout()
+# folder_path = folder_path
+# real_path = os.path.join(folder_path, name)
+# plt.savefig(real_path)
   
 # Font
 font = {'family': "Arial",
   "weight": 'bold',
-  "size":14}
+  "size":3}
 mpl.rc("font",**font)
 mpl.rcParams['mathtext.fontset'] = 'custom'
 mpl.rcParams['mathtext.bf'] = 'sans:italic:bold'
@@ -42,13 +45,13 @@ mpl.rcParams['axes.linewidth'] = linewidth
 mpl.rcParams['axes.labelweight'] = 'bold'
 mpl.rcParams['lines.linewidth'] = linewidth
 mpl.rcParams['xtick.major.width'] = linewidth
-mpl.rcParams['xtick.major.size'] = 2
+mpl.rcParams['xtick.major.size'] = 1
 mpl.rcParams['ytick.major.width'] = linewidth
-mpl.rcParams['ytick.major.size'] = 2
-mpl.rcParams['legend.fontsize'] = 9
+mpl.rcParams['ytick.major.size'] = 1
+mpl.rcParams['legend.fontsize'] = 3
 
 # layout
-fig_size = np.asarray([12,8.5])
+fig_size = np.asarray([6,5])
 fig_size = fig_size / 2.54
 
 
@@ -73,6 +76,7 @@ def load_data_from_file(name):
     readout = np.loadtxt(name)
     # dummy way of getting axis
     file = name
+    data = {}
     with open(file, 'rb') as f:
         file_content = f.readlines()
     for i in range(0, len(file_content)):
@@ -80,7 +84,7 @@ def load_data_from_file(name):
             break
     axis = str(file_content[i - 1][1:].decode('utf-8')).split()
     axis = ['_'.join(x.split('_')[:-1]) for x in axis]
-    data = my_data_dict(readout, axis)
+    data = my_data_dict(data, readout, axis)
     return data
 
 def load_data_from_folder(folder_path):
@@ -125,7 +129,7 @@ def get_ordered_file_name_dict(folder_path):
     return ordered_file_name_dict
 
 def calc_average(x,y,type=None):
-    yy = np.average(y)
+    yy = np.nanmean(y)
     if type == 'logmag':
         yy = np.average(np.power(10, y / 20))
         yy = 20 * np.log10(yy)
@@ -208,9 +212,14 @@ def convolution_gaussian_func(x,x0,A,sigma):
                             bounds_error=False,
                             fill_value="extrapolate")
     return y(x)
+def filter_nan(x,y):
+    mask = [np.logical_and(np.isfinite(x),np.isfinite(y))]
+    mask = tuple(mask)
+    return x[mask], y[mask]
 
 """------------------Plot configs-----------------------------------"""
-def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag',save=False,yerrbar=False):
+def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag',save=False,yerrbar=False,continuous=False):
+    global global_legend
     # filter mask for single sweep
     data[sweep_tag_1] = np.array([round(x, 5) for x in
                          data[sweep_tag_1]])  # round sweep para, avoiding multiple value at same sweep value
@@ -220,7 +229,8 @@ def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA
     for ssweep1 in sweep_1:
         mask.update({ssweep1: sweep1 == ssweep1})
     # Plot
-    fg = plt.figure(figsize=fig_size,dpi=300)
+    if not continuous:
+        fg = plt.figure(figsize=fig_size,dpi=300)
     legend = []
     i = 0
     # print(sorted(sweep_1))
@@ -256,18 +266,19 @@ def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA
         yerr = np.array(yerr)
         dataToSave = np.column_stack((x, y, yerr))
         axis += 'errorbar\t\t\t\t'
-        plt.plot(x, y, ls='--', marker='o', ms=2, mfc='none')
+        plt.plot(x, y, ls='-', ms=0.5, mfc='none')
         plt.fill_between(x, y-yerr, y+yerr, alpha=0.4, ls='--')
+        global_legend += ['']
     else:
         dataToSave = np.column_stack((x, y))
-        plt.plot(x, y, ls='--', marker='o', ms=2, mfc='none')
+        plt.plot(x, y, ls='-', ms=0.5, mfc='none')
 
     file_path = folder_path + '\\' + plot_tag_x +'_vs_' + plot_tag_y
     if save:
         np.savetxt(file_path, dataToSave, delimiter='\t',
                header= axis
                )
-    plt.show()
+    plot_fig()
 
 def plot_single_sweep_calc_R(data, sweep_tag_1, plot_tag_x='VNA_freqs',plot_tag_V='V_x', plot_tag_I='I_x', save=False, yerrbar=False):
     # filter mask for single sweep
@@ -360,7 +371,6 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     sweep2 = data[sweep_tag_2]
     sweep_1 = sorted(list(dict.fromkeys(sweep1)))
     sweep_2 = sorted(list(dict.fromkeys(sweep2)))
-    print(sweep_2)
     mask = {}
     for ssweep1 in sweep_1:
         mask.update({ssweep1:{}})
@@ -400,7 +410,6 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
             vg += [float(sweep_2[i])]
             slope += [para[0]]
         else:
-
             # difference = np.remainder(y - y_previous + 180, 360)
             difference = y
             if baseline is not None:
@@ -408,6 +417,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
             if baseline == 'difference':
                 # difference = np.remainder(y - y_previous + 180, 360)
                 difference = y-y_previous
+            x,difference = filter_nan(x,difference)
             plt.plot(x, difference + i * offset, ls='-', marker='o', ms=0, mfc='none', color=get_color_cycle(len(sweep_2),cmap='coolwarm')[i])
         legend += [f'{round(sweep_2[i], 2)}']
         # newdata.update({f'{round(sweep_2[i], 2)}': (x, y- y_previous)})
@@ -417,12 +427,12 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     #     pickle.dump(newdata, f)
 
     plt.legend(legend, loc='upper right', fontsize=7, ncol=1)
-#   plt.xlabel(plot_tag_x)
-#   plt.ylabel(plot_tag_y)
+    plt.xlabel(plot_tag_x)
+    plt.ylabel(plot_tag_y)
     
-    plt.xlabel('B(mT)')
-    plt.ylabel('Rxy(ohm)')
-    plot_fig(name = 'Rxy_vs_B')
+#   plt.xlabel('B(mT)')
+#   plt.ylabel('Rxy(ohm)')
+#   plot_fig(name = 'Rxy_vs_B')
     # vlines = [4.435e9,5.924e9,6.968e9,7.869e9] #sd006c
     # plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='grey', ls='--')
     # for i, x in enumerate(vlines):
@@ -442,7 +452,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     # plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='grey', ls='-', alpha=0.5)
     # for i, x in enumerate(vlines):
     #     text(x, max(y), f'sd003a:{(x / 1e9)}', rotation=90, verticalalignment='bottom')
-    # plt.show()
+    plot_fig()
 
     if plot_Rxy:
         fg = plt.figure(figsize=np.asarray([10,8.5])/2.54,dpi=300)
@@ -562,28 +572,64 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 
 
 '''------------------------input before run------------------------'''
+""""""
+folder_path = r"/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/data/LYW"
+ordered_file_name_dict = get_ordered_file_name_dict(folder_path)
+ylabel_list = ['vdx','vdy','vix','viy']
+for ylabel in ylabel_list:
+    fg = plt.figure(figsize=fig_size,dpi=300)
+    for name in ordered_file_name_dict.keys():
+        if 'DS' not in name:
+            file = ordered_file_name_dict[name]['path']
+            data = load_data_from_file(file)
+            plot_single_sweep(data,
+              sweep_tag_1='f',
+              plot_tag_x='f',
+              plot_tag_y=ylabel,
+              yerrbar=True,
+              continuous = True
+            )
+            global_legend += [name]
+    plt.legend(global_legend)
+    plt.show()
+  
 
-
-folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230126_SD_006b\transport\Hall\data"
-folder_path = r"/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/data/20230126_SD_006b_ICET/transport/Hall/data"
-# folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230225_SD_003a_mag_probe\20230226_sweep_B_5900to7200MHz'
-data = load_data_from_folder(folder_path)
-print(data.keys())
-
-# data = limitdata(data, low_limit=7.10e9, high_limit=7.11e9, tag='VNA_freqs')
-
-# data = limitdata(data, low_limit=0.4, high_limit=0.9, tag='vg_sur')
-# data.update({'I': np.sqrt(data['I_x'] ** 2 + data['I_y'] ** 2)})
-#
-
-
+"""For MW spectrum sweeping AC Mag(wiggle_B) field BEGIN"""
+# plot_double_sweep(data,
+#                   sweep_tag_1='VNA_freqs',
+#                   sweep_tag_2='wiggle_B',
+#                   plot_tag_x='VNA_freqs',
+#                   plot_tag_y='VNA_log_mag',
+#                   baseline=None,
+#                   offset=0,
+#                   save=False)
+"""For MW spectrum sweeping DC Mag field STOP"""
+  
+"""For SD006b Rxy BEGIN"""
+#folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230126_SD_006b\transport\Hall\data"
+#folder_path = r"/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/data/20230126_SD_006b_ICET/transport/Hall/data"
+#data = load_data_from_folder(folder_path)
+#data = limitdata(data, low_limit=20e-9, high_limit=150e-9, tag='I_x')
+#data = calculate_R(data, tag_I='I_x',tag_V='V_x')
+#data['V_B'] = data['V_B']/1.4*44
+#plot_double_sweep(data,
+#            sweep_tag_1='V_B',
+#            sweep_tag_2='V_gate',
+#            plot_tag_x='V_B',
+#            plot_tag_y='R',
+#            offset=0.0,
+#            save=True,
+#                 plot_Rxy=True)
+"""For SD006b Rxy STOP"""
+  
+"""For Random ploting"""
 # plot_single_sweep_spectrum(data,
 #                            sweep_tag_1='vg_sur',
 #                            plot_tag_x='VNA_freqs',
 #                            plot_tag_y='VNA_log_mag',
 #                            legendcol=2
 #                            )
-
+  
 # plot_single_sweep(data,
 #                   sweep_tag_1='vg_sur',
 #                   plot_tag_x='VNA_freqs',
@@ -591,14 +637,13 @@ print(data.keys())
 #                   save=False,
 #                   yerrbar=False
 #                   )
-#
+
 # plot_cmap(data,
 #           plot_tag_x='VNA_freqs',
 #           plot_tag_y='vg_sur',
 #           plot_tag_z='VNA_log_mag',
 #           baseline=1.4)
-
-#
+  
 # plot_single_sweep(data,
 #                   sweep_tag_1='V_gate',
 #                   plot_tag_x='V_gate',
@@ -614,6 +659,7 @@ print(data.keys())
 #                   save=True,
 #                   yerrbar=True
 #                   )
+
 # plot_single_sweep_calc_R(data,
 #                         sweep_tag_1='V_gate',
 #                         plot_tag_x='V_gate',
@@ -622,30 +668,11 @@ print(data.keys())
 #                         save=True,
 #                         yerrbar=True
 #                         )
-
+  
 # plot_cmap(data,
 #           plot_tag_x='V_gate',
 #           plot_tag_y='V_B',
 #           plot_tag_z='R',
 #           baseline=None)
-
-# plot_double_sweep(data,
-#                   sweep_tag_1='VNA_freqs',
-#                   sweep_tag_2='wiggle_B',
-#                   plot_tag_x='VNA_freqs',
-#                   plot_tag_y='VNA_log_mag',
-#                   baseline=None,
-#                   offset=0,
-#                   save=False)
-
-data = limitdata(data, low_limit=20e-9, high_limit=150e-9, tag='I_x')
-data = calculate_R(data, tag_I='I_x',tag_V='V_x')
-data['V_B'] = data['V_B']/1.4*44
-plot_double_sweep(data,
-             sweep_tag_1='V_B',
-             sweep_tag_2='V_gate',
-             plot_tag_x='V_B',
-             plot_tag_y='R',
-             offset=0.0,
-             save=True,
-                  plot_Rxy=True)
+  
+  

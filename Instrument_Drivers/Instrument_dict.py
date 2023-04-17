@@ -3,7 +3,7 @@ from Instrument_Drivers.vna_analysis import *
 from Instrument_Drivers.SR830 import *
 from Instrument_Drivers.keithley import *
 from Instrument_Drivers.hp34461A import *
-from Instrument_Drivers.PicoVNA108 import *
+# from Instrument_Drivers.PicoVNA108 import *
 from Instrument_Drivers.Agilent_infiniVision import *
 from Instrument_Drivers.keysightN6700c import *
 from Instrument_Drivers.transfer_heater_PID import *
@@ -13,7 +13,7 @@ from Instrument_Drivers.E4405B import *
 global instrument_dict
 instrument_dict = {'get':{},
                    'set':{},
-                   'vna':['vna', 'PicoVNA108','E4405B'],
+                   'vna':['vna', 'PicoVNA108', 'E4405B'],
                    'pid_noise':['keithley', 'SR830', 'hp34461A']} #the instrument for temp acq
 
 instrument_dict['get'].update({'keithley': ['2000ohm_4pt', '2400ohm_4pt', '2000ohm_2pt', '2400ohm_2pt', '2000volt', '2400_sur_current', '2400_sur_volt']})

@@ -2,6 +2,7 @@
 """
 @author: Shilling Du
 @date: Aug 10, 2022
+
 """
 import sys, os, time, threading
 from tkinter import ttk
@@ -9,12 +10,13 @@ import tkinter as tk
 import queue
 from tkinter.filedialog import askdirectory, askopenfilename
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 folder_path = os.getcwd()
 if folder_path not in sys.path:
     sys.path.append(folder_path) # easier to open driver files as long as Simple_DAQ.py is in the same folder with drivers
-from DataManager import *
+from UI_manager.DataManager import *
 import pickle
 
 global instrument_dict
@@ -44,7 +46,6 @@ start_time = time.time()
 last_datalength = 0
 
 
-
 def background():
     global q, reply, profile, reply_1
     rm = pyvisa.ResourceManager()
@@ -59,14 +60,10 @@ def background():
                 # print('not stuck')
         if 'plot' in msg.keys():
             # print('data request sent')
-            x_1,y_1,x_2,y_2 = return_axis(
-                x1=msg['x1'],
-                y1=msg['y1'],
-                x2=msg['x2'],
-                y2=msg['y2'],
-                selector=msg['selector']
-                )
-            reply_1 = {'plot':{'x1':x_1,'y1':y_1,'x2':x_2,'y2':y_2,'flag':True}}
+            all_data = return_axis(selector=msg['selector'])
+            reply_1 = {'plot':{'all_data': all_data,
+                               'flag': True
+                               }}
             # print('data sent')
     while True:
         msg = q.get()
@@ -376,6 +373,7 @@ def pop_window(measurements=8):
             )
             sweep_list.append(self)
             self.sweep_back_flag = False
+            self.log_scale_flag = False
             self.grid(
                 row=row, column=column,
                 rowspan=rowspan, columnspan=columnspan,
@@ -423,6 +421,10 @@ def pop_window(measurements=8):
             self.function_selection = Combobox(self.content, 'Function_selection')
             self.function_selection.grid(row=4)
 
+            self.log_scale = Boolean(self.content, label='log scale?')
+            self.log_scale.grid(row=5, sticky='e')
+
+
             def update_function_selection(event):
                 global instrument_dict
                 func_list = ['None']
@@ -451,18 +453,27 @@ def pop_window(measurements=8):
             self.sweep_delay.grid(row=4, column=1, sticky='e')
             self.sweep_back = Boolean(self.content_2, label='Sweep back?')
             self.sweep_back.grid(row=5, column=1, sticky='e')
-            def sweep_back_flag(event):
-                if self.sweep_back.combobox.get() == 'No':
-                    self.sweep_back_flag = False
-                if self.sweep_back.combobox.get() == 'Yes':
-                    self.sweep_back_flag = True
+            def event_log_scale_flag(event):
+                log_scale_flag(self)
+            def event_sweep_back_flag(event):
+                sweep_back_flag(self)
+            self.log_scale.combobox.bind('<<ComboboxSelected>>', event_log_scale_flag)
+            self.sweep_back.combobox.bind('<<ComboboxSelected>>', event_sweep_back_flag)
             # maybe put the bottom func to backend would be better
             def compute_time_estimate():
                 for sweep in sweep_list:
-                    sweep.num_steps = int(np.floor(
-                        abs(float(sweep.sweep_bottom_limit.entry.get()) - float(sweep.sweep_up_limit.entry.get())) /
-                        (float(sweep.sweep_step_size.entry.get()))))
-
+                    sweep.log_scale.combobox.bind('<<ComboboxSelected>>', log_scale_flag)
+                    start = float(sweep.sweep_bottom_limit.entry.get())
+                    stop = float(sweep.sweep_up_limit.entry.get())
+                    step = float(sweep.sweep_step_size.entry.get())
+                    if sweep.log_scale_flag:
+                        if start == 0 or stop == 0:
+                            print('Can not perform calculation to log10(0)')
+                            sweep.num_steps = 0
+                        else:
+                            sweep.num_steps = int(np.floor((np.log10(start)-np.log10(stop)) / np.log(step))) + 1
+                    else:
+                        sweep.num_steps = int(np.floor(abs(start-stop) / step)) + 1
                 compute_numetrical = int(sweep_list[0].num_steps) * (float(sweep_list[0].sweep_delay.entry.get()) +
                                                                      int(sweep_list[1].num_steps) * float(
                             sweep_list[1].sweep_delay.entry.get()))
@@ -658,6 +669,39 @@ def pop_window(measurements=8):
             self.Load_config_button = ttk.Button(self.content, text="Load config", command=load_config, padding=4)
             self.Load_config_button.grid(row=8, column=0, sticky='e')
 
+    def log_scale_flag(self):
+        def set(item,value,tag=0):
+            item.delete(tag, 'end')
+            item.insert(tag, value)
+        if self.log_scale.combobox.get() == 'No':
+            self.sweep_step_size = EntryBoxH(self.content_2, label='Sweep step size:', initial_value='1')
+            self.sweep_step_size.grid(row=3, column=1, sticky='e')
+            if 'sweepback_step_size' in dir(self):
+                set(self.sweepback_step_size.entry,1)
+            self.log_scale_flag = False
+        if self.log_scale.combobox.get() == 'Yes':
+            self.sweep_step_size = EntryBoxH(self.content_2, label='Ratio between steps:', initial_value='3')
+            self.sweep_step_size.grid(row=3, column=1, sticky='e')
+            if 'sweepback_step_size' in dir(self):
+                set(self.sweepback_step_size.entry,3)
+            self.log_scale_flag = True
+
+    def sweep_back_flag(self):
+        if self.sweep_back.combobox.get() == 'No':
+            self.sweep_back_flag = False
+            if 'sweepback_step_size' in dir(self):
+                self.sweepback_step_size.grid_forget()
+            if 'sweepback_delay' in dir(self):
+                self.sweepback_delay.grid_forget()
+        if self.sweep_back.combobox.get() == 'Yes':
+            self.sweep_back_flag = True
+            self.sweepback_step_size = EntryBoxH(self.content, label=f'Back step',
+                                                 initial_value=self.sweep_step_size.entry.get())
+            self.sweepback_step_size.grid(row=6, sticky='e')
+            self.sweepback_delay = EntryBoxH(self.content_2, label='Back delay(s):',
+                                             initial_value=self.sweep_delay.entry.get())
+            self.sweepback_delay.grid(row=7, column=1, sticky='e')
+
     def none_config(self):
         self.set_point = EntryBoxH(self.content, label='Set point:(Degree)', initial_value='30', box_color=box_color_2,
                                    height=40)
@@ -722,17 +766,23 @@ def pop_window(measurements=8):
 
     def screenshoot():
         global profile
-        instrument_info = {
+        vna_info = {
             'variable_name': [],
             'instrument_address': [],
             'instrument_name': [],
             'function': [],
-            'f_min': 0.3,
-            'f_max': 8500,
-            'points': 1001,
-            'power': 0,
-            'bandwidth': 1000,
-            'average': 1
+            'f_min': [],
+            'f_max': [],
+            'points': [],
+            'power': [],
+            'bandwidth': [],
+            'average': []
+        }
+        instrument_info = {
+            'variable_name': [],
+            'instrument_address': [],
+            'instrument_name': [],
+            'function': []
         }
         sweep_info = {
             'variable_name': [],
@@ -743,7 +793,10 @@ def pop_window(measurements=8):
             'sweep_up_limit': [],
             'sweep_step_size': [],
             'sweep_delay': [],
-            'sweep_up_and_down_flag': []
+            'sweep_up_and_down_flag': [],
+            'log_scale_flag': [],
+            'sweepback_step_size': [],
+            'sweepback_delay': [],
         }
         pid_info = {
             'pid_variable_name': None,
@@ -767,19 +820,22 @@ def pop_window(measurements=8):
             file_info['data_interval'] = float(file.data_interval.entry.get())
         for instrument in instrument_list:
             if instrument.variable_name.entry.get() != '':
-                instrument_info['instrument_name'] += [instrument.instrument_name.combobox.get()]
                 if instrument.instrument_name.combobox.get() in instrument_dict['vna']:
-                    instrument_info['variable_name'] += ['vna_data']
-                    instrument_info['f_min'] = float(instrument.f_min.entry.get())
-                    instrument_info['f_max'] = float(instrument.f_max.entry.get())
-                    instrument_info['points'] = int(instrument.points.entry.get())
-                    instrument_info['power'] = float(instrument.power.entry.get())
-                    instrument_info['bandwidth'] = int(instrument.bandwidth.entry.get())
-                    instrument_info['average'] = int(instrument.average.entry.get())
+                    vna_info['variable_name'] += [instrument.variable_name.entry.get()]
+                    vna_info['instrument_address'] += [instrument.visa_address.combobox.get()]
+                    vna_info['instrument_name'] += [instrument.instrument_name.combobox.get()]
+                    vna_info['function'] += [instrument.function_selection.combobox.get()]
+                    vna_info['f_min'] += [float(instrument.f_min.entry.get())]
+                    vna_info['f_max'] += [float(instrument.f_max.entry.get())]
+                    vna_info['points'] += [int(instrument.points.entry.get())]
+                    vna_info['power'] += [float(instrument.power.entry.get())]
+                    vna_info['bandwidth'] += [int(instrument.bandwidth.entry.get())]
+                    vna_info['average'] += [int(instrument.average.entry.get())]
                 else:
                     instrument_info['variable_name'] += [instrument.variable_name.entry.get()]
-                instrument_info['instrument_address'] += [instrument.visa_address.combobox.get()]
-                instrument_info['function'] += [instrument.function_selection.combobox.get()]
+                    instrument_info['instrument_address'] += [instrument.visa_address.combobox.get()]
+                    instrument_info['instrument_name'] += [instrument.instrument_name.combobox.get()]
+                    instrument_info['function'] += [instrument.function_selection.combobox.get()]
 
         def str_to_tuple(str):
             if str =='No':
@@ -798,6 +854,12 @@ def pop_window(measurements=8):
                 sweep_info['sweep_up_limit'] += [float(sweep.sweep_up_limit.entry.get())]
                 sweep_info['sweep_delay'] += [float(sweep.sweep_delay.entry.get())]
                 sweep_info['sweep_up_and_down_flag'] += [str_to_tuple(str(sweep.sweep_back.combobox.get()))]
+                sweep_info['log_scale_flag'] += [str_to_tuple(str(sweep.log_scale.combobox.get()))]
+                if str_to_tuple(str(sweep.sweep_back.combobox.get())):
+                    if 'sweepback_step_size' in dir(sweep):
+                        sweep_info['sweepback_step_size'] += [float(sweep.sweepback_step_size.entry.get())]
+                    if 'sweepback_delay' in dir(sweep):
+                        sweep_info['sweepback_delay'] += [float(sweep.sweepback_delay.entry.get())]
         for pid in pid_list:
             if pid.pid_variable_name.combobox.get() != '':
                 pid_info['pid_variable_name'] = pid.pid_variable_name.combobox.get()
@@ -836,6 +898,7 @@ def pop_window(measurements=8):
             # print_dict(file_info)
 
         profile = {'instrument_info': instrument_info,
+                   'vna_info': vna_info,
                    'sweep_info': sweep_info,
                    'pid_info': pid_info,
                    'file_info': file_info
@@ -847,51 +910,42 @@ def pop_window(measurements=8):
         sweep_info = profile['sweep_info']
         pid_info = profile['pid_info']
         file_info = profile['file_info']
+        if 'vna_info' in profile.keys():
+            vna_info = profile['vna_info']
+        else:
+            vna_info = None
+        def set(item,value,tag=0):
+            item.delete(tag, 'end')
+            item.insert(tag, value)
 
-        file_list[0].file_name.entry.delete(0, 'end')
-        file_list[0].file_name.entry.insert(0, file_info['file_name'])
-        file_list[0].file_order.entry.delete(0, 'end')
-        file_list[0].file_order.entry.insert(0, file_info['file_order'])
-        file_list[0].dir_entry.entry.delete(0, 'end')
-        file_list[0].dir_entry.entry.insert(0, file_info['file_path'])
-        file_list[0].mynote.delete('1.0', 'end')
-        file_list[0].mynote.insert('1.0', file_info['mynote'])
-        file_list[0].file_size.entry.delete(0, 'end')
-        file_list[0].file_size.entry.insert(0, file_info['data_size'])
-        file_list[0].data_interval.entry.delete(0, 'end')
-        file_list[0].data_interval.entry.insert(0, file_info['data_interval'])
+        set(file_list[0].file_name.entry, file_info['file_name'])
+        set(file_list[0].file_order.entry, file_info['file_order'])
+        set(file_list[0].dir_entry.entry, file_info['file_path'])
+        set(file_list[0].mynote, file_info['mynote'], tag='1.0')
+        set(file_list[0].file_size.entry, file_info['data_size'])
+        set(file_list[0].data_interval.entry, file_info['data_interval'])
 
         i = 0
+        if vna_info:
+            for name in vna_info['variable_name']:
+                set(instrument_list[i].f_min.entry, vna_info['f_min'][i])
+                set(instrument_list[i].f_max.entry, vna_info['f_max'][i])
+                set(instrument_list[i].points.entry, vna_info['points'][i])
+                set(instrument_list[i].power.entry, vna_info['power'][i])
+                set(instrument_list[i].bandwidth.entry, vna_info['bandwidth'][i])
+                set(instrument_list[i].average.entry, vna_info['average'][i])
+                set(instrument_list[i].variable_name.entry, vna_info['variable_name'][i])
+                instrument_list[i].visa_address.combobox.set(vna_info['instrument_address'][i])
+                instrument_list[i].function_selection.combobox.set(vna_info['function'][i])
+                instrument_list[i].instrument_name.combobox.set(vna_info['instrument_name'][i])
+
         for name in instrument_info['variable_name']:
-            if name == 'vna_data':
-                instrument_list[i].f_min.entry.delete(0, 'end')
-                instrument_list[i].f_min.entry.insert(0, instrument_info['f_min'])
-                instrument_list[i].f_max.entry.delete(0, 'end')
-                instrument_list[i].f_max.entry.insert(0, instrument_info['f_max'])
-                instrument_list[i].points.entry.delete(0, 'end')
-                instrument_list[i].points.entry.insert(0, instrument_info['points'])
-                instrument_list[i].power.entry.delete(0, 'end')
-                instrument_list[i].power.entry.insert(0, instrument_info['power'])
-                instrument_list[i].bandwidth.entry.delete(0, 'end')
-                instrument_list[i].bandwidth.entry.insert(0, instrument_info['bandwidth'])
-                instrument_list[i].average.entry.delete(0, 'end')
-                instrument_list[i].average.entry.insert(0, instrument_info['average'])
-                instrument_list[i].variable_name.entry.delete(0, 'end')
-                instrument_list[i].variable_name.entry.insert(0, 'vna_data')
-                instrument_list[i].visa_address.combobox.set(instrument_info['instrument_address'][i])
-                instrument_list[i].function_selection.combobox.set(instrument_info['function'][i])
-                instrument_list[i].instrument_name.combobox.set(instrument_info['instrument_name'][i])
-            else:
-                i += 1
-                if 'vna_data' in instrument_info['variable_name']:
-                    j = i
-                else:
-                    j = i-1
-                instrument_list[i].variable_name.entry.delete(0, 'end')
-                instrument_list[i].variable_name.entry.insert(0, instrument_info['variable_name'][j])
-                instrument_list[i].visa_address.combobox.set(instrument_info['instrument_address'][j])
-                instrument_list[i].function_selection.combobox.set(instrument_info['function'][j])
-                instrument_list[i].instrument_name.combobox.set(instrument_info['instrument_name'][j])
+            i += 1
+            j = i-1
+            set(instrument_list[i].variable_name.entry, instrument_info['variable_name'][j])
+            instrument_list[i].visa_address.combobox.set(instrument_info['instrument_address'][j])
+            instrument_list[i].function_selection.combobox.set(instrument_info['function'][j])
+            instrument_list[i].instrument_name.combobox.set(instrument_info['instrument_name'][j])
 
         def tuple_to_str(flag):
             if flag:
@@ -901,69 +955,63 @@ def pop_window(measurements=8):
 
         i = 0
         for name in sweep_info['variable_name']:
+            if 'log_scale_flag' in sweep_info.keys():
+                sweep_list[i].log_scale.combobox.set(tuple_to_str(sweep_info['log_scale_flag'][i]))
+                if tuple_to_str(sweep_info['log_scale_flag'][i]):
+                    log_scale_flag(sweep_list[i])
+            sweep_list[i].sweep_back.combobox.set(tuple_to_str(sweep_info['sweep_up_and_down_flag'][i]))
+            if tuple_to_str(sweep_info['sweep_up_and_down_flag'][i]):
+                sweep_back_flag(sweep_list[i])
+                if 'sweepback_step_size' in sweep_info.keys():
+                    set(sweep_list[i].sweepback_step_size.entry, sweep_info['sweepback_step_size'][i])
+                else:
+                    set(sweep_list[i].sweepback_step_size.entry, sweep_info['sweep_step_size'][i])
+                if 'sweepback_delay' in sweep_info.keys():
+                    set(sweep_list[i].sweepback_delay.entry, sweep_info['sweepback_delay'][i])
+                else:
+                    set(sweep_list[i].sweepback_delay.entry, sweep_info['sweep_delay'][i])
             sweep_list[i].instrument_name.combobox.set(sweep_info['instrument_name'][i])
-            sweep_list[i].sweep_variable_name.entry.delete(0, 'end')
-            sweep_list[i].sweep_variable_name.entry.insert(0, sweep_info['variable_name'][i])
+            set(sweep_list[i].sweep_variable_name.entry, sweep_info['variable_name'][i])
             sweep_list[i].visa_address.combobox.set(sweep_info['instrument_address'][i])
             sweep_list[i].function_selection.combobox.set(sweep_info['function'][i])
-            sweep_list[i].sweep_bottom_limit.entry.delete(0, 'end')
-            sweep_list[i].sweep_bottom_limit.entry.insert(0, sweep_info['sweep_bottom_limit'][i])
-            sweep_list[i].sweep_step_size.entry.delete(0, 'end')
-            sweep_list[i].sweep_step_size.entry.insert(0, sweep_info['sweep_step_size'][i])
-            sweep_list[i].sweep_up_limit.entry.delete(0, 'end')
-            sweep_list[i].sweep_up_limit.entry.insert(0, sweep_info['sweep_up_limit'][i])
-            sweep_list[i].sweep_delay.entry.delete(0, 'end')
-            sweep_list[i].sweep_delay.entry.insert(0, sweep_info['sweep_delay'][i])
-            sweep_list[i].sweep_back.combobox.set(tuple_to_str(sweep_info['sweep_up_and_down_flag'][i]))
+            set(sweep_list[i].sweep_bottom_limit.entry, sweep_info['sweep_bottom_limit'][i])
+            set(sweep_list[i].sweep_step_size.entry, sweep_info['sweep_step_size'][i])
+            set(sweep_list[i].sweep_up_limit.entry, sweep_info['sweep_up_limit'][i])
+            set(sweep_list[i].sweep_delay.entry, sweep_info['sweep_delay'][i])
+
             i += 1
 
         if pid_info['pid_variable_name'] != None:
             pid_list[0].pid_variable_name.combobox.set(pid_info['pid_variable_name'])
-            pid_list[0].set_point.entry.delete(0, 'end')
-            pid_list[0].set_point.entry.insert(0, pid_info['Setpoint'])
+            set(pid_list[0].set_point.entry, pid_info['Setpoint'])
             pid_list[0].sweep_back.combobox.set(tuple_to_str(pid_info['sweep_up_and_down_flag']))
             if pid_info['pid_variable_name'] == 'ICET noise setup':
                 noise_config(pid_list[0])
                 pid_list[0].instrument_name.combobox.set(pid_info['instrument_name'])
                 pid_list[0].visa_address.combobox.set(pid_info['instrument_address'])
                 pid_list[0].function_selection.combobox.set(pid_info['function'])
-                pid_list[0].Lowkp.entry.delete(0, 'end')
-                pid_list[0].Lowkp.entry.insert(0, pid_info['Lowkp'])
-                pid_list[0].Lowki.entry.delete(0, 'end')
-                pid_list[0].Lowki.entry.insert(0, pid_info['Lowki'])
-                pid_list[0].Lowkd.entry.delete(0, 'end')
-                pid_list[0].Lowkd.entry.insert(0, pid_info['Lowkd'])
-                pid_list[0].Highkp.entry.delete(0, 'end')
-                pid_list[0].Highkp.entry.insert(0, pid_info['Highkp'])
-                pid_list[0].Highki.entry.delete(0, 'end')
-                pid_list[0].Highki.entry.insert(0, pid_info['Highki'])
-                pid_list[0].Highkd.entry.delete(0, 'end')
-                pid_list[0].Highkd.entry.insert(0, pid_info['Highkd'])
-                pid_list[0].step_size.entry.delete(0, 'end')
-                pid_list[0].step_size.entry.insert(0, pid_info['step_size'])
-                pid_list[0].arduino_address.entry.delete(0, 'end')
-                pid_list[0].arduino_address.entry.insert(0, pid_info['arduino_address'])
+                set(pid_list[0].Lowkp.entry, pid_info['Lowkp'])
+                set(pid_list[0].Lowki.entry, pid_info['Lowki'])
+                set(pid_list[0].Lowkd.entry, pid_info['Lowkd'])
+                set(pid_list[0].Highkp.entry, pid_info['Highkp'])
+                set(pid_list[0].Highki.entry, pid_info['Highki'])
+                set(pid_list[0].Highkd.entry, pid_info['Highkd'])
+                set(pid_list[0].step_size.entry, pid_info['step_size'])
+                set(pid_list[0].arduino_address.entry, pid_info['arduino_address'])
                 pid_list[0].sweep_continuous.combobox.set(tuple_to_str(pid_info['sweep_continuous']))
             elif pid_info['pid_variable_name'] == 'NV transfer setup':
                 NV_config(pid_list[0])
-                pid_list[0].kp.entry.delete(0, 'end')
-                pid_list[0].kp.entry.insert(0, pid_info['kp'])
-                pid_list[0].ki.entry.delete(0, 'end')
-                pid_list[0].ki.entry.insert(0, pid_info['ki'])
-                pid_list[0].kd.entry.delete(0, 'end')
-                pid_list[0].kd.entry.insert(0, pid_info['kd'])
-                pid_list[0].arduino_address.entry.delete(0, 'end')
-                pid_list[0].arduino_address.entry.insert(0, pid_info['arduino_address'])
+                set(pid_list[0].kp.entry, pid_info['kp'])
+                set(pid_list[0].ki.entry, pid_info['ki'])
+                set(pid_list[0].kd.entry, pid_info['kd'])
+                set(pid_list[0].arduino_address.entry, pid_info['arduino_address'])
                 pid_list[0].sweep_continuous.combobox.set(tuple_to_str(pid_info['sweep_continuous']))
-
-
 
     def update_visa_list():
         q.put({'query': 'refresh_visa'})
 
     def start_measurement():
         q.put({'query': 'run_measurement'})
-
 
     def display_visa_list(visa_list):
         for instrument in instrument_list:
@@ -1171,11 +1219,11 @@ def plot_window():
 
             self.x_1 = Combobox(self.content, 'X1', values=['None'])
             self.x_1.grid(row=0)
-            self.y_1 = Combobox(self.content, 'Y1, Y1 vs X1 in red', values=['None'])
+            self.y_1 = Combobox(self.content, 'Y1, [Y1 vs X1 in red]', values=['None'])
             self.y_1.grid(row=1)
-            self.x_2 = Combobox(self.content, 'X2, Y1 vs X2 in green', values=['None'])
+            self.x_2 = Combobox(self.content, 'X2, [Y1 vs X2 in green]', values=['None'])
             self.x_2.grid(row=2)
-            self.y_2 = Combobox(self.content, 'Y2, Y2 ys X1 in blue', values=['None'])
+            self.y_2 = Combobox(self.content, 'Y2, [Y2 ys X1 in blue]', values=['None'])
             self.y_2.grid(row=3)
             self.selector = Combobox(self.content, 'data_selector', values=['data','pid','sweep'])
             self.selector.grid(row=4)
@@ -1287,6 +1335,7 @@ def plot_window():
             self.y2 = np.array([None])
             self.y2_name = ''
             self.path = ''
+            self.all_data = {}
             def drawimg():
                 global ax,ax1,ax2, start_time, last_datalength, temp_save_flag
                 ax.clear()
@@ -1294,6 +1343,7 @@ def plot_window():
                 ax2.clear()
                 def normalize_timestamp(x,x_name):
                     global start_time
+                    x = np.array(x)
                     if x_name == 'timestamp' and x.any() != None:
                         for i in range(0,len(x)):
                             x[i] = x[i] - start_time
@@ -1302,28 +1352,28 @@ def plot_window():
                 normalize_timestamp(self.y1, self.y1_name)
                 normalize_timestamp(self.y2, self.y2_name)
                 data_length = min(len(self.x1),len(self.y1))
-                dataToSave = []
-                axis = ''
                 if self.x1.any() != None and self.y1.any() != None:
                     ax.set_xlabel(self.x1_name)
                     ax.set_ylabel(self.y1_name)
                     ax.plot(self.x1[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.r')
-                    dataToSave += [self.x1[:data_length-1]]
-                    dataToSave += [self.y1[:data_length-1]]
-                    axis += f"{self.x1_name}\t\t\t\t"
-                    axis += f"{self.y1_name}\t\t\t\t"
+                    ax.yaxis.label.set_color('r')
                     if self.y2.any() != None:
                         ax1.set_ylabel(self.y2_name)
                         ax1.plot(self.x1[last_datalength:data_length-1], self.y2[last_datalength:data_length-1], '.b')
-                        axis += f"{self.y2_name}\t\t\t\t"
-                        dataToSave += [self.y2[:data_length-1]]
+                        ax1.yaxis.label.set_color('b')
                     if self.x2.any() != None:
                         ax2.set_xlabel(self.x2_name)
                         ax2.plot(self.x2[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.g')
-                        axis += f"{self.x2_name}\t\t\t\t"
-                        dataToSave += [self.y1[:data_length-1]]
+                        ax2.xaxis.label.set_color('g')
+                plt.tight_layout()
                 canvas.draw()
                 if temp_save_flag:
+                    dataToSave = []
+                    axis = ''
+                    for name in self.all_data.keys:
+                        dataToSave += [self.all_data[name]['data'][:data_length-1]]
+                        axis += f"{name}\t\t\t\t"
+                    dataToSave = np.column_stack(dataToSave)
                     try:
                         if self.path != '' and self.path != 'Please enter or choose':
                             file_real_path = self.path + '\\temp'
@@ -1340,33 +1390,38 @@ def plot_window():
                         print('Please double check your folder path entered above')
                         temp_save_flag = False
 
-                window.after(1000,drawimg)
+                window.after(1000, drawimg)
 
             drawimg()
 
-
     def plotInWindow(dataToplot = None):
         if dataToplot!= None:
-            plot_name[0].x1 = dataToplot['x1']
-            plot_name[0].x1_name = plot_list[0].x_1.combobox.get()
-            plot_name[0].y1 = dataToplot['y1']
-            plot_name[0].y1_name = plot_list[0].y_1.combobox.get()
-            plot_name[0].x2 = dataToplot['x2']
-            plot_name[0].x2_name = plot_list[0].x_2.combobox.get()
-            plot_name[0].y2 = dataToplot['y2']
-            plot_name[0].y2_name = plot_list[0].y_2.combobox.get()
-            plot_name[0].path = plot_list[0].dir_entry.entry.get()
-            window.after(100, update_plot_axis)
+            all_data = dataToplot['all_data']
+            plot_name[0].all_data = all_data
 
+            x1_name = plot_list[0].x_1.combobox.get()
+            plot_name[0].x1_name = x1_name
+            plot_name[0].x1 = np.array(all_data[x1_name]['data'])
+
+            y1_name = plot_list[0].y_1.combobox.get()
+            plot_name[0].y1_name = y1_name
+            plot_name[0].y1 = np.array(all_data[y1_name]['data'])
+
+            x2_name = plot_list[0].x_2.combobox.get()
+            plot_name[0].x2_name = x2_name
+            plot_name[0].x2 = np.array(all_data[x2_name]['data'])
+
+            y2_name = plot_list[0].y_2.combobox.get()
+            plot_name[0].y2_name = y2_name
+            plot_name[0].y2 = np.array(all_data[y2_name]['data'])
+            plot_name[0].path = plot_list[0].dir_entry.entry.get()
+
+            window.after(100, update_plot_axis)
 
     def update_plot_axis():
         global last_datalength
         last_datalength = 0
         q.put({'plot': 'plot',
-               'x1': plot_list[0].x_1.combobox.get(),
-               'y1': plot_list[0].y_1.combobox.get(),
-               'x2': plot_list[0].x_2.combobox.get(),
-               'y2': plot_list[0].y_2.combobox.get(),
                'selector': plot_list[0].selector.combobox.get(),
                 }
               )
