@@ -449,7 +449,7 @@ def pop_window(measurements=8):
             self.sweep_up_limit .grid(row=2, column=1, sticky='e')
             self.sweep_step_size = EntryBoxH(self.content_2, label='Sweep step size:', initial_value='1')
             self.sweep_step_size.grid(row=3, column=1, sticky='e')
-            self.sweep_delay = EntryBoxH(self.content_2, label='Delay time(sec):', initial_value='1')
+            self.sweep_delay = EntryBoxH(self.content_2, label='Delay time(sec):', initial_value='0')
             self.sweep_delay.grid(row=4, column=1, sticky='e')
             self.sweep_back = Boolean(self.content_2, label='Sweep back?')
             self.sweep_back.grid(row=5, column=1, sticky='e')
@@ -462,25 +462,39 @@ def pop_window(measurements=8):
             # maybe put the bottom func to backend would be better
             def compute_time_estimate():
                 for sweep in sweep_list:
-                    sweep.log_scale.combobox.bind('<<ComboboxSelected>>', log_scale_flag)
+                    sweep.log_scale.combobox.bind('<<ComboboxSelected>>', event_log_scale_flag)
+                    sweep.sweep_back.combobox.bind('<<ComboboxSelected>>', event_sweep_back_flag)
                     start = float(sweep.sweep_bottom_limit.entry.get())
                     stop = float(sweep.sweep_up_limit.entry.get())
                     step = float(sweep.sweep_step_size.entry.get())
+                    sweep.delay = float(sweep.sweep_delay.entry.get())
+                    if sweep.sweep_back_flag:
+                        step_back = float(sweep.sweepback_step_size.entry.get())
+                        sweep.delay_back = float(sweep.sweepback_delay.entry.get())
+                    else:
+                        sweep.delay_back = 0
                     if sweep.log_scale_flag:
                         if start == 0 or stop == 0:
                             print('Can not perform calculation to log10(0)')
                             sweep.num_steps = 0
+                            sweep.num_steps_back = 0
                         else:
-                            sweep.num_steps = int(np.floor((np.log10(start)-np.log10(stop)) / np.log(step))) + 1
+                            sweep.num_steps = int(np.floor(abs((np.log10(start)-np.log10(stop))) / np.log10(step))) + 1
+                            if sweep.sweep_back_flag:
+                                sweep.num_steps_back = int(np.floor(abs((np.log10(start)-np.log10(stop))) / np.log10(step_back))) + 1
+                            else:
+                                sweep.num_steps_back = 0
                     else:
                         sweep.num_steps = int(np.floor(abs(start-stop) / step)) + 1
-                compute_numetrical = int(sweep_list[0].num_steps) * (float(sweep_list[0].sweep_delay.entry.get()) +
-                                                                     int(sweep_list[1].num_steps) * float(
-                            sweep_list[1].sweep_delay.entry.get()))
+                        if sweep.sweep_back_flag:
+                            sweep.num_steps_back = int(np.floor(abs(start - stop) / step_back)) + 1
+                        else:
+                            sweep.num_steps_back = 0
                 for sweep in sweep_list:
-                    sweep.sweep_back.combobox.bind('<<ComboboxSelected>>', sweep_back_flag)
-                    if sweep.sweep_back_flag:
-                        compute_numetrical = compute_numetrical * 2
+                    sweep.time = sweep.num_steps * sweep.delay + sweep.num_steps_back * sweep.delay_back
+                compute_numetrical = sweep_list[0].time
+                compute_numetrical += sweep_list[1].time * (sweep_list[0].num_steps + sweep_list[0].num_steps_back)
+
                 return compute_numetrical
 
             def display_time_estimate():
@@ -1401,19 +1415,23 @@ def plot_window():
 
             x1_name = plot_list[0].x_1.combobox.get()
             plot_name[0].x1_name = x1_name
-            plot_name[0].x1 = np.array(all_data[x1_name]['data'])
+            if x1_name in all_data.keys():
+                plot_name[0].x1 = np.array(all_data[x1_name]['data'])
 
             y1_name = plot_list[0].y_1.combobox.get()
             plot_name[0].y1_name = y1_name
-            plot_name[0].y1 = np.array(all_data[y1_name]['data'])
+            if y1_name in all_data.keys():
+                plot_name[0].y1 = np.array(all_data[y1_name]['data'])
 
             x2_name = plot_list[0].x_2.combobox.get()
             plot_name[0].x2_name = x2_name
-            plot_name[0].x2 = np.array(all_data[x2_name]['data'])
+            if x2_name in all_data.keys():
+                plot_name[0].x2 = np.array(all_data[x2_name]['data'])
 
             y2_name = plot_list[0].y_2.combobox.get()
             plot_name[0].y2_name = y2_name
-            plot_name[0].y2 = np.array(all_data[y2_name]['data'])
+            if y2_name in all_data.keys():
+                plot_name[0].y2 = np.array(all_data[y2_name]['data'])
             plot_name[0].path = plot_list[0].dir_entry.entry.get()
 
             window.after(100, update_plot_axis)

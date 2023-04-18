@@ -1,7 +1,8 @@
-PyVISA~=1.11.3
-matplotlib~=3.5.1
-numpy~=1.17.4
+PyVISA>=1.11.3
+matplotlib>=3.7.0
+numpy>=1.23.5
 pywin32>=305
-serial>=0.0.97
+pyserial>=3.2.1 
 
-scipy~=1.3.2
+scipy~=1.10.0
+future~=0.18.3

@@ -262,13 +262,13 @@ class Mydata:
             if self.sweep[data.sweep_list[i]]['log_scale_flag']:
                 num_steps_up = int(np.floor(abs(np.log10(start) - np.log10(stop)) / np.log10(step_size))) + 1
                 num_steps_down = int(np.floor(abs(np.log10(start) - np.log10(stop)) / np.log10(stepback_size))) + 1
-                sweep_up += [np.logspace(float(start), float(stop), num_steps_up)]
-                sweep_up += [np.logspace(float(stop), float(start), num_steps_down)]
+                sweep_up += [np.logspace(float(np.log10(start)), float(np.log10(stop)), num_steps_up)]
+                sweep_down += [np.logspace(float(np.log10(stop)), float(np.log10(start)), num_steps_down)]
             else:
                 num_steps_up = int(np.floor(abs(start - stop) / (step_size))) + 1
                 num_steps_down = int(np.floor(abs(start - stop) / (stepback_size))) + 1
                 sweep_up += [np.linspace(float(start), float(stop), num_steps_up)]
-                sweep_down += [np.linspace(float(start), float(stop), num_steps_down)]
+                sweep_down += [np.linspace(float(stop), float(start), num_steps_down)]
 
         def loop(i,value):
             if i < len(sweep_up):
@@ -277,17 +277,17 @@ class Mydata:
                         break
                     time.sleep(delay[i])
                     set_value(address=address[i], name=name[i], func=func[i], value=val)
-                    value[i]= val
-                    loop(i+1)
+                    value[i] = val
+                    loop(i+1,value)
                     self.sweep_update(value=value)
                 if flag[i]:
-                    for val_1 in sweep_down[i]:
+                    for val in sweep_down[i]:
                         if not daq_flag:
                             break
                         time.sleep(delayback[i])
                         set_value(address=address[i], name=name[i], func=func[i], value=val)
                         value[i] = val
-                        loop(i+1)
+                        loop(i+1,value)
                         self.sweep_update(value=value)
             else:
                 pass

@@ -2,7 +2,7 @@ import pyvisa, queue
 import sys, os, time, threading
 from tkinter import ttk
 import tkinter as tk
-
+import serial
 from UI_manager.DataManager import get_value,set_value
 from Instrument_Drivers.Instrument_dict import instrument_dict
                                                                                                                                                                                                                                                                                                                 
@@ -240,14 +240,34 @@ def pop_window():
 
             def display_query():
                 address = self.visa_address.combobox.get()
-                try:
-                    rm = pyvisa.ResourceManager()
-                    instr = rm.open_resource(address)
-                    res = instr.query('*IDN?')
-                except:
-                    res = 'error'
-                finally:
-                    instr.close()
+                if 'ASRL' in address:
+                    address = 'COM' + address.split('::')[0][4:]
+                    try:
+                        port = serial.Serial(port=address, baudrate=115200, timeout=0.5)
+                        command = f'*IDN?\r\n'
+                        port.write(bytes(command, 'utf-8'))
+                        time.sleep(0.5)
+                        out = ''
+                        res = 0
+                        while port.inWaiting() > 0:
+                            out += port.read().decode("ascii")
+                        if out != '':
+                            res = out
+                    except:
+                        res = 'error'
+                    finally:
+                        port.close()
+                else:
+                    try:
+                        rm = pyvisa.ResourceManager()
+                        instr = rm.open_resource(address)
+                        res = instr.query('*IDN?')
+                    except:
+                        res = 'error'
+                    finally:
+                        instr.close()
+
+
                 self.visa_query.delete('1.0', 'end')
                 self.visa_query.insert('1.0', res)
 
