@@ -5,8 +5,18 @@ import tkinter as tk
 import serial
 from UI_manager.DataManager import get_value,set_value
 from Instrument_Drivers.Instrument_dict import instrument_dict
-                                                                                                                                                                                                                                                                                                                
-global instrument_dict
+from Instrument_Drivers.SR830 import *
+
+global instrument_dict, onetime_dict
+onetime_dict = {'get':{},
+                'set':{},
+                'combobox':{}}
+onetime_dict['get'].update({'SR830':{'time_constant','sensitivity','harmonic'}})
+onetime_dict['set'].update({'SR830':{'time_constant','sensitivity','harmonic'}})
+onetime_dict['combobox'].update({'SR830':{}})
+onetime_dict['combobox']['SR830'].update({'time_constant': SR830_timeconstant,
+                                          'sensitivity': SR830_sensitivity})
+
 # Size
 sizex = 1500
 sizey = 400
@@ -279,10 +289,16 @@ def pop_window():
 
 
             instr_list = ['None']
-            global instrument_dict
+            global instrument_dict, onetime_dict
             for name in instrument_dict['get'].keys():
                 instr_list.append(name)
             for name in instrument_dict['set'].keys():
+                if name not in instr_list:
+                    instr_list.append(name)
+            for name in onetime_dict['get'].keys():
+                if name not in instr_list:
+                    instr_list.append(name)
+            for name in onetime_dict['set'].keys():
                 if name not in instr_list:
                     instr_list.append(name)
 
@@ -293,18 +309,21 @@ def pop_window():
             self.function_selection.grid(row=3)
 
             def update_function_selection(event):
-                global instrument_dict
+                global instrument_dict, onetime_dict
                 func_list = ['None']
-                for name in instrument_dict['get'].keys():
-                    if self.instrument_name.combobox.get() == name:
-                        func_list = instrument_dict['get'][name]
+                name = self.instrument_name.combobox.get()
+                if name in instrument_dict['get'].keys():
+                    func_list = instrument_dict['get'][name]
+                if name in onetime_dict['get'].keys():
+                    func_list += onetime_dict['get'][name]
                 self.function_selection.combobox.config(values=func_list)
                 self.function_selection.combobox.current(0)
 
                 func_list = ['None']
-                for name in instrument_dict['set'].keys():
-                    if self.instrument_name.combobox.get() == name:
-                        func_list = instrument_dict['set'][name]
+                if name in instrument_dict['set'].keys():
+                    func_list = instrument_dict['set'][name]
+                if name in onetime_dict['set'].keys():
+                    func_list += onetime_dict['set'][name]
                 self.set_function_selection.combobox.config(values=func_list)
                 self.set_function_selection.combobox.current(0)
 
@@ -313,6 +332,19 @@ def pop_window():
             self.set_function_selection = Combobox(self.content, 'Setting Function selection')
             self.set_function_selection.grid(row=4)
 
+            def update_input(event):
+                name = self.instrument_name.combobox.get()
+                if name in onetime_dict['combobox'].keys():
+                    func = self.set_function_selection.combobox.get()
+                    if func in onetime_dict['combobox'][name].keys():
+                        combobox_config(self)
+                    else:
+                        entry_config(self)
+                else:
+                    entry_config(self)
+
+            self.set_function_selection.combobox.bind('<<ComboboxSelected>>', update_input)
+
             self.visa_read = tk.Text(master=self.content, height=2, width=40)
             self.visa_read.grid(row=2, column=1, sticky='news', padx=frame_padx, pady=frame_pady, columnspan=3)
 
@@ -320,13 +352,33 @@ def pop_window():
                 address = self.visa_address.combobox.get()
                 try:
                     value = get_value(address=self.visa_address.combobox.get(),
-                              name=self.instrument_name.combobox.get(),
-                              func=self.function_selection.combobox.get())
+                                      name=self.instrument_name.combobox.get(),
+                                      func=self.function_selection.combobox.get())
                 except:
                     value = 'error'
 
                 self.visa_read.delete('1.0', 'end')
                 self.visa_read.insert('1.0', value)
+
+            def write():
+                global onetime_dict
+                name = self.instrument_name.combobox.get()
+                func = self.set_function_selection.combobox.get()
+                try:
+                    if func in onetime_dict['combobox'][name].keys():
+                        value = self.visa_write_combobox.combobox.get()
+                    else:
+                        value = self.visa_write.get('1.0', 'end-1c')
+                        value = float(value)
+                    set_value(value=value,
+                              address=self.visa_address.combobox.get(),
+                              name=self.instrument_name.combobox.get(),
+                              func=self.set_function_selection.combobox.get())
+                    value = str(value) + ', ' + 'output tried'
+                    self.visa_write_result.delete('1.0', 'end')
+                    self.visa_write_result.insert('1.0', value)
+                finally:
+                    print('Output Tried')
 
             self.visa_read_button = tk.Button(self.content, text="Query value", command=read)
             self.visa_read_button.grid(row=2, column=4, sticky='w')
@@ -334,22 +386,31 @@ def pop_window():
             self.visa_write = tk.Text(master=self.content, height=2, width=40)
             self.visa_write.grid(row=3, column=1, sticky='news', padx=frame_padx, pady=frame_pady, columnspan=3)
 
-            def write():
-                try:
-                    set_value(value=float(self.visa_write.get('1.0', 'end-1c')),
-                              address=self.visa_address.combobox.get(),
-                              name=self.instrument_name.combobox.get(),
-                              func=self.set_function_selection.combobox.get())
-                    value = self.visa_write.get('1.0', 'end-1c')+', '+ 'output tried'
-                    self.visa_write.delete('1.0', 'end')
-                    self.visa_write.insert('1.0', value)
-                finally:
-                    print('Output Tried')
-
-
-
             self.visa_write_button = tk.Button(self.content, text='Set value', command=write)
             self.visa_write_button.grid(row=3, column=4, sticky='w')
+
+            self.visa_write_result = tk.Text(master=self.content, height=2, width=40)
+            self.visa_write_result.grid(row=4, column=1, sticky='news', padx=frame_padx, pady=frame_pady, columnspan=3)
+
+    def combobox_config(self):
+        global onetime_dict
+        name = self.instrument_name.combobox.get()
+        func = self.set_function_selection.combobox.get()
+        selector = onetime_dict['combobox'][name][func]
+        if 'visa_write' in dir(self):
+            self.visa_write.grid_forget()
+            self.visa_write_combobox = Combobox(self.content, f'Set {func}')
+            self.visa_write_combobox.grid(row=3, column=1, columnspan=3)
+            self.visa_write_combobox.combobox.config(values=selector)
+            self.visa_write_combobox.combobox.current(0)
+    def entry_config(self):
+        if 'visa_write_combobox' in dir(self):
+            self.visa_write_combobox.grid_forget()
+            self.visa_write = tk.Text(master=self.content, height=2, width=40)
+            self.visa_write.grid(row=3, column=1, sticky='news', padx=frame_padx, pady=frame_pady, columnspan=3)
+
+
+
     def update_visa_list():
         q.put({'query': 'refresh_visa'})
 

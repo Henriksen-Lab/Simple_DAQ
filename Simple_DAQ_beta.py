@@ -1237,7 +1237,7 @@ def plot_window():
             self.y_1.grid(row=1)
             self.x_2 = Combobox(self.content, 'X2, [Y1 vs X2 in green]', values=['None'])
             self.x_2.grid(row=2)
-            self.y_2 = Combobox(self.content, 'Y2, [Y2 ys X1 in blue]', values=['None'])
+            self.y_2 = Combobox(self.content, 'Y2, [Y2 vs X1 in blue]', values=['None'])
             self.y_2.grid(row=3)
             self.selector = Combobox(self.content, 'data_selector', values=['data','pid','sweep'])
             self.selector.grid(row=4)
