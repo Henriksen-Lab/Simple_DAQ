@@ -870,10 +870,12 @@ def pop_window(measurements=8):
                 sweep_info['sweep_up_and_down_flag'] += [str_to_tuple(str(sweep.sweep_back.combobox.get()))]
                 sweep_info['log_scale_flag'] += [str_to_tuple(str(sweep.log_scale.combobox.get()))]
                 if str_to_tuple(str(sweep.sweep_back.combobox.get())):
-                    if 'sweepback_step_size' in dir(sweep):
-                        sweep_info['sweepback_step_size'] += [float(sweep.sweepback_step_size.entry.get())]
-                    if 'sweepback_delay' in dir(sweep):
-                        sweep_info['sweepback_delay'] += [float(sweep.sweepback_delay.entry.get())]
+                    sweep_info['sweepback_step_size'] += [float(sweep.sweepback_step_size.entry.get())]
+                    sweep_info['sweepback_delay'] += [float(sweep.sweepback_delay.entry.get())]
+                else:
+                    sweep_info['sweepback_step_size'] += [None]
+                    sweep_info['sweepback_delay'] += [None]
+
         for pid in pid_list:
             if pid.pid_variable_name.combobox.get() != '':
                 pid_info['pid_variable_name'] = pid.pid_variable_name.combobox.get()
@@ -971,10 +973,9 @@ def pop_window(measurements=8):
         for name in sweep_info['variable_name']:
             if 'log_scale_flag' in sweep_info.keys():
                 sweep_list[i].log_scale.combobox.set(tuple_to_str(sweep_info['log_scale_flag'][i]))
-                if tuple_to_str(sweep_info['log_scale_flag'][i]):
-                    log_scale_flag(sweep_list[i])
+                log_scale_flag(sweep_list[i])
             sweep_list[i].sweep_back.combobox.set(tuple_to_str(sweep_info['sweep_up_and_down_flag'][i]))
-            if tuple_to_str(sweep_info['sweep_up_and_down_flag'][i]):
+            if sweep_info['sweep_up_and_down_flag'][i]:
                 sweep_back_flag(sweep_list[i])
                 if 'sweepback_step_size' in sweep_info.keys():
                     set(sweep_list[i].sweepback_step_size.entry, sweep_info['sweepback_step_size'][i])
@@ -1127,7 +1128,7 @@ def plot_window():
     # Window
     window = tk.Tk()
     window.title('Realtime ploting')
-    window.geometry('850x550')
+    window.geometry('1050x550')
     window.configure(bg=background_color)
     window.columnconfigure(0, weight=1)
     window.columnconfigure(1, weight=4)
@@ -1323,13 +1324,13 @@ def plot_window():
                 padx=frame_padx, pady=frame_pady,
                 sticky='w'
             )
-            self.grid_propagate(False)
+            self.grid_propagate(True)
 
             self.rowconfigure(0, weight=1)
             self.rowconfigure(1, weight=9)
             self.rowconfigure(2, weight=2)
 
-            fg = plt.figure(figsize=(5.5,5), dpi=100)
+            fg = plt.figure(figsize=(7.5,5), dpi=100)
             gs = fg.add_gridspec(1, 2, width_ratios=[1, 0])
             global ax,ax1,ax2
             ax = fg.add_subplot(gs[0])
