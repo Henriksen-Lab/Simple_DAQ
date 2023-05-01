@@ -8,6 +8,7 @@ import time, datetime, sys, os, string
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import text
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from matplotlib import cm
 import numpy as np
 from collections import OrderedDict
@@ -23,35 +24,36 @@ import pickle
 global global_legend
 global_legend = []
 
-def plot_fig(name = 'temp',folder_path = r'/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/MLG_calc/plot'):
-  print('plot')
-# plt.show()
-# plt.tight_layout()
-# folder_path = folder_path
-# real_path = os.path.join(folder_path, name)
-# plt.savefig(real_path)
+def plot_fig(name = 'temp',folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230317_SD_004_1_wet_magprobe\graph', save = False):
+    print('plot')
+    plt.tight_layout()
+    if not save:
+        plt.show()
+    else:
+        real_path = os.path.join(folder_path, name)
+        plt.savefig(real_path)
   
 # Font
 font = {'family': "Arial",
-  "weight": 'bold',
-  "size":3}
+  "weight": 'normal',
+  "size":5}
 mpl.rc("font",**font)
 mpl.rcParams['mathtext.fontset'] = 'custom'
 mpl.rcParams['mathtext.bf'] = 'sans:italic:bold'
 
 # Linewidth
-linewidth = 1
+linewidth = 0.5
 mpl.rcParams['axes.linewidth'] = linewidth
-mpl.rcParams['axes.labelweight'] = 'bold'
+mpl.rcParams['axes.labelweight'] = 'normal'
 mpl.rcParams['lines.linewidth'] = linewidth
 mpl.rcParams['xtick.major.width'] = linewidth
 mpl.rcParams['xtick.major.size'] = 1
 mpl.rcParams['ytick.major.width'] = linewidth
 mpl.rcParams['ytick.major.size'] = 1
 mpl.rcParams['legend.fontsize'] = 3
-
+mpl.rcParams['axes.formatter.limits'] = -3, 3
 # layout
-fig_size = np.asarray([6,5])
+fig_size = np.asarray([12,5])
 fig_size = fig_size / 2.54
 
 
@@ -230,7 +232,7 @@ def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA
         mask.update({ssweep1: sweep1 == ssweep1})
     # Plot
     if not continuous:
-        fg = plt.figure(figsize=fig_size,dpi=300)
+        fg = plt.figure(figsize=fig_size, dpi=300)
     legend = []
     i = 0
     # print(sorted(sweep_1))
@@ -260,8 +262,6 @@ def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA
     data.update({f'avg_{plot_tag_y}_yerr': yerr})
 
     if yerrbar:
-        print('error bar')
-        # plt.errorbar(x, y, yerr, ls='--', marker='o', ms=5, mfc='none')
         y = np.array(y)
         yerr = np.array(yerr)
         dataToSave = np.column_stack((x, y, yerr))
@@ -372,10 +372,9 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     sweep_1 = sorted(list(dict.fromkeys(sweep1)))
     sweep_2 = sorted(list(dict.fromkeys(sweep2)))
     mask = {}
-    for ssweep1 in sweep_1:
-        mask.update({ssweep1:{}})
-        for ssweep2 in sweep_2:
-            mask[ssweep1].update({ssweep2 : np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)})
+    def get_mask(ssweep1,ssweep2):
+        return np.logical_and(sweep1 == ssweep1, sweep2 == ssweep2)
+
     fg = plt.figure(figsize=fig_size,dpi=300)
     legend =[]
     vg=[]
@@ -383,7 +382,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     if baseline is not None and baseline!='difference':
         y0 = []
         for j in range(0, len(sweep_1)):
-            current_mask = mask[sweep_1[j]][baseline]
+            current_mask = get_mask(sweep_1[j], baseline)
             yy = np.average(data[plot_tag_y][current_mask])
             y0.append(yy)
     else:
@@ -393,7 +392,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
         x = []
         y = []
         for j in range(0,len(sweep_1)):
-            current_mask = mask[sweep_1[j]][sweep_2[i]]
+            current_mask = get_mask(sweep_1[j], sweep_2[i])
             if 'log_mag' in plot_tag_y:
                 xx, yy = calc_average(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask],type='logmag')
             else:
@@ -426,13 +425,14 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     # with open(folder_path + '\\'+ 'temp', 'wb') as f:
     #     pickle.dump(newdata, f)
 
-    plt.legend(legend, loc='upper right', fontsize=7, ncol=1)
+    plt.legend(legend, loc='upper right', ncol=3)
     plt.xlabel(plot_tag_x)
     plt.ylabel(plot_tag_y)
     
 #   plt.xlabel('B(mT)')
 #   plt.ylabel('Rxy(ohm)')
 #   plot_fig(name = 'Rxy_vs_B')
+    y = difference + i * offset
     # vlines = [4.435e9,5.924e9,6.968e9,7.869e9] #sd006c
     # plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='grey', ls='--')
     # for i, x in enumerate(vlines):
@@ -452,6 +452,18 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     # plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='grey', ls='-', alpha=0.5)
     # for i, x in enumerate(vlines):
     #     text(x, max(y), f'sd003a:{(x / 1e9)}', rotation=90, verticalalignment='bottom')
+
+    # vlines = [6081e6,6225e6,6789e6,7093e6]  # sd004_1_mag_probe, no hemt
+    # plt.vlines(x=vlines, ymin=min(y)-2*offset*len(sweep_2), ymax=max(y)+offset*3, color='grey', ls='-', alpha=0.5)
+    # for i, x in enumerate(vlines):
+    #     text(x, max(y), f'sd004_1:{(x / 1e9)}', rotation=90, verticalalignment='bottom')
+
+    # vlines = [6074e6, 6222e6, 6740e6, 7093e6]  # sd004_1_mag_probe, with hemt
+    # plt.vlines(x=vlines, ymin=min(y) - 3 * offset * len(sweep_2), ymax=max(y) + offset * 3, color='grey', ls='-',
+    #            alpha=0.5)
+    # for i, x in enumerate(vlines):
+    #     text(x, max(y), f'sd004_1:{(x / 1e9)}', rotation=90, verticalalignment='bottom')
+
     plot_fig()
 
     if plot_Rxy:
@@ -572,37 +584,28 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 
 
 '''------------------------input before run------------------------'''
-""""""
-folder_path = r"/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/data/LYW"
-ordered_file_name_dict = get_ordered_file_name_dict(folder_path)
-ylabel_list = ['vdx','vdy','vix','viy']
-for ylabel in ylabel_list:
-    fg = plt.figure(figsize=fig_size,dpi=300)
-    for name in ordered_file_name_dict.keys():
-        if 'DS' not in name:
-            file = ordered_file_name_dict[name]['path']
-            data = load_data_from_file(file)
-            plot_single_sweep(data,
-              sweep_tag_1='f',
-              plot_tag_x='f',
-              plot_tag_y=ylabel,
-              yerrbar=True,
-              continuous = True
-            )
-            global_legend += [name]
-    plt.legend(global_legend)
-    plt.show()
   
 
 """For MW spectrum sweeping AC Mag(wiggle_B) field BEGIN"""
+folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230428_SD006b_mag_probe_addhemt\compressibility"
+
+data = load_data_from_folder(folder_path)
+data = limitdata(data, 5e9, 6.8e9, tag='VNA_freqs')
+now = time.time()
 # plot_double_sweep(data,
 #                   sweep_tag_1='VNA_freqs',
-#                   sweep_tag_2='wiggle_B',
+#                   sweep_tag_2='v_sur',
 #                   plot_tag_x='VNA_freqs',
 #                   plot_tag_y='VNA_log_mag',
-#                   baseline=None,
+#                   baseline=0,
 #                   offset=0,
 #                   save=False)
+plot_cmap(data,
+          plot_tag_x='VNA_freqs',
+          plot_tag_y='v_sur',
+          plot_tag_z='VNA_log_mag',
+          baseline=0)
+print(time.time()-now)
 """For MW spectrum sweeping DC Mag field STOP"""
   
 """For SD006b Rxy BEGIN"""
@@ -622,7 +625,7 @@ for ylabel in ylabel_list:
 #                 plot_Rxy=True)
 """For SD006b Rxy STOP"""
   
-"""For Random ploting"""
+"""For Random MW ploting: """
 # plot_single_sweep_spectrum(data,
 #                            sweep_tag_1='vg_sur',
 #                            plot_tag_x='VNA_freqs',
@@ -638,41 +641,30 @@ for ylabel in ylabel_list:
 #                   yerrbar=False
 #                   )
 
-# plot_cmap(data,
-#           plot_tag_x='VNA_freqs',
-#           plot_tag_y='vg_sur',
-#           plot_tag_z='VNA_log_mag',
-#           baseline=1.4)
-  
-# plot_single_sweep(data,
-#                   sweep_tag_1='V_gate',
-#                   plot_tag_x='V_gate',
-#                   plot_tag_y='I_x',
-#                   save=True,
-#                   yerrbar=True
-#                   )
-#
-# plot_single_sweep(data,
-#                   sweep_tag_1='V_gate',
-#                   plot_tag_x='V_gate',
-#                   plot_tag_y='V_x',
-#                   save=True,
-#                   yerrbar=True
-#                   )
 
-# plot_single_sweep_calc_R(data,
-#                         sweep_tag_1='V_gate',
-#                         plot_tag_x='V_gate',
-#                         plot_tag_V='V_x',
-#                         plot_tag_I='I_x',
-#                         save=True,
-#                         yerrbar=True
-#                         )
-  
-# plot_cmap(data,
-#           plot_tag_x='V_gate',
-#           plot_tag_y='V_B',
-#           plot_tag_z='R',
-#           baseline=None)
-  
-  
+
+"""For Transport- check contact ploting: """
+# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230428_SD006b_mag_probe_addhemt\Transport\Check_contact\data"
+# name_dict = get_ordered_file_name_dict(folder_path)
+# fg = plt.figure(figsize=fig_size, dpi=300)
+# for key, value in name_dict.items():
+#     file_path = value['path']
+#     data = load_data_from_file(file_path)
+#     global_legend += [key.split('.')[0]]
+#     plot_single_sweep(data,
+#                       sweep_tag_1='V_sur_read',
+#                       plot_tag_x='V_sur_read',
+#                       plot_tag_y='V_lead_y',
+#                       save=False,
+#                       yerrbar=True,
+#                       continuous=True)
+# plt.legend(global_legend)
+# plt.xlabel('Current (uA)')
+# plt.ylabel('Voltage (V)')
+# plt.title('Check contact V_y vs I')
+# plt.tight_layout()
+# ax = fg.add_axes([0.4,0.4,0.3,0.3]) #left, bottom, width, height
+# fig_insert = plt.imread(r'C:\Users\ICET\Desktop\Data\SD\20230428_SD006b_mag_probe_addhemt\Transport\Check_contact\measure_config.png')
+# ax.imshow(fig_insert)
+# ax.axis('off')
+# plt.show()

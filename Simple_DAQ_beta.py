@@ -1366,17 +1366,19 @@ def plot_window():
                 normalize_timestamp(self.x2, self.x2_name)
                 normalize_timestamp(self.y1, self.y1_name)
                 normalize_timestamp(self.y2, self.y2_name)
-                data_length = min(len(self.x1),len(self.y1))
                 if self.x1.any() != None and self.y1.any() != None:
+                    data_length = min(len(self.x1), len(self.y1))
                     ax.set_xlabel(self.x1_name)
                     ax.set_ylabel(self.y1_name)
                     ax.plot(self.x1[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.r')
                     ax.yaxis.label.set_color('r')
                     if self.y2.any() != None:
+                        data_length = min(len(self.x1),len(self.y2))
                         ax1.set_ylabel(self.y2_name)
                         ax1.plot(self.x1[last_datalength:data_length-1], self.y2[last_datalength:data_length-1], '.b')
                         ax1.yaxis.label.set_color('b')
                     if self.x2.any() != None:
+                        data_length = min(len(self.x2), len(self.y1))
                         ax2.set_xlabel(self.x2_name)
                         ax2.plot(self.x2[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.g')
                         ax2.xaxis.label.set_color('g')
