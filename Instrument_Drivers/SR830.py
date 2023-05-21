@@ -14,7 +14,7 @@ SR830_sensitivity = ['2nV/fA','5nV/fA','10nV/fA','20nV/fA','50nV/fA',
                 '100nV/fA','200nV/fA','500nV/fA','1uV/pA','2uV/pA',
                 '5uV/pA','10uV/pA','20uV/pA','50uV/pA','100uV/pA',
                 '200uV/pA','500uV/pA','1mV/nA','2mV/nA','5mV/nA',
-                '10mV/nA','20mV/nA','50mV/nA','100mV/nA','200mV/nA'
+                '10mV/nA','20mV/nA','50mV/nA','100mV/nA','200mV/nA',
                 '500mV/nA','1V/uA']
 
 SR830_timeconstant = ['10us','30us','100us','300us','1ms',

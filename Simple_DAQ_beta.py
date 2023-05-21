@@ -1387,7 +1387,7 @@ def plot_window():
                 if temp_save_flag:
                     dataToSave = []
                     axis = ''
-                    for name in self.all_data.keys:
+                    for name in self.all_data.keys():
                         dataToSave += [self.all_data[name]['data'][:data_length-1]]
                         axis += f"{name}\t\t\t\t"
                     dataToSave = np.column_stack(dataToSave)
@@ -1396,7 +1396,7 @@ def plot_window():
                             file_real_path = self.path + '\\temp'
                             os.makedirs(self.path, exist_ok=True)
                             np.savetxt(file_real_path,
-                                       np.column_stack(dataToSave),
+                                       dataToSave,
                                        delimiter='\t',
                                        header=f"{datetime.now().strftime('%Y.%m.%d')}" + " " + f"{datetime.now().strftime('%H:%M:%S')}" +
                                               '\n' + f"{axis}"
@@ -1420,21 +1420,29 @@ def plot_window():
             plot_name[0].x1_name = x1_name
             if x1_name in all_data.keys():
                 plot_name[0].x1 = np.array(all_data[x1_name]['data'])
+            else:
+                plot_name[0].x1 = np.array([None])
 
             y1_name = plot_list[0].y_1.combobox.get()
             plot_name[0].y1_name = y1_name
             if y1_name in all_data.keys():
                 plot_name[0].y1 = np.array(all_data[y1_name]['data'])
+            else:
+                plot_name[0].y1 = np.array([None])
 
             x2_name = plot_list[0].x_2.combobox.get()
             plot_name[0].x2_name = x2_name
             if x2_name in all_data.keys():
                 plot_name[0].x2 = np.array(all_data[x2_name]['data'])
+            else:
+                plot_name[0].x2 = np.array([None])
 
             y2_name = plot_list[0].y_2.combobox.get()
             plot_name[0].y2_name = y2_name
             if y2_name in all_data.keys():
                 plot_name[0].y2 = np.array(all_data[y2_name]['data'])
+            else:
+                plot_name[0].y2 = np.array([None])
             plot_name[0].path = plot_list[0].dir_entry.entry.get()
 
             window.after(100, update_plot_axis)

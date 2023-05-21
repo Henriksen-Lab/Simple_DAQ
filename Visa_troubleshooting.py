@@ -364,10 +364,13 @@ def pop_window():
                 global onetime_dict
                 name = self.instrument_name.combobox.get()
                 func = self.set_function_selection.combobox.get()
+                one_time_flag = False
                 try:
-                    if func in onetime_dict['combobox'][name].keys():
-                        value = self.visa_write_combobox.combobox.get()
-                    else:
+                    if name in onetime_dict['combobox'].keys():
+                        if func in onetime_dict['combobox'][name].keys():
+                            value = self.visa_write_combobox.combobox.get()
+                            one_time_flag = True
+                    if not one_time_flag:
                         value = self.visa_write.get('1.0', 'end-1c')
                         value = float(value)
                     set_value(value=value,

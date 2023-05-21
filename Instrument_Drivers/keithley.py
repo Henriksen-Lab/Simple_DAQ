@@ -83,7 +83,8 @@ def keithley2400_set_sour_currrent_A(address, target_value_A):
         keithley.write("sour:func curr")
         keithley.write("sour:curr:rang:auto 1")
         keithley.write(f"sour:curr {target_value_A}")
-        keithley.write("SYST:KEY 23")  # press local key
+        # keithley.write("SYST:KEY 23")  # press local
+        time.sleep(0.01)
     finally:
         keithley.close()
 

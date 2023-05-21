@@ -10,6 +10,7 @@ from Instrument_Drivers.transfer_heater_PID import *
 from Instrument_Drivers.noise_probe_PID import *
 from Instrument_Drivers.E4405B import *
 from Instrument_Drivers.DC205 import *
+from Instrument_Drivers.SR124 import *
 
 global instrument_dict
 instrument_dict = {'get':{},
@@ -25,11 +26,13 @@ instrument_dict['get'].update({'vna': ['please input the VNA_settings']})
 instrument_dict['get'].update({'Agilent infiniiVision': ['counter']})
 instrument_dict['get'].update({'E4405B': ['please input the VNA_settings']})
 instrument_dict['get'].update({'DC205': ['sur_volt']})
+instrument_dict['get'].update({'SR124': ['sur_AC_Vrms', 'sur_AC_freq', 'sur_DC_bias']})
 
 instrument_dict['set'].update({'keithley': ['current', 'voltage']})
 instrument_dict['set'].update({'SR830': ['amplitude', 'freqency','harmonic']})
 instrument_dict['set'].update({'keysight N6700c': ['volt @ channel 2']})
 instrument_dict['set'].update({'DC205': ['voltage']})
+instrument_dict['set'].update({'SR124': ['AC_Vrms', 'AC_freq', 'DC_bias']})
 
 global read_write_lock
 read_write_lock = False
@@ -106,6 +109,13 @@ def get_value(address='', name='', func='', **kwargs):
     elif name == 'DC205':
         if func == 'sur_volt':
             value = dc205_get_sour_voltage_V(address)
+    elif name == 'SR124':
+        if func == 'sur_AC_Vrms':
+            value = SR124_get_amplitude(address)
+        if func == 'sur_AC_freq':
+            value = SR124_get_frequency(address)
+        if func == 'sur_DC_bias':
+            value = SR124_get_DCbias(address)
     else:
         value = 0
         print('Please input correct instrument name or function name')
@@ -165,6 +175,13 @@ def set_value(value, address='', name='', func='', **kwargs):
     elif name == 'DC205':
         if func == 'voltage':
             dc205_set_sour_voltage_V(address, value)
+    elif name == 'SR124':
+        if func == 'AC_Vrms':
+            SR124_set_amplitude(address, value)
+        if func == 'AC_freq':
+            SR124_set_frequency(address, value)
+        if func == 'DC_bias':
+            SR124_set_DCbias(address, value)
     else:
         print('Please input correct instrument name or function name')
     read_write_lock = False
