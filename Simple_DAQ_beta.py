@@ -1396,7 +1396,7 @@ def plot_window():
                             file_real_path = self.path + '\\temp'
                             os.makedirs(self.path, exist_ok=True)
                             np.savetxt(file_real_path,
-                                       dataToSave,
+                                       dataToSave ,
                                        delimiter='\t',
                                        header=f"{datetime.now().strftime('%Y.%m.%d')}" + " " + f"{datetime.now().strftime('%H:%M:%S')}" +
                                               '\n' + f"{axis}"
