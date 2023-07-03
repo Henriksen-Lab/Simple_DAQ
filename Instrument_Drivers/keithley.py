@@ -36,6 +36,11 @@ def keithley2400_output_on(address):
     finally:
         keithley.close()
 
+# address = 'GPIB0::24::INSTR'
+# keithley2400_initialize(address)
+# keithley2400_output_on(address)
+
+
 def keithley2400_ramp_from_prev_value_I(address, target_value_mA, step_size_mA=0.01):
     try:
         keithley = rm.open_resource(address)            

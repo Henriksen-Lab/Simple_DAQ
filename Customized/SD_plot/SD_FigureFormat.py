@@ -6,6 +6,11 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+def get_color_cycle(NUM_COLORS, cmap='twilight_shifted'):
+    cm = plt.get_cmap(cmap)
+    custom_cycler = [cm(1. * x / NUM_COLORS) for x in range(NUM_COLORS)]
+    return custom_cycler
+
 fontsize = 8
 # Font
 font = {
@@ -27,7 +32,8 @@ mpl.rcParams['xtick.major.width'] = linewidth
 mpl.rcParams['xtick.major.size'] = 3
 mpl.rcParams['ytick.major.width'] = linewidth
 mpl.rcParams['ytick.major.size'] = 3
-mpl.rcParams['legend.fontsize'] = 7
+
+mpl.rcParams['legend.fontsize'] = 5
 mpl.rcParams['axes.formatter.limits'] = -2, 4
 mpl.rcParams['axes.formatter.useoffset'] = False
 mpl.rcParams['axes.spines.top'] = True
@@ -42,14 +48,11 @@ mpl.rcParams['legend.frameon'] = False
 mpl.rcParams['legend.borderpad'] = 0
 # layout
 
-fig_size = np.asarray([8, 6])
+fig_size = np.asarray([10, 7])
 fig_size = fig_size / 2.54
 
 
-def get_color_cycle(NUM_COLORS, cmap='twilight_shifted'):
-    cm = plt.get_cmap(cmap)
-    custom_cycler = [cm(1. * x / NUM_COLORS) for x in range(NUM_COLORS)]
-    return custom_cycler
+
 
 
 def get_im(fg):

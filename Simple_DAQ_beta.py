@@ -1359,7 +1359,7 @@ def plot_window():
                 def normalize_timestamp(x,x_name):
                     global start_time
                     x = np.array(x)
-                    if x_name == 'timestamp' and x.any() != None:
+                    if 'timestamp' in x_name and x.any() != None:
                         for i in range(0,len(x)):
                             x[i] = x[i] - start_time
                 normalize_timestamp(self.x1, self.x1_name)

@@ -11,6 +11,7 @@ from Instrument_Drivers.noise_probe_PID import *
 from Instrument_Drivers.E4405B import *
 from Instrument_Drivers.DC205 import *
 from Instrument_Drivers.SR124 import *
+from Instrument_Drivers.keithley2230G_30_1 import *
 
 global instrument_dict
 instrument_dict = {'get':{},
@@ -18,7 +19,9 @@ instrument_dict = {'get':{},
                    'vna':['vna', 'PicoVNA108', 'E4405B'],
                    'pid_noise':['keithley', 'SR830', 'hp34461A']} #the instrument for temp acq
 
-instrument_dict['get'].update({'keithley': ['2000ohm_4pt', '2400ohm_4pt', '2000ohm_2pt', '2400ohm_2pt', '2000volt', '2400_sur_current', '2400_sur_volt']})
+instrument_dict['get'].update({'keithley2000': ['ohm_4pt', 'ohm_2pt', 'volt']})
+instrument_dict['get'].update({'keithley2400': ['ohm_4pt', 'ohm_2pt', 'sur_current', 'sur_volt']})
+instrument_dict['get'].update({'keithley2230': ['Ch1_fetch_volt', 'Ch1_fetch_curr', 'Ch2_fetch_volt', 'Ch2_fetch_curr', 'Ch3_fetch_volt', 'Ch3_fetch_curr']})
 instrument_dict['get'].update({'SR830': ['x', 'y', 'R', 'theta', 'freq','amplitude']})
 instrument_dict['get'].update({'hp34461A': ['volt', 'ohm_4pt']})
 instrument_dict['get'].update({'PicoVNA108': ['S21', 'S12', 'S11', 'S22']})
@@ -28,7 +31,8 @@ instrument_dict['get'].update({'E4405B': ['please input the VNA_settings']})
 instrument_dict['get'].update({'DC205': ['sur_volt']})
 instrument_dict['get'].update({'SR124': ['sur_AC_Vrms', 'sur_AC_freq', 'sur_DC_bias']})
 
-instrument_dict['set'].update({'keithley': ['current', 'voltage']})
+instrument_dict['set'].update({'keithley2400': ['current', 'voltage']})
+instrument_dict['set'].update({'keithley2230': ['Ch1_volt', 'Ch2_volt', 'Ch3_volt']})
 instrument_dict['set'].update({'SR830': ['amplitude', 'freqency','harmonic']})
 instrument_dict['set'].update({'keysight N6700c': ['volt @ channel 2']})
 instrument_dict['set'].update({'DC205': ['voltage']})
@@ -44,21 +48,35 @@ def get_value(address='', name='', func='', **kwargs):
     read_write_lock = True
     if name == 'time':
         value = time.time()
-    elif name == 'keithley':
-        if func == '2000ohm_4pt':
+    elif name == 'keithley2000':
+        if func == 'ohm_4pt':
             value = keithley2000_get_ohm_4pt(address)
-        elif func == '2400ohm_4pt':
-            value = keithley2400_get_ohm_4pt(address)
-        elif func == '2000ohm_2pt':
+        elif func == 'ohm_2pt':
             value = keithley2000_get_ohm_2pt(address)
-        elif func == '2400ohm_2pt':
-            value = keithley2400_get_ohm_2pt(address)
-        elif func == '2000volt':
+        elif func == 'volt':
             value = keithley2000_get_voltage_V(address)
-        elif func == '2400_sur_current':
+    elif name == 'keithley2400':
+        if func == 'ohm_4pt':
+            value = keithley2400_get_ohm_4pt(address)
+        elif func == 'ohm_2pt':
+            value = keithley2400_get_ohm_2pt(address)
+        elif func == 'sur_current':
             value = keithley2400_get_sour_currrent_A(address)
-        elif func == '2400_sur_volt':
+        elif func == 'sur_volt':
             value = keithley2400_get_sour_voltage_V(address)
+    elif name == 'keithley2230':
+        if func == 'Ch1_fetch_volt':
+            value = keithley2230_CH1_Fetch_voltage(address)
+        elif func == 'Ch1_fetch_curr':
+            value = keithley2230_CH1_Fetch_current(address)
+        elif func == 'Ch2_fetch_volt':
+            value = keithley2230_CH2_Fetch_voltage(address)
+        elif func == 'Ch2_fetch_curr':
+            value = keithley2230_CH2_Fetch_current(address)
+        elif func == 'Ch3_fetch_volt':
+            value = keithley2230_CH3_Fetch_voltage(address)
+        elif func == 'Ch3_fetch_curr':
+            value = keithley2230_CH3_Fetch_current(address)
     elif name == 'SR830':
         if func == 'x':
             value = SR830_get_x(address)
@@ -128,11 +146,18 @@ def set_value(value, address='', name='', func='', **kwargs):
     while read_write_lock:
         time.sleep(0.001)
     read_write_lock = True
-    if name == 'keithley':
+    if name == 'keithley2400':
         if func == 'current':
             keithley2400_set_sour_currrent_A(address, value)
         elif func == 'voltage':
             keithley2400_set_sour_voltage_V(address, value)
+    elif name == 'keithley2230':
+        if func == 'Ch1_volt':
+            keithley2230_CH1_Set_voltage(address,value)
+        if func == 'Ch2_volt':
+            keithley2230_CH2_Set_voltage(address,value)
+        if func == 'Ch3_volt':
+            keithley2230_CH3_Set_voltage(address, value)
     elif name == 'SR830':
         if func == 'amplitude':
             SR830_set_amplitude(address, value)

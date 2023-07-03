@@ -19,6 +19,7 @@ from scipy.optimize import curve_fit
 from scipy import signal
 from scipy import interpolate
 import pickle
+from Instrument_Drivers.thermometer.Cernox import *
 
 global global_legend
 global_legend = []
@@ -120,12 +121,16 @@ def get_ordered_file_name_dict(folder_path):
         # go through every file inside the folder, even inside subfolders
         for name in files:
             if '.' in name:
-                file_name_dict.update({name: {}})
-                file_name_dict[name].update({'path': os.path.join(root, name),
+                path = os.path.join(root, name)
+                file_name_dict.update({path: {}})
+                file_name_dict[path].update({'path': os.path.join(root, name),
+                                             'name': name,
                                              'time': os.path.getctime(os.path.join(root, name)),
                                              'dir': root,
                                              })
-    # Reorder the file name dict with the modified time, if want to use the created time order, change the getmtime -> getctime
+
+    # Reorder the file name dict with the modified time
+    # if want to use the created time order, change the getmtime -> getctime
     ordered_file_name_dict = OrderedDict(sorted(file_name_dict.items(),
                                                 key=lambda x: getitem(x[1], 'time')))
     return ordered_file_name_dict
@@ -186,7 +191,10 @@ def linear_func(x, A, B):
     y = A * x +B
     return y
 
-
+def calculate_R(data, tag_I='I_x', tag_V='V_x'):
+    data.update({'R': data[tag_V] / data[tag_I]})
+    data.update({'rho': data[tag_I] / (data[tag_V])})
+    return data
 
 """------------------Plot configs-----------------------------------"""
 def plot_single_sweep(data, sweep_tag_1, plot_tag_x, plot_tag_y, save=False, yerrbar=False, continuous=False):
@@ -364,34 +372,100 @@ def plot_double_sweep(data, sweep_tag_1, sweep_tag_2, plot_tag_x, plot_tag_y,
 
 '''------------------------input before run------------------------'''
 """"""
-folder_path = r"C:\Users\ICET\Desktop\Data\lyw\20230420_3\data\20230420"
-file_path = r"C:\Users\ICET\Desktop\Data\lyw\20230420_3\data\20230420\3w_vs_i_20K.002"
+# folder_path = r"C:\Users\ICET\Desktop\Data\lyw\20230420_3\data\20230420"
+# file_path = r"C:\Users\ICET\Desktop\Data\lyw\20230420_3\data\20230420\3w_vs_i_20K.002"
+#
+# data = load_data_from_file(file_path)
+# data = limitdata(data,80,1000,'f')
+# data = limitdata(data,-1E12,-1E-5,'vx')
+# #           plot_single_sweep(data,
+# #             sweep_tag_1='f',
+# #             plot_tag_x='f',
+# #             plot_tag_y=ylabel,
+# #             yerrbar=True,
+# #             continuous = True
+# #           )
+# I_rms, kappa = plot_double_sweep(data,
+#                                   sweep_tag_1='f',
+#                                   sweep_tag_2='vix',
+#                                   plot_tag_x='f',
+#                                   plot_tag_y='vx',
+#                                   baseline=None,
+#                                   offset = 0,
+#                                   save=False,
+#                                   fit =True)
+#
+# fg = plt.figure(figsize=fig_size,dpi=300)
+# plt.plot(I_rms, kappa,ls='--', marker='o', ms=2, mfc='none', mew=0.5)
+# plt.xlabel('I_rms')
+# plt.ylabel('$\kappa$')
+# plt.tight_layout()
+# plt.show()
 
-data = load_data_from_file(file_path)
-data = limitdata(data,80,1000,'f')
-data = limitdata(data,-1E12,-1E-5,'vx')
-#           plot_single_sweep(data,
-#             sweep_tag_1='f',
-#             plot_tag_x='f',
-#             plot_tag_y=ylabel,
-#             yerrbar=True,
-#             continuous = True
-#           )
-I_rms, kappa = plot_double_sweep(data,
-                                  sweep_tag_1='f',
-                                  sweep_tag_2='vix',
-                                  plot_tag_x='f',
-                                  plot_tag_y='vx',
-                                  baseline=None,
-                                  offset = 0,
-                                  save=False,
-                                  fit =True)
-    
-fg = plt.figure(figsize=fig_size,dpi=300)
-plt.plot(I_rms, kappa,ls='--', marker='o', ms=2, mfc='none', mew=0.5)
-plt.xlabel('I_rms')
-plt.ylabel('$\kappa$')
+def get_x_y_07032023(folder_path):
+
+    data = load_data_from_folder(folder_path)
+    data = calculate_R(data, tag_I='i', tag_V='v')
+    data['R'] *= -1
+    data = limitdata(data,0,1600,'R')
+    data.update({'temp': np.array([float(get_T_cernox_3(x)) for x in data['rt']])})
+    # data = limitdata(data,0,200,'temp')
+    # plt.plot(data['timestamp'],data['temp'])
+    x = []
+    y = []
+    yerr = []
+    for temp in np.linspace(np.max(data['temp']), np.min(data['temp']), 1001):
+        all_R = []
+        spacing = (np.max(data['temp']) - np.min(data['temp'])) / 1000
+        mask = np.logical_and(data['temp'] >= temp - spacing / 2, data['temp'] <= temp + spacing / 2)
+        all_R = data['R'][mask]
+        if len(all_R) > 0:
+            x += [temp]
+            y += [np.average(all_R)]
+            yerr += [np.std(all_R) / np.sqrt(len(all_R))]
+    return x, y, yerr
+
+def get_x_y_06132023(folder_path):
+
+    data = load_data_from_folder(folder_path)
+    data = calculate_R(data, tag_I='I_100ohm_x', tag_V='V_x')
+    data['R'] = data['R'] *1000+230
+    #data = limitdata(data,0,1600,'R')
+    data.update({'temp': np.array([float(get_T_cernox_3(x)) for x in data['R_t']])})
+    # data = limitdata(data,0,200,'temp')
+    # plt.plot(data['timestamp'],data['temp'])
+    x = []
+    y = []
+    yerr = []
+    for temp in np.linspace(np.max(data['temp']), np.min(data['temp']), 1001):
+        all_R = []
+        spacing = (np.max(data['temp']) - np.min(data['temp'])) / 1000
+        mask = np.logical_and(data['temp'] >= temp - spacing / 2, data['temp'] <= temp + spacing / 2)
+        all_R = data['R'][mask]
+        if len(all_R) > 0:
+            x += [temp]
+            y += [np.average(all_R)]
+            yerr += [np.std(all_R) / np.sqrt(len(all_R))]
+    return x, y, yerr
+
+plt.figure(figsize=fig_size, dpi=300)
+
+
+#folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230628_SD_AuGe_80nm_meander\data"
+#x,y,yerr = get_x_y_06282023(folder_path)
+#plt.errorbar(x, y, yerr)
+folder_path = r"C:\Users\ICET\Desktop\Data\lyw\20230701\data"
+x,y,yerr = get_x_y_07032023(folder_path)
+plt.errorbar(x, y, yerr)
+folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230612_SD_AuGe_13nm\data"
+x,y,yerr = get_x_y_06132023(folder_path)
+plt.errorbar(x, y, yerr)
+plt.legend(['80nm sweep heater',r'13nm sweep heater$(\times 10+230)$'])
+
+
+plt.xlim(0,30)
+plt.xlabel('T(K)')
+plt.ylabel(r'R($\Omega$)')
+plt.title(r'AuGe Resistance vs temp')
 plt.tight_layout()
 plt.show()
-
-  

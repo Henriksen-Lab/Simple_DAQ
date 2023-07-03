@@ -91,12 +91,12 @@ def dry_sweep(start, stop, step_size=0.01):
         read()
     return sweep
 
-def wet_sweep(start, stop, step_size,order, last_v, f_min, f_max):
+def wet_sweep(start, stop, step_size,order, last_v, f_min, f_max, power=-5):
     for sweep in get_sweep(start=start, stop=stop, step_size=step_size):
         last_v = dry_sweep(last_v, sweep)
-        for i in range(1):
+        for i in range(3):
             order += 1
-            run_single(sweep, order, f_min=f_min, f_max=f_max, average=250)
+            run_single(sweep, order, f_min=f_min, f_max=f_max, average=250, power=power)
             last_v = sweep
     return last_v
 
@@ -116,8 +116,8 @@ port ='S21'
 def set(value):
     if value is not None:
         '''AC B wiggle'''
-        # SR830_set_frequency(SR830, 50000)
-        # SR830_set_amplitude(SR830, value)
+        SR830_set_frequency(SR830, 50000)
+        SR830_set_amplitude(SR830, value)
         '''DC sweep Gate'''
         # keithley2400_set_sour_voltage_V(keithley2400_gpib, value)
         '''DC+AC sweep gate'''
@@ -128,8 +128,8 @@ def read(*arg):
     read = {}
     # read.update({'power': arg[0]})
     '''AC B wiggle'''
-    # read.update({'freq':SR830_get_frequency(SR830)})
-    # read.update({'wiggle_B':SR830_get_amplitude(SR830)})
+    read.update({'freq':SR830_get_frequency(SR830)})
+    read.update({'wiggle_B':SR830_get_amplitude(SR830)})
     '''DC sweep Gate'''
     # read.update({'v_sur': keithley2400_get_sour_voltage_V(keithley2400_gpib)})
     '''DC+AC sweep gate'''
@@ -147,31 +147,33 @@ def read(*arg):
 
 
 '''AC wiggle B'''
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
-# my_note = "2023.06.15 Icet sd008_MoRe2 warm up"
+data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009'
+my_note = "2023.07.03 Icet sd009_MoRe3 base temp"
 
 # # centers =  [6080, 6220, 6610, 7089] #sd004_1
 # # centers =  [6033, 6335, 6620, 7104] #sd003a
 # # centers =  [6107, 6462, 7172, 7577, 7876, 8029] #sd008
-# start_freq_list = [1000]
-# stop_freq_list = [8500]
+
+start_freq_list = [1000,3600,3000,6000]
+stop_freq_list = [8500,4600,6000,8500]
 # # for center in centers:
 # #     start_freq_list += [center-100]
 # #     stop_freq_list += [center+100]
 # #
-# last_v = 0.004
-# for index in range(len(start_freq_list)):
-#     title = "_" + f"sweep_B_{start_freq_list[index]}to{stop_freq_list[index]}MHz" # some unique feature you want to add in title
-#     order = 0
-#     last_v = wet_sweep(start=last_v,
-#                        stop=3.504,
-#                        step_size=0.5,
-#                        order=order,
-#                        last_v=last_v,
-#                        f_min=start_freq_list[index],
-#                        f_max=stop_freq_list[index])
-#     last_v = dry_sweep(last_v,0.004)
-# print('done')
+last_v = 0.004
+for index in range(len(start_freq_list)):
+    title = "_" + f"sweep_B_{start_freq_list[index]}to{stop_freq_list[index]}MHz" # some unique feature you want to add in title
+    order = 0
+    last_v = wet_sweep(start=last_v,
+                       stop=3.504,
+                       step_size=0.5,
+                       order=order,
+                       last_v=last_v,
+                       f_min=start_freq_list[index],
+                       f_max=stop_freq_list[index],
+                       power=-5)
+    last_v = dry_sweep(last_v,0.004)
+print('done')
 
 '''Power scan'''
 # data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
@@ -179,7 +181,7 @@ def read(*arg):
 
 # power_list = [-20,-15,-10,-5,0,5]
 # for index in range(len(power_list)):
-#     title = "_" + f"sweep_power_{power_list[index]}dBm" # some unique feature you want to add in title
+#     title = f"sweep_power_{power_list[index]}dBm" # some unique feature you want to add in title
 #     order = 0
 #     for i in range(2):
 #         run_single(None,order,f_min=5500,f_max=8500,power=power_list[index])
@@ -218,7 +220,7 @@ def read(*arg):
 #
 # for bias in get_sweep(0,1.25,0.05):
 #     last_bias = bias_sweep(last_bias,bias)
-#     title = "_" + f"DC_bias_{last_bias}V"  # some unique feature you want to add in title
+#     title = f"DC_bias_{last_bias}V"  # some unique feature you want to add in title
 #     last_v = wet_sweep(start=0.01,
 #                        stop=0.71,
 #                        step_size=0.05,
@@ -242,8 +244,8 @@ def read(*arg):
 #     order += 1
 
 '''Take trace_manual'''
-data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230623_CHECK_samplepackage'
-my_note = "2023.06.23 Rmtemp Vna port 1 -> -20dB -> -20dB -> VNA port 2"
-order = 1
-title = "input_line" # some unique feature you want to add in title
-run_single(sweep=None,order=order,f_min=1000,f_max=8500,average=5,power=0,)
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009'
+# my_note = "2023.06.28 Base temp"
+# order = 1
+# title = "transmission" # some unique feature you want to add in title
+# run_single(sweep=None,order=order,f_min=1000,f_max=8500,average=10,power=0)

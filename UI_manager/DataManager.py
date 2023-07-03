@@ -102,12 +102,13 @@ class Mydata:
                     self.data_VNA = get_value(address=self.data[name]['instrument_address'], name='E4405B', func='',
                                               f_min=self.data[name]['f_min'],
                                               f_max=self.data[name]['f_max'])
-                self.data.update({'VNA_freqs':{'data':self.data_VNA.freqs}})
-                self.data.update({'VNA_log_mag':{'data':self.data_VNA.log_mag}})
-                if self.data[name]['instrument_name'] in ['vna','PicoVNA108']:
-                    self.data.update({'VNA_phase_rad':{'data':self.data_VNA.phase_rad}})
-                    self.data.update({'VNA_real':{'data':self.data_VNA.real}})
-                    self.data.update({'VNA_imag':{'data':self.data_VNA.imag}})
+
+                vna_attributes = [(attr, getattr(self.data_VNA, attr)) for attr in dir(self.data_VNA)
+                                  if not attr.startswith('__') and not callable(getattr(self.data_VNA, attr))]
+
+                for name, value in vna_attributes:
+                    newname = 'VNA_' + name
+                    self.data.update({newname: {'data': value}})
                 self.vna_data_length = len(self.data_VNA.freqs)
         if vna_exist:
             for name in self.data.keys():
@@ -275,8 +276,8 @@ class Mydata:
                 for val in sweep_up[i]:
                     if not daq_flag:
                         break
-                    time.sleep(delay[i])
                     set_value(address=address[i], name=name[i], func=func[i], value=val)
+                    time.sleep(delay[i])
                     value[i] = val
                     loop(i+1,value)
                     self.sweep_update(value=value)
@@ -284,8 +285,8 @@ class Mydata:
                     for val in sweep_down[i]:
                         if not daq_flag:
                             break
-                        time.sleep(delayback[i])
                         set_value(address=address[i], name=name[i], func=func[i], value=val)
+                        time.sleep(delayback[i])
                         value[i] = val
                         loop(i+1,value)
                         self.sweep_update(value=value)

@@ -560,18 +560,27 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 #                            legendcol=2
 #                            )
 
-folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230623_CHECK_samplepackage\20230623"
-files = get_ordered_file_name_dict(folder_path)
-legend = []
-for path in files.keys():
-    data = load_data_from_file(path)
-    x = data['VNA_freqs']
-    y = data['VNA_log_mag']
-    plt.plot(x, y)
-    name = files[path]['name']
-    legend += [f'{name}']
-plt.legend(legend)
-plt.show()
+# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230623_CHECK_samplepackage\DC_SR770\Equipments"
+# files = get_ordered_file_name_dict(folder_path)
+# fg = plt.figure(figsize=fig_size)
+# legend = []
+# index = 0
+# for path in sorted(files.keys()):
+#     data = load_data_from_file(path)
+#     x = data['freqs']
+#     y = data['log_mag']
+#     # plt.plot(x/1000, y*1e9+30*index, c=get_color_cycle(20,'coolwarm')[index])
+#     # plt.plot(x / 1000, y * 1e9, c=get_color_cycle(20, 'coolwarm')[index])
+#     plt.plot(x / 1000, y * 1e9)
+#     name = files[path]['name']
+#     legend += [f'{name}']
+#     index +=1
+# plt.legend(legend,ncol=2)
+# plt.xlabel(r'Freqency (kHz)')
+# plt.ylabel(r'PSD (nV/$\sqrt{\mathrm{Hz}}$)')
+# plt.ylim(-100,3500)
+# plt.tight_layout()
+# plt.show()
 
 
 """For Transport- check contact ploting: """
@@ -635,31 +644,34 @@ plt.show()
 """For Transport- 4pts END """
 
 """For ploting cooling down START"""
-# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230612_SD_AuGe_13nm\data"
-# data = load_data_from_folder(folder_path)
-# data = calculate_R(data, tag_I='I_100ohm_x', tag_V='V_x')
-# data['R'] *= 100
-# data.update({'temp': np.array([float(get_T_cernox_3(x)) for x in data['R_t']])})
-# data = limitdata(data,20,200,'temp')
-# x = []
-# y = []
-# yerr = []
-# for temp in np.linspace(np.max(data['temp']), np.min(data['temp']), 1001):
-#     all_R = []
-#     spacing = (np.max(data['temp']) - np.min(data['temp'])) / 1000
-#     mask = np.logical_and(data['temp'] >= temp - spacing / 2, data['temp'] <= temp + spacing / 2)
-#     all_R = data['R'][mask]
-#     if len(all_R) > 0:
-#         x += [temp]
-#         y += [np.average(all_R)]
-#         yerr += [np.std(all_R) / np.sqrt(len(all_R))]
-# plt.figure(figsize=fig_size, dpi=300)
-# plt.errorbar(x, y, yerr)
-# plt.xlabel('T(K)')
-# plt.ylabel(r'R($\Omega$)')
-# plt.title(r'AuGe Resistance vs temp 061223-0613, ICET heating')
-# plt.tight_layout()
-# plt.show()
+folder_path = r"C:\Users\ICET\Desktop\Data\lyw\20230701\data"
+data = load_data_from_folder(folder_path)
+data = calculate_R(data, tag_I='i', tag_V='v')
+data['R'] *= -1
+data = limitdata(data,0,2000,'R')
+data.update({'temp': np.array([float(get_T_cernox_3(x)) for x in data['rt']])})
+# data = limitdata(data,0,200,'temp')
+# plt.plot(data['timestamp'],data['temp'])
+x = []
+y = []
+yerr = []
+for temp in np.linspace(np.max(data['temp']), np.min(data['temp']), 1001):
+    all_R = []
+    spacing = (np.max(data['temp']) - np.min(data['temp'])) / 1000
+    mask = np.logical_and(data['temp'] >= temp - spacing / 2, data['temp'] <= temp + spacing / 2)
+    all_R = data['R'][mask]
+    if len(all_R) > 0:
+        x += [temp]
+        y += [np.average(all_R)]
+        yerr += [np.std(all_R) / np.sqrt(len(all_R))]
+plt.figure(figsize=fig_size, dpi=300)
+plt.errorbar(x, y, yerr)
+plt.xlim(0,max(x))
+plt.xlabel('T(K)')
+plt.ylabel(r'R($\Omega$)')
+plt.title(r'AuGe Resistance vs temp 06292023, ICET cooling')
+plt.tight_layout()
+plt.show()
 """For ploting cooling down END"""
 
 """For ploting Mag cali Start"""
