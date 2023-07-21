@@ -48,8 +48,6 @@ def filter_nan(x, y):
 
 
 """------------------Plot configs-----------------------------------"""
-
-
 def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag', save=False, yerrbar=False,
                       continuous=False):
     global global_legend
@@ -430,9 +428,9 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 """For MW spectrum sweeping AC Mag(wiggle_B) field BEGIN"""
 # inside_plot_flag = False
 # fig = plt.figure(figsize=fig_size)
-# folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2\20230613_sweep_B_1000to8500MHz'
+# folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009\wiggleB_50KHz'
 # data = load_data_from_folder(folder_path)
-# # data = limitdata(data, 3.56e9, 8.5e9, tag='VNA_freqs')
+# data = limitdata(data, 2.56e9, 8.5e9, tag='VNA_freqs')
 # sweep_para = 'wiggle_B'
 # # sweep_para = 'power'
 # sweep = sorted(get_sweep(data,sweep_para))
@@ -445,7 +443,7 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 #                   # baseline=None,
 #                   offset=2,
 #                   save=False)
-# add_vline([6050e6,6450e6,7060e6,7610e6],[-6,15],'Design',position=15)
+# # add_vline([6050e6,6450e6,7060e6,7610e6],[-6,15],'Design',position=15)
 # # add_vline([6050e6,6450e6,7060e6,7610e6],[0,18],'Design',position=20)
 # plt.show()
 
@@ -513,20 +511,20 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 """For MW spectrum sweeping DC+ AC gate STOP"""
 
 """For MW spectrum sweeping temp START"""
-# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2\20230615_warmup"
+# folder_path = r"C:\Users\ICET\Desktop\Data\SD\20230629_SD_009\warmup"
 # data = load_data_from_folder(folder_path)
 # data.update({'temp': np.array([float(RuOx_get_T(abs(x))) for x in data['R_RuOx']])})
-# data = limitdata(data,0,12,'temp')
+# data = limitdata(data,0,9,'temp')
 # sweep = sorted(get_sweep(data,'temp'))
 # inside_plot_flag = False
-# add_vline([6050e6,6450e6,7060e6,7610e6],[0,40],'Design',position=40)
+# # add_vline([6050e6,6450e6,7060e6,7610e6],[0,40],'Design',position=40) # sd008
 # plot_double_sweep(data,
 #                   sweep_tag_1='VNA_freqs',
 #                   sweep_tag_2='temp',
 #                   plot_tag_x='VNA_freqs',
 #                   plot_tag_y='VNA_log_mag',
-#                   baseline=sweep[0],
-#                   offset=-2,
+#                   # baseline=sweep[0],
+#                   offset=0,
 #                   save=False,
 #                   )
 # plt.show()
@@ -644,34 +642,34 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 """For Transport- 4pts END """
 
 """For ploting cooling down START"""
-folder_path = r"C:\Users\ICET\Desktop\Data\lyw\20230701\data"
-data = load_data_from_folder(folder_path)
-data = calculate_R(data, tag_I='i', tag_V='v')
-data['R'] *= -1
-data = limitdata(data,0,2000,'R')
-data.update({'temp': np.array([float(get_T_cernox_3(x)) for x in data['rt']])})
-# data = limitdata(data,0,200,'temp')
-# plt.plot(data['timestamp'],data['temp'])
-x = []
-y = []
-yerr = []
-for temp in np.linspace(np.max(data['temp']), np.min(data['temp']), 1001):
-    all_R = []
-    spacing = (np.max(data['temp']) - np.min(data['temp'])) / 1000
-    mask = np.logical_and(data['temp'] >= temp - spacing / 2, data['temp'] <= temp + spacing / 2)
-    all_R = data['R'][mask]
-    if len(all_R) > 0:
-        x += [temp]
-        y += [np.average(all_R)]
-        yerr += [np.std(all_R) / np.sqrt(len(all_R))]
-plt.figure(figsize=fig_size, dpi=300)
-plt.errorbar(x, y, yerr)
-plt.xlim(0,max(x))
-plt.xlabel('T(K)')
-plt.ylabel(r'R($\Omega$)')
-plt.title(r'AuGe Resistance vs temp 06292023, ICET cooling')
-plt.tight_layout()
-plt.show()
+# folder_path = r"C:\Users\ICET\Desktop\Data\lyw\20230701\data"
+# data = load_data_from_folder(folder_path)
+# data = calculate_R(data, tag_I='i', tag_V='v')
+# data['R'] *= -1
+# data = limitdata(data,0,2000,'R')
+# data.update({'temp': np.array([float(get_T_cernox_3(x)) for x in data['rt']])})
+# # data = limitdata(data,0,200,'temp')
+# # plt.plot(data['timestamp'],data['temp'])
+# x = []
+# y = []
+# yerr = []
+# for temp in np.linspace(np.max(data['temp']), np.min(data['temp']), 1001):
+#     all_R = []
+#     spacing = (np.max(data['temp']) - np.min(data['temp'])) / 1000
+#     mask = np.logical_and(data['temp'] >= temp - spacing / 2, data['temp'] <= temp + spacing / 2)
+#     all_R = data['R'][mask]
+#     if len(all_R) > 0:
+#         x += [temp]
+#         y += [np.average(all_R)]
+#         yerr += [np.std(all_R) / np.sqrt(len(all_R))]
+# plt.figure(figsize=fig_size, dpi=300)
+# plt.errorbar(x, y, yerr)
+# plt.xlim(0,max(x))
+# plt.xlabel('T(K)')
+# plt.ylabel(r'R($\Omega$)')
+# plt.title(r'AuGe Resistance vs temp 06292023, ICET cooling')
+# plt.tight_layout()
+# plt.show()
 """For ploting cooling down END"""
 
 """For ploting Mag cali Start"""

@@ -94,7 +94,7 @@ def dry_sweep(start, stop, step_size=0.01):
 def wet_sweep(start, stop, step_size,order, last_v, f_min, f_max, power=-5):
     for sweep in get_sweep(start=start, stop=stop, step_size=step_size):
         last_v = dry_sweep(last_v, sweep)
-        for i in range(3):
+        for i in range(2):
             order += 1
             run_single(sweep, order, f_min=f_min, f_max=f_max, average=250, power=power)
             last_v = sweep
@@ -116,8 +116,8 @@ port ='S21'
 def set(value):
     if value is not None:
         '''AC B wiggle'''
-        SR830_set_frequency(SR830, 50000)
-        SR830_set_amplitude(SR830, value)
+        # SR830_set_frequency(SR830, 10000)
+        # SR830_set_amplitude(SR830, value)
         '''DC sweep Gate'''
         # keithley2400_set_sour_voltage_V(keithley2400_gpib, value)
         '''DC+AC sweep gate'''
@@ -128,8 +128,8 @@ def read(*arg):
     read = {}
     # read.update({'power': arg[0]})
     '''AC B wiggle'''
-    read.update({'freq':SR830_get_frequency(SR830)})
-    read.update({'wiggle_B':SR830_get_amplitude(SR830)})
+    # read.update({'freq':SR830_get_frequency(SR830)})
+    # read.update({'wiggle_B':SR830_get_amplitude(SR830)})
     '''DC sweep Gate'''
     # read.update({'v_sur': keithley2400_get_sour_voltage_V(keithley2400_gpib)})
     '''DC+AC sweep gate'''
@@ -137,7 +137,7 @@ def read(*arg):
     # read.update({'vg_freq': SR124_get_frequency(SR124)})
     # read.update({'vg_Vrms': SR124_get_amplitude(SR124)})
     '''Read RuOx'''
-    # read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
+    read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
 
     msg = ''
     for key, item in read.items():
@@ -147,33 +147,34 @@ def read(*arg):
 
 
 '''AC wiggle B'''
-data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009'
-my_note = "2023.07.03 Icet sd009_MoRe3 base temp"
-
-# # centers =  [6080, 6220, 6610, 7089] #sd004_1
-# # centers =  [6033, 6335, 6620, 7104] #sd003a
-# # centers =  [6107, 6462, 7172, 7577, 7876, 8029] #sd008
-
-start_freq_list = [1000,3600,3000,6000]
-stop_freq_list = [8500,4600,6000,8500]
-# # for center in centers:
-# #     start_freq_list += [center-100]
-# #     stop_freq_list += [center+100]
-# #
-last_v = 0.004
-for index in range(len(start_freq_list)):
-    title = "_" + f"sweep_B_{start_freq_list[index]}to{stop_freq_list[index]}MHz" # some unique feature you want to add in title
-    order = 0
-    last_v = wet_sweep(start=last_v,
-                       stop=3.504,
-                       step_size=0.5,
-                       order=order,
-                       last_v=last_v,
-                       f_min=start_freq_list[index],
-                       f_max=stop_freq_list[index],
-                       power=-5)
-    last_v = dry_sweep(last_v,0.004)
-print('done')
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009\WiggleB_10Khz_fine'
+# my_note = "2023.07.07 Icet sd009_MoRe3 base temp"
+#
+# # # centers =  [6080, 6220, 6610, 7089] #sd004_1
+# # # centers =  [6033, 6335, 6620, 7104] #sd003a
+# # # 6107, 6462, 7172, 7577, 7876, 8029] #sd008
+# centers = [3980, 4070, 4340, 4550] #sd009
+#
+# start_freq_list = []
+# stop_freq_list = []
+# for center in centers:
+#     start_freq_list += [center-40]
+#     stop_freq_list += [center+20]
+#
+# last_v = 0.004
+# for index in range(len(start_freq_list)):
+#     title = f"sweep_B_{start_freq_list[index]}to{stop_freq_list[index]}MHz" # some unique feature you want to add in title
+#     order = 0
+#     last_v = wet_sweep(start=last_v,
+#                        stop=3.504,
+#                        step_size=0.5,
+#                        order=order,
+#                        last_v=last_v,
+#                        f_min=start_freq_list[index],
+#                        f_max=stop_freq_list[index],
+#                        power=-5)
+#     last_v = dry_sweep(last_v,0.004)
+# print('done')
 
 '''Power scan'''
 # data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
@@ -235,13 +236,14 @@ print('done')
 # dry_sweep(0.7,0.01)
 
 '''Record temp'''
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
-# my_note = "2023.06.15 Icet sd008_MoRe2 warm up"
+data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009\warmup'
+my_note = "2023.07.08 Icet sd009 warm up"
 
-# order = 0
-# while 1:
-#     run_single(sweep=None,order=order,f_min=2000,f_max=8500,average=3,power=-5)
-#     order += 1
+order = 0
+title = 'warmup'
+while 1:
+    run_single(sweep=None,order=order,f_min=2000,f_max=8500,average=3,power=-5)
+    order += 1
 
 '''Take trace_manual'''
 # data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009'

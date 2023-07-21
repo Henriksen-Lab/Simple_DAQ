@@ -109,7 +109,7 @@ def keithley2400_get_ohm_4pt(address):
         keithley.write("SENS:FUNC \'RES\'") # measure Resistance
         keithley.write("RES:MODE AUTO") # mode: auto
         keithley.write("SYST:RSEN ON")  # set to 4 wire sensing
-        keithley.write("SENS:RES:RANG:AUTO 1") # Auto range
+        # keithley.write("SENS:RES:RANG:AUTO 1") # Auto range
         keithley.write("FORM:ELEM RES") # only output R
         string_data = keithley.query("READ?")
         numerical_data = float(string_data)
@@ -123,7 +123,7 @@ def keithley2400_get_ohm_2pt(address):
         keithley.write("SENS:FUNC \'RES\'") # measure Resistance
         keithley.write("RES:MODE AUTO") # mode: auto
         keithley.write("SYST:RSEN OFF")  # set to 4 wire sensing
-        keithley.write("SENS:RES:RANG:AUTO 1") # Auto range
+        # keithley.write("SENS:RES:RANG:AUTO 1") # Auto range
         keithley.write("FORM:ELEM RES") # only output R
         string_data = keithley.query("READ?")
         numerical_data = float(string_data)
@@ -135,7 +135,7 @@ def keithley2000_get_voltage_V(address):
     try:
         keithley = rm.open_resource(address)
         keithley.write("SENS:FUNC \"volt\"") # set volt
-        keithley.write("SENS:volt:RANG:AUTO 1") # Auto range
+        # keithley.write("SENS:volt:RANG:AUTO 1") # Auto range
         string_data = keithley.query("FETC?")
         numerical_data = float(string_data)
     finally:
@@ -146,7 +146,7 @@ def keithley2000_get_ohm_4pt(address):
     try:
         keithley = rm.open_resource(address)
         keithley.write("SENS:FUNC \"FRES\"") # measure 4 wire Resistance for 2000
-        keithley.write("SENS:FRES:RANG:AUTO 1") # Auto range
+        # keithley.write("SENS:FRES:RANG:AUTO 1") # Auto range
         # keithley.write("FORM:ELEM FRES") # only output R
         string_data = keithley.query("FETC?")
 
@@ -159,7 +159,7 @@ def keithley2000_get_ohm_2pt(address):
     try:
         keithley = rm.open_resource(address)
         keithley.write("SENS:FUNC \"RES\"") # measure 2 wire Resistance for 2000
-        keithley.write("SENS:RES:RANG:AUTO 1") # Auto range
+        # keithley.write("SENS:RES:RANG:AUTO 1") # Auto range
         string_data = keithley.query("FETC?")
 
         numerical_data = float(string_data)

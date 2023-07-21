@@ -12,7 +12,7 @@ from Instrument_Drivers.E4405B import *
 from Instrument_Drivers.DC205 import *
 from Instrument_Drivers.SR124 import *
 from Instrument_Drivers.keithley2230G_30_1 import *
-
+from Instrument_Drivers.Keysight_U2741A import *
 global instrument_dict
 instrument_dict = {'get':{},
                    'set':{},
@@ -30,6 +30,7 @@ instrument_dict['get'].update({'Agilent infiniiVision': ['counter']})
 instrument_dict['get'].update({'E4405B': ['please input the VNA_settings']})
 instrument_dict['get'].update({'DC205': ['sur_volt']})
 instrument_dict['get'].update({'SR124': ['sur_AC_Vrms', 'sur_AC_freq', 'sur_DC_bias']})
+instrument_dict['get'].update({'U2741A': ['volt', 'ohm_4pt']})
 
 instrument_dict['set'].update({'keithley2400': ['current', 'voltage']})
 instrument_dict['set'].update({'keithley2230': ['Ch1_volt', 'Ch2_volt', 'Ch3_volt']})
@@ -134,6 +135,11 @@ def get_value(address='', name='', func='', **kwargs):
             value = SR124_get_frequency(address)
         if func == 'sur_DC_bias':
             value = SR124_get_DCbias(address)
+    elif name == 'U2741A':
+        if func == 'volt':
+            value = U2741A_get_voltage(address)
+        elif func == 'ohm_4pt':
+            value = U2741A_get_ohm_4pt(address)
     else:
         value = 0
         print('Please input correct instrument name or function name')
