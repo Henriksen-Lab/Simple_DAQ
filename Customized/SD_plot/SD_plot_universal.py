@@ -5,6 +5,7 @@
 """
 
 import time, datetime, sys, os, string
+from datetime import datetime as dt
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
@@ -15,7 +16,11 @@ import scipy
 from scipy.optimize import curve_fit
 
 import pickle
-
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+parent_parent_dir = os.path.dirname(parent_dir)
+if parent_parent_dir not in sys.path:
+    sys.path.append(parent_parent_dir)
 from Instrument_Drivers.thermometer.Cernox import *
 from Instrument_Drivers.thermometer.RuOx import *
 from SD_FigureFormat import *

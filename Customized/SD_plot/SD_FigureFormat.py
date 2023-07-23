@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from PIL import Image
+# from PIL import Image
 import matplotlib as mpl
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -34,7 +34,7 @@ mpl.rcParams['ytick.major.width'] = linewidth
 mpl.rcParams['ytick.major.size'] = 3
 
 mpl.rcParams['legend.fontsize'] = 5
-mpl.rcParams['axes.formatter.limits'] = -2, 4
+mpl.rcParams['axes.formatter.limits'] = -4, 4
 mpl.rcParams['axes.formatter.useoffset'] = False
 mpl.rcParams['axes.spines.top'] = True
 mpl.rcParams['xtick.top'] = True
