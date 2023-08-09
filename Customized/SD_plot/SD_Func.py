@@ -1,6 +1,7 @@
 import numpy as np
 
 import scipy
+from datetime import datetime as dt
 from scipy.optimize import curve_fit
 from scipy import signal
 from scipy import interpolate
@@ -33,9 +34,27 @@ def antisymetric(y):
 #     fit = f(x)
 #     return derivative(fit, x, dx=1e6, args=params)
 
+
 def compute_slope(x, y):
     dx = np.diff(x)
     dy = np.diff(y)
     slope = dy / dx
     newx = (x[:-1] + x[1:])/2
     return newx, slope
+
+def round_to_2e(arr, align_width=10):
+    output = []
+    if isinstance(arr, (list, np.ndarray)):
+        for item in arr:
+            if isinstance(item, str):
+                output.append(item.ljust(align_width))
+            else:
+                output.append(f"{item:.2e}".ljust(align_width))
+        return ', '.join(output)
+    else:
+        raise TypeError("Input must be a list or a numpy array.")
+
+def get_ymd(timestamp):
+    time = dt.fromtimestamp(timestamp)
+    today = time.strftime("%Y%m%d")
+    return today

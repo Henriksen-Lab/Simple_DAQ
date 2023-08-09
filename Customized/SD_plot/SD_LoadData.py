@@ -46,13 +46,21 @@ def load_data_from_file(name):
     data = my_data_dict(data, readout, axis)
     return data
 
+def load_data_CZlab(path):
+    with open(path, 'r') as f:
+        data = f.read()
+    result = re.search(r"(BEGIN)(.*)(END)", data, flags=re.DOTALL)
+    data = result.groups()[1]
+    with StringIO(data) as data_io:
+        data = np.genfromtxt(data_io)
+    return data
 
 def load_data_from_folder(folder_path):
     order = 0
     ordered_file_name_dict = get_ordered_file_name_dict(folder_path)
     data = {}
     for name in ordered_file_name_dict.keys():
-        if 'DS' not in name:
+        if ".DS_Store" not in name:
             matrix = []
             order += 1
             file = ordered_file_name_dict[name]['path']
@@ -64,7 +72,7 @@ def load_data_from_folder(folder_path):
                     break
             axis = str(file_content[i - 1][1:].decode('utf-8')).split()
             axis = ['_'.join(x.split('_')[:-1]) for x in axis]
-            print(' ', order, ". ", name)
+            print(' ', order, ". ", ordered_file_name_dict[name]['name'])
             readout = np.loadtxt(file)
             [matrix.append(x) for x in readout]
             matrix = np.array(matrix)
@@ -78,7 +86,7 @@ def get_ordered_file_name_dict(folder_path):
     for root, dirs, files in os.walk(folder_path, topdown=False):
         # go through every file inside the folder, even inside subfolders
         for name in files:
-            if '.' in name:
+            if '.' in name and ".DS_Store" not in name:
                 path = os.path.join(root, name)
                 file_name_dict.update({path: {}})
                 file_name_dict[path].update({'path': os.path.join(root, name),
@@ -94,22 +102,21 @@ def get_ordered_file_name_dict(folder_path):
     return ordered_file_name_dict
 
 
-def calc_average(x, y, type=None):
-    x = np.array(x)
+def calc_average(y, type=None):
     y = np.array(y)
     if type == 'logmag':
         yy = np.average(np.power(10, y / 20))
         yy = 20 * np.log10(yy)
     else:
         yy = np.nanmean(y)
-    return np.average(x), yy
+    return yy
 
-def calc_average_spectrum(x, y, type='logmag'):
+def calc_average_spectrum(x, y, type=None):
     x = np.array(x)
     y = np.array(y)
     x_sweep = list(dict.fromkeys(x))
     y_sweep = []
-    for each_x in x_sweep:
+    for each_x in sorted(x_sweep):
         if type == 'logmag':
             each_y = np.average(np.power(10, y / 20)[x == each_x])
             each_y = 20 * np.log10(each_y)
@@ -117,7 +124,7 @@ def calc_average_spectrum(x, y, type='logmag'):
             each_y = np.average(y[x == each_x])
         y_sweep += [each_y]
     # print('     Avg = ', len(y[x == x_sweep[0]]), ' times')
-    return np.array(x_sweep), np.array(y_sweep)
+    return np.array(sorted(x_sweep)), np.array(y_sweep)
 
 
 def limitdata(data, low_limit, high_limit, tag):
@@ -163,10 +170,21 @@ def save_data(folder_path, data):
                header=axis
                )
 
-
 def get_sweep(data, tag):
     data[tag] = np.array(
         [round(x, 5) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
     sweep = data[tag]
     sweep_list = sorted(list(dict.fromkeys(sweep)))
     return sweep_list
+
+def get_sweep_info(data, tag):
+    data[tag] = np.array(
+        [round(x, 5) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
+    sweep = data[tag]
+    sweep_list = sorted(list(dict.fromkeys(sweep)))
+    i = str(min(sweep_list))
+    f = str(max(sweep_list))
+    num = len(sweep_list)
+    info = f'[{i}, {f}, num = {num}]'
+    return info
+

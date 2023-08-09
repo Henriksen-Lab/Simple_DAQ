@@ -1,6 +1,6 @@
 import os
 import numpy as np
-# from PIL import Image
+from PIL import Image
 import matplotlib as mpl
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -47,6 +47,7 @@ mpl.rcParams['axes.xmargin'] = 0.0 # x margin.  See `axes.Axes.margins`
 mpl.rcParams['axes.ymargin'] = 0.1  # y margin.  See `axes.Axes.margins`
 mpl.rcParams['legend.frameon'] = False
 mpl.rcParams['legend.borderpad'] = 0
+mpl.rcParams['axes.titlepad'] = 15
 
 # color
 # colorcycle = ["#DF9E9B","#99BADF","#D8E7CA","#99CDCE","#999ACD","#FFD0E9"] # 6 light
@@ -62,18 +63,18 @@ fig_size = np.asarray([10, 7])
 fig_size = fig_size / 2.54
 
 
-
-
-
 def get_im(fg):
-    # get the figure canvas and renderer
-    canvas = fg.canvas
-    renderer = canvas.get_renderer()
-    # draw the figure canvas
-    canvas.draw()
-    # get the numpy array of the figure canvas
-    im = np.array(renderer.buffer_rgba())
-    plt.close(fg)
+    if isinstance(fg, (np.ndarray, np.generic)):
+        im = fg
+    else:
+        # get the figure canvas and renderer
+        canvas = fg.canvas
+        renderer = canvas.get_renderer()
+        # draw the figure canvas
+        canvas.draw()
+        # get the numpy array of the figure canvas
+        im = np.array(renderer.buffer_rgba())
+        plt.close(fg)
     return im
 
 
@@ -81,7 +82,6 @@ def turn_off(list):
     for ax in list:
         ax.axis('off')
         # ax.axis('tight')
-
 
 def import_fig(path):
     # open the image with PIL
@@ -91,7 +91,6 @@ def import_fig(path):
     # close the PIL image to free memory
     img.close()
     return arr.astype(float)
-
 
 def vertical_stack(fig_width, heights, figs, labels, sharex = False):
     gs = gridspec.GridSpec(ncols=1, nrows=len(heights), height_ratios=heights)
@@ -129,7 +128,7 @@ def horizontal_stack(fig_height, widths, figs, labels=None):
 
 def insert(fg, fig_insert, left, bottom, width, height):
     # decrease label/tick sizes in fig_insert
-    for ax in fig_insert.axes:
+    for ax in fg.axes:
         ax.tick_params(labelsize=8)
         for label in ax.get_xticklabels():
             label.set_size(8)
@@ -140,8 +139,8 @@ def insert(fg, fig_insert, left, bottom, width, height):
     ax.axis('off')
 
 
-def add_vline(vlines, y, label='', position=None):
-    plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color='grey', ls='--')
+def add_vline(vlines, y, label='', position=None, color='grey', ls='--'):
+    plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color=color, ls=ls)
     for i, x in enumerate(vlines):
         if position is None:
             position = min(y)
