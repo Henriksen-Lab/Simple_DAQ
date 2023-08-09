@@ -35,6 +35,8 @@ mpl.rcParams['ytick.major.size'] = 3
 
 mpl.rcParams['legend.fontsize'] = 5
 mpl.rcParams['axes.formatter.limits'] = -2, 4
+
+# Preference
 mpl.rcParams['axes.formatter.useoffset'] = False
 mpl.rcParams['axes.spines.top'] = True
 mpl.rcParams['xtick.top'] = True
@@ -46,6 +48,15 @@ mpl.rcParams['axes.xmargin'] = 0.0 # x margin.  See `axes.Axes.margins`
 mpl.rcParams['axes.ymargin'] = 0.1  # y margin.  See `axes.Axes.margins`
 mpl.rcParams['legend.frameon'] = False
 mpl.rcParams['legend.borderpad'] = 0
+
+# color
+# colorcycle = ["#DF9E9B","#99BADF","#D8E7CA","#99CDCE","#999ACD","#FFD0E9"] # 6 light
+# colorcycle = ["#354e97","#70a3c4","#c7e5ec","#f5b46f","#df5b3f"] # 5 Blue->red
+# colorcycle = ["#fbf49a","#eeb5ba","#7e5874","#ffe2b5","#edb073","#ce223d","#aeadd6","#91adb9","#d1d1d1","#c48ab6"]
+# colorcycle = ["#7b7b7c","#28a8de","#fff300","#f3835e","#ef5a29","#f1eee8"]
+# colorcycle = ["#8ecfc9", "#ffbe7a", "#fa7f6f", "#82b0d2", "#beb8dc", "#e7dad2"]
+# mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colorcycle)
+
 # layout
 
 fig_size = np.asarray([10, 7])
