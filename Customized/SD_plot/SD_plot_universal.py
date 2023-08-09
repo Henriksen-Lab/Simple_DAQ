@@ -27,14 +27,9 @@ from SD_FigureFormat import *
 from SD_LoadData import *
 from SD_Func import *
 
-global global_legend, inside_plot_flag
-global_legend = []
-inside_plot_flag = True
-
-
+folder_path =''
 def plot_fig(name='temp', folder_path=r'C:\Users\ICET\Desktop\Data\SD\20230317_SD_004_1_wet_magprobe\graph',
-             save=False):
-    global inside_plot_flag
+             save=False, inside_plot_flag=True):
     if inside_plot_flag:
         print('Inside plot')
         plt.tight_layout()
@@ -53,66 +48,49 @@ def filter_nan(x, y):
 
 
 """------------------Plot configs-----------------------------------"""
-def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag', save=False, yerrbar=False,
-                      continuous=False):
-    global global_legend
+def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag', save=False, yerrbar=False, inside_plot_flag=True):
     # filter mask for single sweep
-    data[sweep_tag_1] = np.array([round(x, 5) for x in
-                                  data[sweep_tag_1]])  # round sweep para, avoiding multiple value at same sweep value
-    sweep1 = data[sweep_tag_1]  # sweep para
-    sweep_1 = list(dict.fromkeys(sweep1))  # sweep para list
+    sweep1 = data[sweep_tag_1]
+    sweep_1 = get_sweep(data,sweep_tag_1)
     mask = {}  # mask dictionary
     for ssweep1 in sweep_1:
         mask.update({ssweep1: sweep1 == ssweep1})
     # Plot
-    if not continuous:
+    if inside_plot_flag:
         fg = plt.figure(figsize=fig_size, dpi=300)
-    legend = []
-    i = 0
-    # print(sorted(sweep_1))
+
     x = []
     y = []
     yerr = []
     for ssweep1 in sorted(sweep_1):
         current_mask = mask[ssweep1]
-        if 'freq' in plot_tag_x:
-            xx, yy = calc_average_spectrum(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask])
-            x += [float(ssweep1)]
-            y += [xx[yy == min(yy)]]  # find dip freq
-            yerr += [xx[1] - xx[0]]
-            plt.xlabel('Vg(V)')
-            plt.ylabel('Resonance freq(Hz)')
-        else:
-            xx = data[plot_tag_x][current_mask]
-            yy = data[plot_tag_y][current_mask]
-            x += [np.average(xx)]
-            y += [np.average(yy)]
-            yerr += [np.std(yy)]
-            plt.xlabel(plot_tag_x)
-            plt.ylabel(plot_tag_y)
+        xx = data[plot_tag_x][current_mask]
+        yy = data[plot_tag_y][current_mask]
+        x += [np.average(xx)]
+        y += [np.average(yy)]
+        yerr += [np.std(yy)]
+    plt.xlabel(plot_tag_x)
+    plt.ylabel(plot_tag_y)
     axis = plot_tag_x + '\t\t\t\t' + plot_tag_y + '\t\t\t\t'
     data.update({f'avg_{plot_tag_x}_x': x})
     data.update({f'avg_{plot_tag_y}_y': y})
     data.update({f'avg_{plot_tag_y}_yerr': yerr})
-
+    plt.plot(x, y, ls='-', ms=0.5, mfc='none')
     if yerrbar:
         y = np.array(y)
         yerr = np.array(yerr)
         dataToSave = np.column_stack((x, y, yerr))
         axis += 'errorbar\t\t\t\t'
-        plt.plot(x, y, ls='-', ms=0.5, mfc='none')
         plt.fill_between(x, y - yerr, y + yerr, alpha=0.4, ls='--')
-        global_legend += ['']
     else:
         dataToSave = np.column_stack((x, y))
-        plt.plot(x, y, ls='-', ms=0.5, mfc='none')
 
     file_path = folder_path + '\\' + plot_tag_x + '_vs_' + plot_tag_y
     if save:
         np.savetxt(file_path, dataToSave, delimiter='\t',
                    header=axis
                    )
-    plot_fig()
+    plot_fig(inside_plot_flag=inside_plot_flag)
 
 
 def plot_single_sweep_calc_R(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_V='V_x', plot_tag_I='I_x', save=False,
@@ -203,7 +181,7 @@ def plot_single_sweep_spectrum(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_t
 
 
 def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp', plot_tag_y='r_ruox',
-                      baseline=None, offset=0, save=False, plot_Rxy=False):
+                      baseline=None, offset=0, save=False, plot_Rxy=False, inside_plot_flag = True):
     data[sweep_tag_1] = np.array([round(x, 5) for x in
                                   data[sweep_tag_1]])  # round sweep para, avoiding multiple value at same sweep value
     data[sweep_tag_2] = np.array([round(x, 5) for x in
@@ -303,7 +281,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     # vlines = [6081e6,6225e6,6789e6,7093e6]  # sd004_1_mag_probe, no hemt
     # add_vline(vlines,y)
 
-    plot_fig()
+    plot_fig(inside_plot_flag=inside_plot_flag)
 
     if plot_Rxy:
         fg = plt.figure(figsize=np.asarray([10, 8.5]) / 2.54, dpi=300)
@@ -453,6 +431,7 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 # plt.show()
 
 """For MW spectrum sweeping DC Mag field BEGIN"""
+# inside_plot_flag = True
 # folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230428_SD006b_mag_probe_addhemt\compressibility\sweep2'
 # data = load_data_from_folder(folder_path)
 # # data = limitdata(data, 5.0e9, 5.5e9, tag='VNA_freqs')
@@ -476,6 +455,7 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 """For MW spectrum sweeping DC Mag field STOP"""
 
 """For MW spectrum sweeping DC+ AC gate BEGIN"""
+# inside_plot_flag = True
 # folder_path = r'C:\Users\ICET\Desktop\Data\SD\20230428_SD006b_mag_probe_addhemt\compressibility\DCACsweep_20min'
 # save_path = r'C:\Users\ICET\Desktop\Data\SD\20230428_SD006b_mag_probe_addhemt\compressibility\fig_DCACsweep_20min\difference'
 # data = load_data_from_folder(folder_path)
@@ -715,3 +695,4 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
 # plt.show()
 
 """For ploting Mag cali END"""
+
