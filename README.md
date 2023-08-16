@@ -1,4 +1,3 @@
-<meta name="google-site-verification" content="CTpLnFBsJ2f2Atf_mY3q0W8onOKsMNPaIQCR2kTkwjI" />
 # Project Name: Simple_DAQ
 
 ## Table of Contents
