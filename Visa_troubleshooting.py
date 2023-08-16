@@ -6,6 +6,7 @@ import serial
 from UI_manager.DataManager import get_value,set_value
 from Instrument_Drivers.Instrument_dict import instrument_dict
 from Instrument_Drivers.SR830 import *
+from datetime import datetime
 
 global instrument_dict, onetime_dict
 onetime_dict = {'get':{},
@@ -377,11 +378,13 @@ def pop_window():
                               address=self.visa_address.combobox.get(),
                               name=self.instrument_name.combobox.get(),
                               func=self.set_function_selection.combobox.get())
-                    value = str(value) + ', ' + 'output tried'
+
+                    current_t = f"{datetime.now().strftime('%Y.%m.%d')}", " at ", f"{datetime.now().strftime('%H:%M:%S')}"
+                    value = str(value) + ', ' + 'output tried' + ',' + current_t
                     self.visa_write_result.delete('1.0', 'end')
                     self.visa_write_result.insert('1.0', value)
                 finally:
-                    print('Output Tried')
+                    print(current_t,'Output Tried')
 
             self.visa_read_button = tk.Button(self.content, text="Query value", command=read)
             self.visa_read_button.grid(row=2, column=4, sticky='w')
