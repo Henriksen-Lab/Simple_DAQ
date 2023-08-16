@@ -11,8 +11,6 @@
     - [Advanced Usage](#advanced-usage)
 5. [FAQ](#faq)
 6. [Contributing](#contributing)
-7. [License](#license)
-8. [Acknowledgments](#acknowledgments)
 
 ## Introduction
 
@@ -146,17 +144,23 @@ While the Python version maintains the UI style of the original LabVIEW version,
 
 ### Quick Start
 
-1. **Initial Setup**:
+1. **Safety First**:
+    - Before initiating any measurements, ensure you're knowledgeable about the equipment and the measurements you're planning. Ensure connections are correct and that the readings are sensible. Proceeding without this confirmation can lead to wasted time and inaccurate data.
+
+2. **Initial Setup**:
     - Begin by following the installation instructions provided.
     - In your IDE, execute the `Simple_DAQ_beta.py` file. Two windows named `Specify your measurement below` and `Realtime plotting` will appear.
 
-2. **Safety First**:
-    - Before initiating any measurements, ensure you're knowledgeable about the equipment and the measurements you're planning. Ensure connections are correct and that the readings are sensible. Proceeding without this confirmation can lead to wasted time and inaccurate data.
+![Plot](UI_manager/Measurement.png)
+![Plot](UI_manager/Plot.png)
 
 3. **Measurement Specification Window**:
     - This window primarily contains three fields: `Instrument`, `File`, and `Sweep`.
 
 4. **File Configuration**:
+
+    ![Plot](UI_manager/file.png)
+
     - Determine a `File name` for your data.
     - Specify the `Folder path` where data should be saved.
     - Determine the `order` of your files. Input should be an integer. E.g., default data will save as `name_me_please.001`.
@@ -169,6 +173,10 @@ While the Python version maintains the UI style of the original LabVIEW version,
 
 5. **Instrument Configuration**:
     - The far-left block is reserved for VNA-type instruments. Remaining blocks are for instruments that return a single value.
+
+    ![Plot](UI_manager/VNA.png)
+    ![Plot](UI_manager/instrument.png)
+
     - Assign a `Variable name` which will represent this in your data set.
     - Fill in the `Visa address`, verifiable via NI MAX software or `Visa_troubleshooting.py`.
     - Choose your `Instrument_name` and `Function_selection` for specific data recording.
@@ -178,6 +186,9 @@ While the Python version maintains the UI style of the original LabVIEW version,
 6. **Sweep Configurations**:
     - This panel contains: `Main loop`, `Secondary loop`, and `PID control`.
     - For a single parameter sweep, fill in the `Main loop`:
+
+        ![Plot](UI_manager/Mainloop.png)
+
         - Instrument settings mirror those in the instrument panel.
         - Sweep settings include `Start`, `Stop`, `Sweep step size`, and `Delay time`.
         - Toggles include:
@@ -193,7 +204,11 @@ While the Python version maintains the UI style of the original LabVIEW version,
 ### Advanced Usage
 
 1. `Visa_troubleshooting.py`: Test connection and fuctionality with single instrument.
+![Plot](UI_manager/Troubleshoot.png)
+
 2. `Datafile editor.py`: Contatenate same formatted data in the folder, it will comparing different tempstamp to match data, and out put the new data
+![Plot](UI_manager/datafile_editor.png)
+
 3. `Instrument_Drivers`:
 	- `Instrument_dict.py`: Includes names and function of the drivers
 
