@@ -153,7 +153,7 @@ While the Python version maintains the UI style of the original LabVIEW version,
 
 ![Plot](UI_manager/Measurement.png)
 
-![Plot](UI_manager/Plot.png)
+![Plot](UI_manager/plotwin.png)
 
 3. **Measurement Specification Window**:
     - This window primarily contains three fields: `Instrument`, `File`, and `Sweep`.
@@ -244,11 +244,11 @@ While the Python version maintains the UI style of the original LabVIEW version,
 
 #### **1. `Visa_troubleshooting.py`**
 This tool is particularly useful when you need to test individual instruments or make simultaneous manual adjustments. Its primary purpose is to validate the connection and assess the functionality of a single instrument.
-![Troubleshooting Interface](UI_manager/Troubleshoot.png)
+![Troubleshooting Interface](UI_manager/Trouble.png)
 
 #### **2. `Datafile editor.py`**
 When you've captured data on different computers and wish to synchronize their timestamps, this tool comes to the rescue. It efficiently concatenates identically formatted data (with matching axes) found within a folder. By comparing diverse timestamps, it aligns data and then exports the newly consolidated data to the specified folder.
-![Datafile Editor Interface](UI_manager/datafile_editor.png)
+![Datafile Editor Interface](UI_manager/datafile.png)
 
 #### **3. `Instrument_Drivers`**
 
