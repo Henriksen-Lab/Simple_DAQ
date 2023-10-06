@@ -140,12 +140,12 @@ def insert(fg, fig_insert, left, bottom, width, height):
     ax.axis('off')
 
 
-def add_vline(vlines, y, label='', position=None, color='grey', ls='--'):
+def add_vline(vlines, y, label='', position=None, color='grey', ls='--', fontsize=8):
     plt.vlines(x=vlines, ymin=min(y), ymax=max(y), color=color, ls=ls)
     for i, x in enumerate(vlines):
         if position is None:
             position = min(y)
-        plt.text(x, position, f'{label}:{(x / 1e9)}', rotation=90, verticalalignment='bottom')
+        plt.text(x, position, f'{label}:{(x / 1e9)}', rotation=90, verticalalignment='bottom', fontsize=fontsize, color=color)
 
 
 def get_path(filename):

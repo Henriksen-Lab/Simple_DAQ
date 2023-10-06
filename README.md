@@ -152,7 +152,8 @@ While the Python version maintains the UI style of the original LabVIEW version,
     - In your IDE, execute the `Simple_DAQ_beta.py` file. Two windows named `Specify your measurement below` and `Realtime plotting` will appear.
 
 ![Plot](UI_manager/Measurement.png)
-![Plot](UI_manager/Plot.png)
+
+![Plot](UI_manager/plotwin.png)
 
 3. **Measurement Specification Window**:
     - This window primarily contains three fields: `Instrument`, `File`, and `Sweep`.
@@ -201,29 +202,134 @@ While the Python version maintains the UI style of the original LabVIEW version,
 	<!-- (Refer to [Advanced Usage](#advanced-usage)).  -->
 	
 
+7. **Initiating the Measurement**
+
+    Once you click the `Run` button, your IDE will display a sequence of status updates, which might include:
+
+    ```bash
+    Measurement loaded
+    Monitor functioning            # Displayed when no sweep is set up.
+    Single Sweep Starting          # Displayed for Mainloop sweep configuration.
+    Double Sweep Started           # Displayed when both Mainloop and Secondary loop configurations.
+    ```
+
+    Over time, as the data files are created or updated, you'll notice additional messages like:
+
+    ```bash
+    2023.08.16      11:16:36        name_me_please.001
+    Data file created.
+    2023.08.16      11:26:36        name_me_please.001
+    Data file updated.
+    2023.08.16      11:36:36        name_me_please.001
+    Data file updated.
+    ```
+
+8. **Visualizing Data with the Plot Window**
+
+    **Select Data**:
+    - Navigate to `data_selector` to specify the data category you'd like to visualize. Your options might be:
+        - `data`: Represents data to be saved in files
+        - `sweep`: Refers to internal record for you sweep parameters
+        - `pid`: Indicates the temp log from the PID set up
+
+    **Define Axes**:
+    - Determine which parameters you want on the X1 and Y1 axes for your graph.
+
+    **Begin Visualization**:
+    - Click on `Start plotting`. A live-updating plot will subsequently appear on the right side of the screen.
+
+
+
 ### Advanced Usage
 
-1. `Visa_troubleshooting.py`: Test connection and fuctionality with single instrument.
-![Plot](UI_manager/Troubleshoot.png)
+#### **1. `Visa_troubleshooting.py`**
+This tool is particularly useful when you need to test individual instruments or make simultaneous manual adjustments. Its primary purpose is to validate the connection and assess the functionality of a single instrument.
+![Troubleshooting Interface](UI_manager/Trouble.png)
 
-2. `Datafile editor.py`: Contatenate same formatted data in the folder, it will comparing different tempstamp to match data, and out put the new data
-![Plot](UI_manager/datafile_editor.png)
+#### **2. `Datafile editor.py`**
+When you've captured data on different computers and wish to synchronize their timestamps, this tool comes to the rescue. It efficiently concatenates identically formatted data (with matching axes) found within a folder. By comparing diverse timestamps, it aligns data and then exports the newly consolidated data to the specified folder.
+![Datafile Editor Interface](UI_manager/datafile.png)
 
-3. `Instrument_Drivers`:
-	- `Instrument_dict.py`: Includes names and function of the drivers
+#### **3. `Instrument_Drivers`**
 
-To add more instrument/ Functions:
-1. Edit/add funtion in Instrument_Drivers folder
-2. if new driver added:
+- **`Instrument_dict.py`**:
+    This contains the nomenclature and functionalities associated with the drivers.
 
-	import the new driver in `Instrument_dict.py` with format:
+#### To Incorporate Additional Instruments or Functions:
 
-	```bash
-	from [your driver name] import *
-	```
-3. if new driver/ function added:
-	
-	Change the `get_value()`, `set_value()` function accordingly in `Instrument_dict.py`
+**1.** Start by editing or adding the desired function/driver within the `Instrument_Drivers` directory.
+
+**2.** If you're introducing a new driver:
+  
+- Import the new driver in `Instrument_dict.py`
+
+**3.** **Integrating a New Driver or Function**:
+
+Whenever you add a new driver or function:
+
+- Update the `get_value()` and `set_value()` functions in `Instrument_dict.py` to accommodate the new additions.
+  
+- Make appropriate modifications to the `instrument_dict` in `Instrument_dict.py`.
+
+**For Instance**:
+
+Suppose you've created a new driver, `SampleInstrument.py`, housing several functions like follows, and you've placed this in the `Instrument_Drivers` directory.
+
+```python
+def SampleInstrument_get_random1(address):
+    ...
+    return value
+
+def SampleInstrument_get_random2(address):
+    ...
+    return value
+
+def SampleInstrument_set_random3(address, value):
+    ...
+
+def SampleInstrument_set_random4(address, value):
+    ...
+```
+
+To integrate this in `Instrument_dict.py`, proceed as follows:
+
+- Incorporate the new driver by adding:
+
+```python
+from SampleInstrument import *
+```
+
+- Enhance the `instrument_dict` to include the new functions:
+
+```python
+instrument_dict['get'].update({SampleInstrument: ['random1', 'random2']})
+instrument_dict['set'].update({SampleInstrument: ['random3', 'random4']})
+```
+
+- Embed the new functions into the `get_value` and `set_value` procedures:
+
+```python
+def get_value(address='', name='', func='', **kwargs):  # Extend this function
+    ...
+    elif name == 'SampleInstrument':
+        if func == 'random1':
+            value = SampleInstrument_get_random1(address)
+        elif func == 'random2':
+            value = SampleInstrument_get_random2(address)
+```
+
+```python
+def set_value(value, address='', name='', func='', **kwargs):  # Expand this function
+    ...
+    elif name == 'SampleInstrument':
+        if func == 'random3':
+            SampleInstrument_set_random3(address, value)
+        elif func == 'random4':
+            SampleInstrument_set_random4(address, value)
+```
+
+**4.** Before pushing your changes to GitHub **(and please do so if you add new drivers/functions)**, ensure that the `Visa_troubleshooting.py` correctly displays the intended readouts or causes the instrument to behave as desired.
+
 
 ### Folder Tree
 ```
