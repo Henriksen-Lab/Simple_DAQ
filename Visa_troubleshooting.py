@@ -379,8 +379,8 @@ def pop_window():
                               name=self.instrument_name.combobox.get(),
                               func=self.set_function_selection.combobox.get())
 
-                    current_t = f"{datetime.now().strftime('%Y.%m.%d')}", " at ", f"{datetime.now().strftime('%H:%M:%S')}"
-                    value = str(value) + ', ' + 'output tried' + ',' + current_t
+                    current_t = f"{datetime.now().strftime('%Y.%m.%d')}" + ' at ' + f"{datetime.now().strftime('%H:%M:%S')}"
+                    value = str(value) + ', ' + 'output tried' + ',' + str(current_t)
                     self.visa_write_result.delete('1.0', 'end')
                     self.visa_write_result.insert('1.0', value)
                 finally:
