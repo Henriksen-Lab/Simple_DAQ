@@ -19,11 +19,7 @@ folder_path = os.getcwd()
 if folder_path not in sys.path:
     sys.path.append(folder_path) # easier to open driver files as long as Simple_DAQ.py is in the same folder with drivers
 from Instrument_Drivers.PicoVNA108 import get_picoVNA_smith
-from Instrument_Drivers.SR830 import SR830_set_frequency, SR830_set_amplitude
-from Instrument_Drivers.keithley import *
-from Instrument_Drivers.hp34461A import hp34461a_get_ohm_2pt, hp34461a_get_voltage,hp34461a_get_ohm_4pt
-from Instrument_Drivers.SR830 import SR830_set_frequency,SR830_set_amplitude,SR830_get_frequency,SR830_get_amplitude
-from Instrument_Drivers.SR124 import *
+from Instrument_Drivers.Instrument_dict import *
 rm = pyvisa.ResourceManager()
 
 # subprocess.call(['sh','SD_pywin32error.sh'])
@@ -54,7 +50,7 @@ def my_form(kwargs):
 
 '''---------------------Run func---------------------'''
 def get_sweep(start,stop,step_size):
-    num_steps = int(np.floor(abs(float(start) - float(stop)) / float(step_size))) + 1
+    num_steps = int((abs(float(start) - float(stop)) / float(step_size))) + 1
     return np.linspace(float(start), float(stop), num_steps)
 
 def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None):
@@ -84,19 +80,22 @@ def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None):
                header=f"{datetime.now().strftime('%Y%m%d')}" + " " + f"{datetime.now().strftime('%H%M%S')}" + '\n' + \
                       my_note + '\n' + avg + '\n' + f"{axis}")
 
-def dry_sweep(start, stop, step_size=0.01):
+def dry_sweep(start, stop, step_size=0.01, delay=0.9):
+    print(f"{datetime.now().strftime('%Y.%m.%d')}", " ", f"{datetime.now().strftime('%H:%M:%S')} ", 'Sweep started from:')
+    read()
     for sweep in get_sweep(start=start, stop=stop, step_size=step_size):
         sweep = round(sweep,ndigits=4)
-        set(sweep)
-        read()
+        set(sweep,delay=delay)
+    print(f"{datetime.now().strftime('%Y.%m.%d')}", " ", f"{datetime.now().strftime('%H:%M:%S')} ", 'Sweep ended at :')
+    read()
     return sweep
 
-def wet_sweep(start, stop, step_size,order, last_v, f_min, f_max, power=-5):
+def wet_sweep(start, stop, step_size, order, last_v, f_min, f_max, power=-5, average=250, dry_step_size=0.01, dry_delay=0.9):
     for sweep in get_sweep(start=start, stop=stop, step_size=step_size):
-        last_v = dry_sweep(last_v, sweep)
-        for i in range(2):
+        last_v = dry_sweep(last_v, sweep, step_size=dry_step_size, delay=dry_delay)
+        for i in range(1):
             order += 1
-            run_single(sweep, order, f_min=f_min, f_max=f_max, average=250, power=power)
+            run_single(sweep, order, f_min=f_min, f_max=f_max, average=average, power=power)
             last_v = sweep
     return last_v
 
@@ -105,39 +104,46 @@ def wet_sweep(start, stop, step_size,order, last_v, f_min, f_max, power=-5):
 
 keithley2400_gpib = 'GPIB0::25::INSTR'
 keithley2000_gpib = 'GPIB0::18::INSTR'
+keithley2230_gpib = 'GPIB0::1::INSTR'
 hp34461a = 'GPIB0::17::INSTR'
-SR830 = 'GPIB0::5::INSTR'
+SR830 = 'GPIB0::7::INSTR'
 SR124 = 'ASRL5::INSTR'
 
 port ='S21'
 
 '''---------------------Start your sequence here---------------------'''
 # define the program for each sweep
-def set(value):
+def set(value, delay=0.9):
     if value is not None:
         '''AC B wiggle'''
         # SR830_set_frequency(SR830, 10000)
         # SR830_set_amplitude(SR830, value)
         '''DC sweep Gate'''
         # keithley2400_set_sour_voltage_V(keithley2400_gpib, value)
+        keithley2230_CH2_Set_voltage(keithley2230_gpib, value)
         '''DC+AC sweep gate'''
         # SR124_set_amplitude(SR124, value)
-    time.sleep(1)
+        time.sleep(delay)
+    time.sleep(0.1)
 
 def read(*arg):
     read = {}
+    read.update({'timestamp': time.time()})
+    '''Power scan'''
     # read.update({'power': arg[0]})
     '''AC B wiggle'''
-    # read.update({'freq':SR830_get_frequency(SR830)})
-    # read.update({'wiggle_B':SR830_get_amplitude(SR830)})
+    # read.update({'freq': SR830_get_frequency(SR830)})
+    # read.update({'wiggle_B': SR830_get_amplitude(SR830)})
     '''DC sweep Gate'''
     # read.update({'v_sur': keithley2400_get_sour_voltage_V(keithley2400_gpib)})
+    read.update({'v_sur': keithley2230_CH2_Fetch_voltage(keithley2230_gpib)})
+    read.update({'i_sur': keithley2230_CH2_Fetch_current(keithley2230_gpib)})
     '''DC+AC sweep gate'''
     # read.update({'vg_bias': SR124_get_DCbias(SR124)})
     # read.update({'vg_freq': SR124_get_frequency(SR124)})
     # read.update({'vg_Vrms': SR124_get_amplitude(SR124)})
     '''Read RuOx'''
-    read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
+    # read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
 
     msg = ''
     for key, item in read.items():
@@ -147,27 +153,29 @@ def read(*arg):
 
 
 '''AC wiggle B'''
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009\WiggleB_10Khz_fine'
-# my_note = "2023.07.07 Icet sd009_MoRe3 base temp"
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231009_SD_test_011_7a_ICET\Wiggle_B'
+# my_note = "2023.10.09 Icet SD_test011_7a base temp"
 #
 # # # centers =  [6080, 6220, 6610, 7089] #sd004_1
 # # # centers =  [6033, 6335, 6620, 7104] #sd003a
 # # # 6107, 6462, 7172, 7577, 7876, 8029] #sd008
-# centers = [3980, 4070, 4340, 4550] #sd009
+# # centers = [3980, 4070, 4340, 4550] #sd009
 #
-# start_freq_list = []
-# stop_freq_list = []
-# for center in centers:
-#     start_freq_list += [center-40]
-#     stop_freq_list += [center+20]
+# # start_freq_list = [1000]
+# # stop_freq_list = [8500]
+# start_freq_list = [4620-100]
+# stop_freq_list = [4620+100]
+# # for center in centers:
+# #     start_freq_list += [center-40]
+# #     stop_freq_list += [center+20]
 #
 # last_v = 0.004
 # for index in range(len(start_freq_list)):
 #     title = f"sweep_B_{start_freq_list[index]}to{stop_freq_list[index]}MHz" # some unique feature you want to add in title
 #     order = 0
 #     last_v = wet_sweep(start=last_v,
-#                        stop=3.504,
-#                        step_size=0.5,
+#                        stop=4.504,
+#                        step_size=1,
 #                        order=order,
 #                        last_v=last_v,
 #                        f_min=start_freq_list[index],
@@ -189,20 +197,24 @@ def read(*arg):
 # print('done')
 
 '''DC sweep Gate'''
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
-# my_note = "2023.06.15 Icet sd008_MoRe2 warm up"
+data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231009_SD_test_011_7a_ICET\DC_Gate'
+my_note = "2023.10.09 Icet sdtest001_7a test gate leads"
 
-# last_v = 0
-# order = 0
-# last_v = wet_sweep(start=last_v,
-#                    stop=2.5,
-#                    step_size=0.1,
-#                    order=order,
-#                    last_v=last_v,
-#                    f_min=4000,
-#                    f_max=6000)
-# last_v = dry_sweep(last_v,0)
-# print('done')
+last_v = 0
+order = 0
+title = f"1c" # some unique feature you want to add in title
+last_v = wet_sweep(start=last_v,
+                   stop=2,
+                   step_size=0.5,
+                   order=order,
+                   last_v=last_v,
+                   f_min=3500,
+                   f_max=6000,
+                   average=100,
+                   dry_step_size=0.05,
+                   dry_delay=0.01)
+last_v = dry_sweep(last_v,0)
+print('done')
 
 '''DC+AC sweep gate'''
 # data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
@@ -236,14 +248,14 @@ def read(*arg):
 # dry_sweep(0.7,0.01)
 
 '''Record temp'''
-data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009\warmup'
-my_note = "2023.07.08 Icet sd009 warm up"
-
-order = 0
-title = 'warmup'
-while 1:
-    run_single(sweep=None,order=order,f_min=2000,f_max=8500,average=3,power=-5)
-    order += 1
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231009_SD_test_011_7a_ICET\Warmup'
+# my_note = "2023.10.09 Icet sd011_7a warm up"
+#
+# order = 0
+# title = 'warmup'
+# while 1:
+#     run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=3,power=-5)
+#     order += 1
 
 '''Take trace_manual'''
 # data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009'

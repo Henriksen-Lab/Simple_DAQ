@@ -68,15 +68,15 @@ def run_one_temp():
     now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address))  # current temp
     time_interval = 1  # change input voltage every ...s
     kp = 0.2
-    ki = 4
-    kd = 2.5
-    setpoint_value = 28
+    ki = 2
+    kd = 1.5
+    setpoint_value = 15
     while True:
         values = output_cal(setpoint_value, now_value, time_interval, kp, ki, kd, lastErr, lastErr_2)
         p = values[0]
         lastErr = values[1]
         lastErr_2 = values[2]
-        keithley2230_CH1_Set_voltage(address2, 5 * p)
+        keithley2230_CH1_Set_voltage(address2, 1.5 * p)
         time.sleep(time_interval)
         now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address))
         print(p, lastErr, lastErr_2, now_value)

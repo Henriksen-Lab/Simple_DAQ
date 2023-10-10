@@ -170,9 +170,9 @@ def save_data(folder_path, data):
                header=axis
                )
 
-def get_sweep(data, tag):
+def get_sweep(data, tag, digit=5):
     data[tag] = np.array(
-        [round(x, 5) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
+        [round(x, digit) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
     sweep = data[tag]
     sweep_list = sorted(list(dict.fromkeys(sweep)))
     return sweep_list
