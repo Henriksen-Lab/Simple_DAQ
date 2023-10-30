@@ -1,0 +1,125 @@
+;---------------------------------------------------------------;
+; PICOSOURCE.INF
+;	-Installs ftdi support for PicoSource USB devices;
+;
+; Copyright © 1995-2018, Pico Technology Ltd
+;
+;	www.picotech.com	www.drdaq.com
+; 
+;---------------------------------------------------------------;
+
+[Version]
+Signature="$Windows NT$"
+Class=DataAcquisitionDevices
+ClassGUID={745DD1A8-FCA4-4659-9DF2-954176705158}
+Provider=%Pico_Provider%
+CatalogFile=ftdibus.cat
+DriverVer=08/13/2018,1.0.12.0
+
+[SourceDisksNames]
+1=%PICO_Install%,,,
+
+[SourceDisksFiles]
+ftdibus.sys = 1
+
+
+[SourceDisksFiles.amd64]
+ftdibus.sys = 1
+
+[DestinationDirs]
+FtdiBus.Copy = 10,system32\drivers
+
+[Manufacturer]
+%Pico_Provider%=FtdiHw,NTamd64
+
+[FtdiHw]
+%USB\VID_0CE9&PID_1500.DeviceDesc%=FtdiBus.NT, USB\VID_0CE9&PID_1500
+%USB\VID_0CE9&PID_1501.DeviceDesc%=FtdiBus.NT, USB\VID_0CE9&PID_1501
+
+[FtdiHw.NTamd64]
+%USB\VID_0CE9&PID_1500.DeviceDesc%=FtdiBus.NT, USB\VID_0CE9&PID_1500
+%USB\VID_0CE9&PID_1501.DeviceDesc%=FtdiBus.NT, USB\VID_0CE9&PID_1501
+
+; ========== DataAcquisitionDevices Class ===========
+
+[PICO_Install] 
+Include=picosource.inf 
+
+[Dev_AddReg]
+HKR,,DeviceInterfaceGUIDs,0x00010000,"{15AD01F2-440D-4ca6-8867-3F9D1A960EAD}"
+HKR,,"RemovalPolicy",0x00010001,3
+
+[ClassInstall32]
+AddReg=DevicesClass_RegistryAdd
+
+[DevicesClass_RegistryAdd]
+HKR,,,,%ClassName%
+HKR,,Icon,,"-20"
+
+
+[ControlFlags]
+ExcludeFromSelect=*
+
+[FtdiBus.NT.AddReg.Guid]
+HKR,,DriverGUID,,%PICO.GUID%
+
+[FtdiBus.NT]
+CopyFiles=FtdiBus.Copy
+AddReg=FtdiBus.NT.AddReg
+
+[FtdiBus.NTamd64]
+CopyFiles=FtdiBus.Copy
+AddReg=FtdiBus.NT.AddReg
+
+[FtdiBus.NT.HW]
+AddReg=FtdiBus.NT.HW.AddReg
+
+[FtdiBus.NTamd64.HW]
+AddReg=FtdiBus.NT.HW.AddReg
+
+[FtdiBus.NT.Services]
+AddService = FTDIBUS, 0x00000002, FtdiBus.NT.AddService
+
+[FtdiBus.NTamd64.Services]
+AddService = FTDIBUS, 0x00000002, FtdiBus.NT.AddService
+
+[FtdiBus.NT.HW.AddReg]
+HKR,,"ConfigData",0x00010001,0
+
+
+[FtdiBus.NT.AddService]
+DisplayName = %PICO_Description%
+ServiceType = 1 ; SERVICE_KERNEL_DRIVER
+StartType = 3 ; SERVICE_DEMAND_START
+ErrorControl = 1 ; SERVICE_ERROR_NORMAL
+ServiceBinary = %10%\system32\drivers\ftdibus.sys
+LoadOrderGroup = Base
+AddReg = FtdiBus.NT.AddService.AddReg
+
+[FtdiBus.NT.AddReg]
+HKR,,FriendlyName,,%PICO_Description%
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,ftdibus.sys
+;HKR,,EnumPropPages32,,"ftbusui.dll,FTBUSUIPropPageProvider"
+
+[FtdiBus.NT.AddService.AddReg]
+;HKR,Parameters,"LocIds",1,31,00,00,00,32,00,00,00,00
+;HKR,Parameters,"RetryResetCount",0x10001,50
+
+
+[FtdiBus.Copy]
+ftdibus.sys
+
+[Strings]
+Pico_Provider="Pico Technology Ltd"
+PICO_Company="Pico Technology"
+PICO_Description="Pico Source Driver"
+PICO_Install="Pico Source Driver Installation Disk"
+
+USB\VID_0CE9&PID_1500.DeviceDesc="PicoVNA Series Analyzer"
+USB\VID_0CE9&PID_1501.DeviceDesc="PicoSource Series Agile Synthesizer"
+WINUN="Software\Microsoft\Windows\CurrentVersion\Uninstall"
+
+ClassName="Pico Technology instruments"
+
+PICO.GUID="{4AA176D7-28A1-4D0D-85A7-F989D9B40741}"

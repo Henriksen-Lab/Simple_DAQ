@@ -2,7 +2,7 @@
 import sys, os, time, threading, tkinter
 import numpy as np
 from decimal import Decimal
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 folder_path = os.getcwd()
 if folder_path not in sys.path:

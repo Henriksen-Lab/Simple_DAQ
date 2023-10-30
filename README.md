@@ -9,6 +9,7 @@
 4. [Usage](#usage)
     - [Quick Start](#quick-start)
     - [Advanced Usage](#advanced-usage)
+    - [PicoVNA108](#picovna108)
 5. [FAQ](#faq)
 6. [Contributing](#contributing)
 
@@ -384,6 +385,47 @@ def set_value(value, address='', name='', func='', **kwargs):  # Expand this fun
 │   │   └── Arduino_run_transfer_Heater.ino
 │   └── vna_analysis.py
 └── older reference(folded)
+```
+### PicoVNA108
+
+PicoVNA 108 is a peculiar instrument to query because the python warpper the instrument uses bases on `pywin32` package and only function in **Python 32bit ver**, which means you might need to separately install a 32 bit python for the instrument. There are serveral more steps to prepare if you want to install picovna 3 and talk to it through python on a new PC
+
+#### **1. Install the PicoVNA 3 Software**
+The step is required even if you don't want to use the software built by manufactor, because only after installation, the instrument would be registered in registry and thus to be accessed. You could find the installation package in ```~\Instrument_Drivers\PicoVNA_InitialSetup\picovna3_exe_install.exe```. After installation, the folder in `Document` should have content as a example shown in ```~\Instrument_Drivers\PicoVNA_InitialSetup\picovna3_exe_install\PicoVNA3_whatItShouldLookLikeAfterInstall```. You could run the program to check if the software is correctly installed
+#### **2. Run python warpper**
+For PicoVNA 3 usage, run 
+```~\Instrument_Drivers\PicoVNA_InitialSetup\PICOVNA_pythonWarpper\9B7C3137-F2BB-4D8E-9FDB-450B6D527E5Ex0x1x0.py```
+under **Python 32bit** environment with `pywin32` pre-installed. No error should show up at this step if python installed correctly.
+
+#### **3. Find Picovna in registry**
+Bring the registry up by press `win + R` on keyboard and type in `regedit` in the pop-up window at bottom left.
+Look for items with format `Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3[].PicoVNA_3[]` like the following:
+
+`Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3.PicoVNA_3`
+`Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3.PicoVNA_3_1`
+`Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3.PicoVNA_3_2`
+`Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3_1.PicoVNA_3_1`
+`Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3_2.PicoVNA_3_2`
+
+Now go to the driver at `~\Instrument_Drivers\PicoVNA108.py`, look for two lines that ought to be changed:
+```python
+ans = picoVNA.LoadCal(r'C:\Users\Henriksen Lab\Documents\Pico Technology\PicoVNA3\FacCal.cal') # PPMS PC Iridium
+```
+Change the **file path** with your PicoVNA 3 calibration file path installed in the new PC.
+and 
+```python
+picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3") # PPMS PC Iridium
+```
+
+Change `"PicoControl3.PicoVNA_3"` bytesting the conbination of in your registry and see which one gave you response `PicoControl3[].PicoVNA_3[]`. Usually one of them would work out.
+
+#### **4. If you encounter ClID or other random error at one point**
+try this one by one if previous not working:
+- re-run the program
+- restart the equipment
+- Run this command in `WindowPowerShell` **as Administrator**:
+```sh
+Remove-Item -path $env:LOCALAPPDATA\Temp\gen_py -recurse
 ```
 
 

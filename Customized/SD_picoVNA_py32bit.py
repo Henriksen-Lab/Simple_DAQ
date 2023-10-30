@@ -12,8 +12,8 @@ Created on Tues Feb 8 16:17:58 2022
 import numpy as np
 from datetime import datetime
 import time, sys, os, pyvisa, subprocess
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+# import matplotlib as mpl
+# import matplotlib.pyplot as plt
 
 folder_path = os.getcwd()
 if folder_path not in sys.path:
@@ -53,7 +53,7 @@ def get_sweep(start,stop,step_size):
     num_steps = int((abs(float(start) - float(stop)) / float(step_size))) + 1
     return np.linspace(float(start), float(stop), num_steps)
 
-def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None):
+def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None,number_of_points=1001,bandwidth=1000):
     set(sweep)
     value = read()
     avg = f"\n average for {average} times"
@@ -62,7 +62,7 @@ def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None):
     msg = 'VNA data for'
     for key, item in value.items():
         msg += f" {key}={item}, "
-    vs = get_picoVNA_smith(port=port, f_min=f_min, f_max=f_max, number_of_points=1001, power=power, bandwidth=1000, Average=average)
+    vs = get_picoVNA_smith(port=port, f_min=f_min, f_max=f_max, number_of_points=number_of_points, power=power, bandwidth=bandwidth, Average=average)
     print(msg+' recorded')
     value.update({'smith':vs})
     data, axis = my_form(value)
@@ -102,12 +102,14 @@ def wet_sweep(start, stop, step_size, order, last_v, f_min, f_max, power=-5, ave
 
 '''---------------------INPUT BEFORE RUN---------------------'''
 
-keithley2400_gpib = 'GPIB0::25::INSTR'
-keithley2000_gpib = 'GPIB0::18::INSTR'
-keithley2230_gpib = 'GPIB0::1::INSTR'
-hp34461a = 'GPIB0::17::INSTR'
-SR830 = 'GPIB0::7::INSTR'
-SR124 = 'ASRL5::INSTR'
+# keithley2400_gpib = 'GPIB0::25::INSTR'
+# keithley2000_gpib = 'GPIB0::18::INSTR'
+# keithley2230_gpib = 'GPIB0::1::INSTR'
+# hp34461a = 'GPIB0::17::INSTR'
+# SR830 = 'GPIB0::7::INSTR'
+# SR124 = 'ASRL5::INSTR'
+multi_Temp = 'USB0::0x0957::0x4918::MY59170002::INSTR'
+multi_Field = 'USB0::0x0957::0x4918::MY60480007::INSTR'
 
 port ='S21'
 
@@ -120,7 +122,7 @@ def set(value, delay=0.9):
         # SR830_set_amplitude(SR830, value)
         '''DC sweep Gate'''
         # keithley2400_set_sour_voltage_V(keithley2400_gpib, value)
-        keithley2230_CH2_Set_voltage(keithley2230_gpib, value)
+        # keithley2230_CH2_Set_voltage(keithley2230_gpib, value)
         '''DC+AC sweep gate'''
         # SR124_set_amplitude(SR124, value)
         time.sleep(delay)
@@ -136,15 +138,17 @@ def read(*arg):
     # read.update({'wiggle_B': SR830_get_amplitude(SR830)})
     '''DC sweep Gate'''
     # read.update({'v_sur': keithley2400_get_sour_voltage_V(keithley2400_gpib)})
-    read.update({'v_sur': keithley2230_CH2_Fetch_voltage(keithley2230_gpib)})
-    read.update({'i_sur': keithley2230_CH2_Fetch_current(keithley2230_gpib)})
+    # read.update({'v_sur': keithley2230_CH2_Fetch_voltage(keithley2230_gpib)})
+    # read.update({'i_sur': keithley2230_CH2_Fetch_current(keithley2230_gpib)})
     '''DC+AC sweep gate'''
     # read.update({'vg_bias': SR124_get_DCbias(SR124)})
     # read.update({'vg_freq': SR124_get_frequency(SR124)})
     # read.update({'vg_Vrms': SR124_get_amplitude(SR124)})
     '''Read RuOx'''
     # read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
-
+    '''Read Temp and Field from PPMS'''
+    read.update({'V_T': U2741A_get_voltage(multi_Temp)})
+    read.update({'V_B': U2741A_get_voltage(multi_Field)})
     msg = ''
     for key, item in read.items():
         msg += f'{key}={item}, '
@@ -197,24 +201,24 @@ def read(*arg):
 # print('done')
 
 '''DC sweep Gate'''
-data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231009_SD_test_011_7a_ICET\DC_Gate'
-my_note = "2023.10.09 Icet sdtest001_7a test gate leads"
-
-last_v = 0
-order = 0
-title = f"1c" # some unique feature you want to add in title
-last_v = wet_sweep(start=last_v,
-                   stop=2,
-                   step_size=0.5,
-                   order=order,
-                   last_v=last_v,
-                   f_min=3500,
-                   f_max=6000,
-                   average=100,
-                   dry_step_size=0.05,
-                   dry_delay=0.01)
-last_v = dry_sweep(last_v,0)
-print('done')
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231009_SD_test_011_7a_ICET\DC_Gate'
+# my_note = "2023.10.09 Icet sdtest001_7a test gate leads"
+#
+# last_v = 0
+# order = 0
+# title = f"1c" # some unique feature you want to add in title
+# last_v = wet_sweep(start=last_v,
+#                    stop=2,
+#                    step_size=0.5,
+#                    order=order,
+#                    last_v=last_v,
+#                    f_min=3500,
+#                    f_max=6000,
+#                    average=100,
+#                    dry_step_size=0.05,
+#                    dry_delay=0.01)
+# last_v = dry_sweep(last_v,0)
+# print('done')
 
 '''DC+AC sweep gate'''
 # data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
@@ -263,3 +267,13 @@ print('done')
 # order = 1
 # title = "transmission" # some unique feature you want to add in title
 # run_single(sweep=None,order=order,f_min=1000,f_max=8500,average=10,power=0)
+
+'''Take temp and field'''
+data_dir = r'C:\Users\Henriksen Lab\Desktop\Data\KZ\20231027_KZ_AFMFMR001_PPMS'
+my_note = "2023.10.27 Kaiwen's AFMFMR device, RuCl3 kapton tape on thermal Evapped Al CPW(100nm, wet etch) on Intrinsic Si wafer\n T = V_T/10*150 + 150\n B = V_B/10"
+order = 1
+title = "SweepTandB_3kTo8p5G" # some unique feature you want to add in title
+while 1:
+    run_single(sweep=None,order=order,f_min=0.3,f_max=8500,average=5,power=0,number_of_points=1001,bandwidth=300)
+    time.sleep(15)
+    order += 1

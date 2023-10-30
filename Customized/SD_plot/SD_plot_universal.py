@@ -76,13 +76,13 @@ def filter_nan(x, y):
 
 
 def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag', avgtype=None, yerrbar=False,
-                      inside_plot_flag=True, timestamp=None):
+                      inside_plot_flag=True, timestamp=None, digit =5):
     if timestamp is None:
         if 'timestamp' in data.keys():
             timestamp = min(data['timestamp'])
     # filter mask for single sweep
     sweep1 = data[sweep_tag_1]
-    sweep_1 = get_sweep(data, sweep_tag_1)
+    sweep_1 = get_sweep(data, sweep_tag_1, digit)
     sweep_1_info = get_sweep_info(data, sweep_tag_1)
     # Plot
     if inside_plot_flag:
@@ -113,17 +113,17 @@ def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA
 
 
 def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp', plot_tag_y='r_ruox', avgtype=None,
-                      baseline=None, offset=0, save=False, inside_plot_flag=True, timestamp=None):
+                      baseline=None, offset=0, save=False, inside_plot_flag=True, timestamp=None, digit=5):
     if timestamp is None:
         if 'timestamp' in data.keys():
             timestamp = min(data['timestamp'])
     # filter mask for Double sweep
     sweep1 = data[sweep_tag_1]
-    sweep_1 = get_sweep(data, sweep_tag_1)
+    sweep_1 = get_sweep(data, sweep_tag_1, digit)
     sweep_1_info = get_sweep_info(data, sweep_tag_1)
 
     sweep2 = data[sweep_tag_2]
-    sweep_2 = get_sweep(data, sweep_tag_2)
+    sweep_2 = get_sweep(data, sweep_tag_2, digit)
     sweep_2_info = get_sweep_info(data, sweep_tag_2)
 
     if sweep_tag_1 == plot_tag_x:

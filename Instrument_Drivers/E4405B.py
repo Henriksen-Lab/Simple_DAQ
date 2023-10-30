@@ -8,7 +8,7 @@ Created on Tues Nov 1 2022
 
 import numpy as np
 import pyvisa
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import time, os
 from datetime import datetime
 

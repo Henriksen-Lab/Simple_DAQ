@@ -1,7 +1,7 @@
 # Written by Shilling Du 7/25/2022
 import sys, os, time, threading, tkinter
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from datetime import datetime
 from decimal import Decimal
 
