@@ -29,17 +29,19 @@ def run_r_vs_T():
     lastErr_2 = 0.0 #initial err(-2)
     now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address)) #current temp
     time_interval = 1 #change input voltage every ...s
-    Time_wait = 1800 #change set temperature every ...s
-
+    Time_wait = 3600 #change set temperature every ...s
     kp = 0.2
-    ki = [4, 4, 4, 10, 10, 10, 10] #ki for 20-80 K
-    kd = [2.5, 2.5, 2.5, 5, 5, 7.5, 7.5] #kd for 20-80 K
-    V_in = [3.25, 5, 6, 7, 7, 7, 7] #input voltage for 20-80 K
+    ki = [0, 1, 2, 4, 4, 4, 10, 10, 12.5] #ki for 5-100 K
+    kd = [0, 0.5, 1.5, 2.5, 2.5, 2.5, 5, 7.5, 10] #kd for 5-100 K
+    V_in = [0, 0.8, 1.5, 3, 3.25, 4, 5, 7, 8] #input voltage for 5-100 K
+    setpoint= [0, 5, 10, 15, 20, 35, 50, 70, 100]
     timestamp = [] #record time of set temp change
     set_temp = [] #record set temp
-    for i in range(0,7):
+    reach_temp = []
+    for i in range(0,9):
+        reach_temp_temp = []
         timestamp.append(time.time())
-        setpoint_value = 10*i+20
+        setpoint_value = setpoint[i]
         set_temp.append(setpoint_value)
         j = 0  # record time
         print('!!!!')
@@ -54,23 +56,27 @@ def run_r_vs_T():
             now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address))
             print(p, lastErr, lastErr_2, now_value)
             j += 1
+            if j > 2700:
+                reach_temp_temp.append(now_value)
+        reach_temp.append(sum(reach_temp_temp)/len(reach_temp_temp))
         timestamp.append(time.time())
     keithley2230_CH1_Set_voltage(address2, 0)
     print(set_temp)
+    print(reach_temp)
     print(timestamp)
 
 def run_one_temp():
     address = 'GPIB::17::INSTR'
     address2 = 'GPIB::1::INSTR'
     err = 0.0  # initial error(0)
-    lastErr = 0.  # initial err(-1)
+    lastErr = 0.0  # initial err(-1)
     lastErr_2 = 0.0  # initial err(-2)
     now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address))  # current temp
     time_interval = 1  # change input voltage every ...s
     kp = 0.2
     ki = 2
     kd = 1.5
-    setpoint_value = 15
+    setpoint_value = 10
     while True:
         values = output_cal(setpoint_value, now_value, time_interval, kp, ki, kd, lastErr, lastErr_2)
         p = values[0]
@@ -83,3 +89,4 @@ def run_one_temp():
 
 '''-------------------------------------------------------Run------------------------------------------------------'''
 run_one_temp()
+#run_r_vs_T()
