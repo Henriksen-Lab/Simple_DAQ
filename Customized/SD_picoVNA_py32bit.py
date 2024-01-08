@@ -24,6 +24,8 @@ rm = pyvisa.ResourceManager()
 
 # subprocess.call(['sh','SD_pywin32error.sh'])
 # this command delete r'C:\Users\<username>\AppData\Local\Temp\2\gen_py' to solve a potential pywin32 error that usually happens after you use the PICOVNA 3 program
+global msmt_flag
+msmt_flag = None
 
 def my_form(kwargs):
     lens = len(kwargs['smith'].freqs)
@@ -102,12 +104,12 @@ def wet_sweep(start, stop, step_size, order, last_v, f_min, f_max, power=-5, ave
 
 '''---------------------INPUT BEFORE RUN---------------------'''
 
-# keithley2400_gpib = 'GPIB0::25::INSTR'
-# keithley2000_gpib = 'GPIB0::18::INSTR'
-# keithley2230_gpib = 'GPIB0::1::INSTR'
-# hp34461a = 'GPIB0::17::INSTR'
-# SR830 = 'GPIB0::7::INSTR'
-# SR124 = 'ASRL5::INSTR'
+keithley2400_gpib = 'GPIB0::25::INSTR'
+keithley2000_gpib = 'GPIB0::18::INSTR'
+keithley2230_gpib = 'GPIB0::1::INSTR'
+hp34461a = 'GPIB0::17::INSTR'
+SR830 = 'GPIB0::7::INSTR'
+SR124 = 'ASRL5::INSTR'
 multi_Temp = 'USB0::0x0957::0x4918::MY59170002::INSTR'
 multi_Field = 'USB0::0x0957::0x4918::MY60480007::INSTR'
 
@@ -116,39 +118,45 @@ port ='S21'
 '''---------------------Start your sequence here---------------------'''
 # define the program for each sweep
 def set(value, delay=0.9):
+    global msmt_flag
     if value is not None:
-        '''AC B wiggle'''
-        # SR830_set_frequency(SR830, 10000)
-        # SR830_set_amplitude(SR830, value)
-        '''DC sweep Gate'''
-        # keithley2400_set_sour_voltage_V(keithley2400_gpib, value)
-        # keithley2230_CH2_Set_voltage(keithley2230_gpib, value)
-        '''DC+AC sweep gate'''
-        # SR124_set_amplitude(SR124, value)
+        if msmt_flag =='AC B wiggle':
+            SR830_set_frequency(SR830, 10000)
+            SR830_set_amplitude(SR830, value)
+        if msmt_flag =='DC sweep Gate, 2400':
+            keithley2400_set_sour_voltage_V(keithley2400_gpib, value)
+        if msmt_flag == 'DC sweep Gate, 2230':
+            keithley2230_CH2_Set_voltage(keithley2230_gpib, value)
+        if msmt_flag =='DC+AC sweep gate':
+            SR124_set_amplitude(SR124, value)
         time.sleep(delay)
     time.sleep(0.1)
 
 def read(*arg):
+    global msmt_flag
     read = {}
     read.update({'timestamp': time.time()})
-    '''Power scan'''
-    # read.update({'power': arg[0]})
-    '''AC B wiggle'''
-    # read.update({'freq': SR830_get_frequency(SR830)})
-    # read.update({'wiggle_B': SR830_get_amplitude(SR830)})
-    '''DC sweep Gate'''
-    # read.update({'v_sur': keithley2400_get_sour_voltage_V(keithley2400_gpib)})
-    # read.update({'v_sur': keithley2230_CH2_Fetch_voltage(keithley2230_gpib)})
-    # read.update({'i_sur': keithley2230_CH2_Fetch_current(keithley2230_gpib)})
-    '''DC+AC sweep gate'''
-    # read.update({'vg_bias': SR124_get_DCbias(SR124)})
-    # read.update({'vg_freq': SR124_get_frequency(SR124)})
-    # read.update({'vg_Vrms': SR124_get_amplitude(SR124)})
-    '''Read RuOx'''
-    # read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
-    '''Read Temp and Field from PPMS'''
-    read.update({'V_T': U2741A_get_voltage(multi_Temp)})
-    read.update({'V_B': U2741A_get_voltage(multi_Field)})
+    if msmt_flag =='Power scan':
+        read.update({'power': arg[0]})
+    if msmt_flag =='AC B wiggle':
+        read.update({'freq': SR830_get_frequency(SR830)})
+        read.update({'wiggle_B': SR830_get_amplitude(SR830)})
+    if msmt_flag =='DC sweep Gate, 2400':
+        read.update({'v_sur': keithley2400_get_sour_voltage_V(keithley2400_gpib)})
+    if msmt_flag == 'DC sweep Gate, 2230':
+        read.update({'v_sur': (-1) * keithley2230_CH2_Fetch_voltage(keithley2230_gpib)})
+        read.update({'i_sur': (-1) * keithley2230_CH2_Fetch_current(keithley2230_gpib)})
+    if msmt_flag =='DC+AC sweep gate':
+        read.update({'vg_bias': SR124_get_DCbias(SR124)})
+        read.update({'vg_freq': SR124_get_frequency(SR124)})
+        read.update({'vg_Vrms': SR124_get_amplitude(SR124)})
+    if msmt_flag == 'Read RuOx':
+        read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
+    if msmt_flag == 'Read Temp and Field from PPMS':
+        read.update({'V_T': U2741A_get_voltage(multi_Temp)})
+        read.update({'V_B': U2741A_get_voltage(multi_Field)})
+    if msmt_flag == 'manual':
+        read.update({'Vtg': -1.77})
     msg = ''
     for key, item in read.items():
         msg += f'{key}={item}, '
@@ -157,18 +165,18 @@ def read(*arg):
 
 
 '''AC wiggle B'''
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231009_SD_test_011_7a_ICET\Wiggle_B'
-# my_note = "2023.10.09 Icet SD_test011_7a base temp"
+# msmt_flag ='AC B wiggle'
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231107_SD012_ICET\Wiggle_B'
+# my_note = "2023.11.07 Icet SD_012 base temp"
 #
 # # # centers =  [6080, 6220, 6610, 7089] #sd004_1
 # # # centers =  [6033, 6335, 6620, 7104] #sd003a
 # # # 6107, 6462, 7172, 7577, 7876, 8029] #sd008
 # # centers = [3980, 4070, 4340, 4550] #sd009
 #
-# # start_freq_list = [1000]
-# # stop_freq_list = [8500]
-# start_freq_list = [4620-100]
-# stop_freq_list = [4620+100]
+# start_freq_list = [5600]
+# stop_freq_list = [7500]
+#
 # # for center in centers:
 # #     start_freq_list += [center-40]
 # #     stop_freq_list += [center+20]
@@ -179,16 +187,18 @@ def read(*arg):
 #     order = 0
 #     last_v = wet_sweep(start=last_v,
 #                        stop=4.504,
-#                        step_size=1,
+#                        step_size=1.5,
 #                        order=order,
 #                        last_v=last_v,
 #                        f_min=start_freq_list[index],
 #                        f_max=stop_freq_list[index],
 #                        power=-5)
 #     last_v = dry_sweep(last_v,0.004)
+# SR830_set_frequency(SR830, 17.777)
 # print('done')
 
 '''Power scan'''
+# msmt_flag ='Power scan'
 # data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
 # my_note = "2023.06.15 Icet sd008_MoRe2 warm up"
 
@@ -201,26 +211,52 @@ def read(*arg):
 # print('done')
 
 '''DC sweep Gate'''
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231009_SD_test_011_7a_ICET\DC_Gate'
-# my_note = "2023.10.09 Icet sdtest001_7a test gate leads"
-#
+# # msmt_flag ='DC sweep Gate, 2400'
+# msmt_flag ='DC sweep Gate, 2230'
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231111_SD012_AfterFIB_ICET\Gate_spectrum_1c'
+# my_note = "2023.11.22 Icet sd012 after fib test gate leads"
 # last_v = 0
 # order = 0
 # title = f"1c" # some unique feature you want to add in title
 # last_v = wet_sweep(start=last_v,
-#                    stop=2,
-#                    step_size=0.5,
+#                    stop=1.8,
+#                    step_size=0.05,
 #                    order=order,
 #                    last_v=last_v,
-#                    f_min=3500,
-#                    f_max=6000,
-#                    average=100,
-#                    dry_step_size=0.05,
-#                    dry_delay=0.01)
+#                    f_min=3000,
+#                    f_max=8500,
+#                    average=50,
+#                    dry_step_size=0.01,
+#                    dry_delay=0.1)
+# last_v = wet_sweep(start=last_v,
+#                    stop=0,
+#                    step_size=0.05,
+#                    order=order,
+#                    last_v=last_v,
+#                    f_min=3000,
+#                    f_max=8500,
+#                    average=50,
+#                    dry_step_size=0.01,
+#                    dry_delay=0.1)
+# last_v = dry_sweep(last_v,0)
+# print('done')
+
+# last_v = 0
+# order = 0
+# title = f"1c_longavg" # some unique feature you want to add in title
+# last_v = dry_sweep(last_v,0.575,step_size=0.01, delay=0.9)
+# for i in range(5):
+#     run_single(sweep=None, order=order, f_min=3000, f_max=8500, average=250, power=-5)
+#     order += 1
+# last_v = dry_sweep(last_v,1.5,step_size=0.01, delay=0.9)
+# for i in range(5):
+#     run_single(sweep=None, order=order, f_min=3000, f_max=8500, average=250, power=-5)
+#     order += 1
 # last_v = dry_sweep(last_v,0)
 # print('done')
 
 '''DC+AC sweep gate'''
+# msmt_flag ='DC+AC sweep gate'
 # data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230612_SD_008_MoRe2'
 # my_note = "2023.06.15 Icet sd008_MoRe2 warm up"
 
@@ -252,8 +288,9 @@ def read(*arg):
 # dry_sweep(0.7,0.01)
 
 '''Record temp'''
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231009_SD_test_011_7a_ICET\Warmup'
-# my_note = "2023.10.09 Icet sd011_7a warm up"
+# msmt_flag = 'Read RuOx'
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231111_SD012_AfterFIB_ICET\warmup'
+# my_note = "2023.12.07 Icet sd012_afterfib warm up"
 #
 # order = 0
 # title = 'warmup'
@@ -262,18 +299,20 @@ def read(*arg):
 #     order += 1
 
 '''Take trace_manual'''
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20230629_SD_009'
-# my_note = "2023.06.28 Base temp"
-# order = 1
-# title = "transmission" # some unique feature you want to add in title
-# run_single(sweep=None,order=order,f_min=1000,f_max=8500,average=10,power=0)
+msmt_flag = 'manual'
+data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231222_SD013\DC_gate_sweep'
+my_note = "2024.1.7 SD_013, sweep vg"
+order = 1
+title = "DC_gate_sweep" # some unique feature you want to add in title
+run_single(sweep=None,order=order,f_min=6460-250,f_max=6460+250,average=250,power=-5)
 
 '''Take temp and field'''
-data_dir = r'C:\Users\Henriksen Lab\Desktop\Data\KZ\20231027_KZ_AFMFMR001_PPMS'
-my_note = "2023.10.27 Kaiwen's AFMFMR device, RuCl3 kapton tape on thermal Evapped Al CPW(100nm, wet etch) on Intrinsic Si wafer\n T = V_T/10*150 + 150\n B = V_B/10"
-order = 1
-title = "SweepTandB_3kTo8p5G" # some unique feature you want to add in title
-while 1:
-    run_single(sweep=None,order=order,f_min=0.3,f_max=8500,average=5,power=0,number_of_points=1001,bandwidth=300)
-    time.sleep(15)
-    order += 1
+# msmt_flag = 'Read Temp and Field from PPMS'
+# data_dir = r'C:\Users\Henriksen Lab\Desktop\Data\KZ\20231027_KZ_AFMFMR001_PPMS'
+# my_note = "2023.10.27 Kaiwen's AFMFMR device, RuCl3 kapton tape on thermal Evapped Al CPW(100nm, wet etch) on Intrinsic Si wafer\n T = V_T/10*150 + 150\n B = V_B/10"
+# order = 1
+# title = "SweepTandB_3kTo8p5G" # some unique feature you want to add in title
+# while 1:
+#     run_single(sweep=None,order=order,f_min=0.3,f_max=8500,average=5,power=0,number_of_points=1001,bandwidth=300)
+#     time.sleep(15)
+#     order += 1

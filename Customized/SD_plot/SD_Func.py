@@ -7,9 +7,12 @@ from scipy import signal
 from scipy import interpolate
 from scipy.misc import derivative
 
-
-def linear_func(x, A):
+def ratio_func(x, A):
     y = A * x
+    return y
+
+def linear_func(x, A, B):
+    y = A * x + B
     return y
 
 

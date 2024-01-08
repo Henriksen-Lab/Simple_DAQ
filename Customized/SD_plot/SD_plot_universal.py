@@ -113,7 +113,7 @@ def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA
 
 
 def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp', plot_tag_y='r_ruox', avgtype=None,
-                      baseline=None, offset=0, save=False, inside_plot_flag=True, timestamp=None, digit=5):
+                      baseline=None, offset=0, type='-', save=False, inside_plot_flag=True, timestamp=None, digit=5):
     if timestamp is None:
         if 'timestamp' in data.keys():
             timestamp = min(data['timestamp'])
@@ -171,9 +171,12 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
             y_previous = y
         difference = y
         if baseline is not None:
-            difference = y - y0
-        if baseline == 'difference':
-            difference = y - y_previous
+            if baseline == 'difference':
+                y0 = y_previous
+            if type == '-':
+                difference = y - y0
+            elif type == '/':
+                difference = y/y0
         x, difference = filter_nan(x, difference)
         plt.plot(x, difference + i * offset, ls='-', marker='o', ms=0, mfc='none',
                  c=get_color_cycle(len(sweep_list))[i])
@@ -202,29 +205,7 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
         fg = plt.figure(figsize=fig_size, dpi=300)
     gs = fg.add_gridspec(1, 2, width_ratios=[0.9, 0.1])
     ax = fg.add_subplot(gs[0])
-
-    # filter mask for Double sweep
-    sweep1 = data[plot_tag_x]
-    sweep_1 = get_sweep(data, plot_tag_x)
-    sweep_1_info = get_sweep_info(data, plot_tag_x)
-
-    sweep2 = data[plot_tag_y]
-    sweep_2 = get_sweep(data, plot_tag_y)
-    sweep_2_info = get_sweep_info(data, plot_tag_y)
-
-    x = []
-    y = []
-    z = []
-    for sweep1 in sweep_1:
-        for sweep2 in sweep_2:
-            x += [sweep1]
-            y += [sweep2]
-            mask = np.logical_and(data[plot_tag_x] == sweep1, data[plot_tag_y] == sweep2)
-            z += [calc_average(data[plot_tag_z][mask], type=avgtype)]
-    x = np.array(x)
-    y = np.array(y)
-    z = np.array(z)
-
+    x,y,z = get_xyz(data, plot_tag_x, plot_tag_y, plot_tag_z, avgtype)
     ax.scatter(x, y, c=z, s=10, marker='|')
     cax = fg.add_subplot(gs[1])
     norm = mpl.colors.Normalize(vmin=np.min(z), vmax=np.max(z))
@@ -235,3 +216,60 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
     ax.set_ylabel(plot_tag_y)
     note = f'{plot_tag_y} vs {plot_tag_x}\n colormap {plot_tag_z}'
     plot_fig(note, inside_plot_flag=inside_plot_flag, timestamp=timestamp)
+
+def get_xyz(data,plot_tag_x,plot_tag_y,plot_tag_z,avgtype='logmag',normalized=None):
+    flag = None
+    if normalized is not None:
+        if normalized['axis'] == plot_tag_x:
+            flag = 'x'
+        elif normalized['axis'] == plot_tag_y:
+            flag = 'y'
+        else:
+            print('Can not normalize, axis not included in plot para')
+    sweep_1 = get_sweep(data, plot_tag_x)
+    sweep_2 = get_sweep(data, plot_tag_y)
+    x = []
+    y = []
+    z = []
+    z0 = []
+    for sweep2 in sweep_2:
+        for sweep1 in sweep_1:
+            x += [sweep1]
+            y += [sweep2]
+            mask = np.logical_and(data[plot_tag_x] == sweep1, data[plot_tag_y] == sweep2)
+            if flag == 'x':
+                zeromask = np.logical_and(data[plot_tag_x] == normalized['value'], data[plot_tag_y] == sweep2)
+                z0 = calc_average(data[plot_tag_z][zeromask], type=avgtype)
+            elif flag == 'y':
+                zeromask = np.logical_and(data[plot_tag_x] == sweep1, data[plot_tag_y] == normalized['value'])
+                z0 = calc_average(data[plot_tag_z][zeromask], type=avgtype)
+            if normalized is not None:
+                if normalized['type']=='/':
+                    z += [calc_average(data[plot_tag_z][mask], type=avgtype)/z0]
+                elif normalized['type']=='-':
+                    z += [calc_average(data[plot_tag_z][mask], type=avgtype)-z0]
+            else:
+                z += [calc_average(data[plot_tag_z][mask], type=avgtype)]
+    x = np.array(x)
+    y = np.array(y)
+    z = np.array(z)
+    return x,y,z
+
+def plot_fill_matrix(x,y,z):
+    # Assuming x, y, and z are your 1D arrays
+    # Create a 2D grid of x and y values using meshgrid
+    x_unique = np.unique(x)
+    y_unique = np.unique(y)
+    x_grid, y_grid = np.meshgrid(x_unique, y_unique)
+
+    # Initialize z_grid with NaN values
+    z_grid = np.full_like(x_grid, fill_value=np.nan, dtype=float)
+
+    # Fill z_grid with actual z values where data exists
+    for xi, yi, zi in zip(x, y, z):
+        j = np.where(y_unique == yi)[0][0]
+        i = np.where(x_unique == xi)[0][0]
+        z_grid[j, i] = zi
+
+    # Create a colormap plot using imshow
+    plt.imshow(z_grid, cmap='viridis', extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')

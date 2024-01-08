@@ -6,17 +6,19 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-def get_color_cycle(NUM_COLORS, cmap='twilight_shifted'):
+
+def get_color_cycle(NUM_COLORS, cmap='coolwarm'):
     cm = plt.get_cmap(cmap)
     custom_cycler = [cm(1. * x / NUM_COLORS) for x in range(NUM_COLORS)]
     return custom_cycler
 
+
 fontsize = 8
 # Font
 font = {
-        # 'family': "Helvetica",
-        "weight": 'normal',
-        "size": fontsize}
+    # 'family': "Helvetica",
+    "weight": 'normal',
+    "size": fontsize}
 mpl.rc("font", **font)
 mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['mathtext.bf'] = 'sans:italic:bold'
@@ -43,7 +45,7 @@ mpl.rcParams['xtick.direction'] = 'in'
 mpl.rcParams['axes.spines.right'] = True
 mpl.rcParams['ytick.right'] = True
 mpl.rcParams['ytick.direction'] = 'in'
-mpl.rcParams['axes.xmargin'] = 0.0 # x margin.  See `axes.Axes.margins`
+mpl.rcParams['axes.xmargin'] = 0.0  # x margin.  See `axes.Axes.margins`
 mpl.rcParams['axes.ymargin'] = 0.1  # y margin.  See `axes.Axes.margins`
 mpl.rcParams['legend.frameon'] = False
 mpl.rcParams['legend.borderpad'] = 0
@@ -51,12 +53,13 @@ mpl.rcParams['axes.titlepad'] = 15
 
 # color
 # colorcycle = ["#DF9E9B","#99BADF","#D8E7CA","#99CDCE","#999ACD","#FFD0E9"] # 6 light
-# colorcycle = ["#354e97","#70a3c4","#c7e5ec","#f5b46f","#df5b3f"] # 5 Blue->red
+colorcycle = ["#354e97", "#70a3c4", "#c7e5ec", "#f5b46f", "#df5b3f"]  # 5 Blue->red
 # colorcycle = ["#fbf49a","#eeb5ba","#7e5874","#ffe2b5","#edb073","#ce223d","#aeadd6","#91adb9","#d1d1d1","#c48ab6"]
 # colorcycle = ["#7b7b7c","#28a8de","#fff300","#f3835e","#ef5a29","#f1eee8"]
 # colorcycle = ["#8ecfc9", "#ffbe7a", "#fa7f6f", "#82b0d2", "#beb8dc", "#e7dad2"]
-colorcycle = get_color_cycle(8, cmap='coolwarm')
-mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colorcycle)
+
+# colorcycle = get_color_cycle(8, cmap='coolwarm')
+# mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colorcycle)
 
 # layout
 
@@ -84,6 +87,7 @@ def turn_off(list):
         ax.axis('off')
         # ax.axis('tight')
 
+
 def import_fig(path):
     # open the image with PIL
     img = Image.open(path)
@@ -93,7 +97,8 @@ def import_fig(path):
     img.close()
     return arr.astype(float)
 
-def vertical_stack(fig_width, heights, figs, labels, sharex = False):
+
+def vertical_stack(fig_width, heights, figs, labels, sharex=False):
     gs = gridspec.GridSpec(ncols=1, nrows=len(heights), height_ratios=heights)
     fig = plt.figure(figsize=(fig_width, np.sum(heights)))
     # create the axes objects for each subplot
@@ -145,12 +150,34 @@ def add_vline(vlines, y, label='', position=None, color='grey', ls='--', fontsiz
     for i, x in enumerate(vlines):
         if position is None:
             position = min(y)
-        plt.text(x, position, f'{label}:{(x / 1e9)}', rotation=90, verticalalignment='bottom', fontsize=fontsize, color=color)
+        plt.text(x, position, f'{label}:{(x / 1e9)}', rotation=90, verticalalignment='bottom', fontsize=fontsize,
+                 color=color)
 
 
 def get_path(filename):
     figure_folder = r'/Users/chellybone/Library/CloudStorage/Box-Box/N15_Figs/Methods:Supp/Sensitivity/3_17'
     # figure_folder = r'/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/ESR_cal/fg'
     # figure_folder = r'C:\Users\duxin\OneDrive - Washington University in St. Louis\wustl\2023 Spring\ESR_cal\fg\convolution'
-    full_path = os.path.join(figure_folder,filename)
+    full_path = os.path.join(figure_folder, filename)
     return full_path
+
+def offset(myFig,myAx,n=1,yOff=60):
+    dx, dy = 0., yOff/myFig.dpi
+    return myAx.transData + mpl.transforms.ScaledTranslation(dx,n*dy,myFig.dpi_scale_trans)
+
+def plot_waterfall(xs,ys,z,offset):
+    fig, ax = plt.subplots(figsize=(5, 6))
+    for idx, i in enumerate(z):
+        z_ind = max(z) - idx  ## to ensure each plot is "behind" the previous plot
+        trans = offset(fig, ax, idx, yOff=offset)
+
+        ## note that I am using both .plot() and .fill_between(.. edgecolor="None" ..)
+        #  in order to circumvent showing the "edges" of the fill_between
+        ax.plot(xs, ys, color="k", linewidth=0.5, transform=trans, zorder=z_ind)
+        ax.fill_between(xs, ys, -0.5, facecolor="w", edgecolor="None", transform=trans, zorder=z_ind)
+
+    ## turn off the spines
+    for side in ["top", "right", "left"]:
+        ax.spines[side].set_visible(False)
+    ## and turn off the y axis
+    ax.set_yticks([])

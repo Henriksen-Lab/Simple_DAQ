@@ -419,7 +419,7 @@ picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3") # PP
 
 Change `"PicoControl3.PicoVNA_3"` bytesting the conbination of in your registry and see which one gave you response `PicoControl3[].PicoVNA_3[]`. Usually one of them would work out.
 
-#### **4. If you encounter ClID or other random error at one point**
+#### **4. If you encounter `has no attribute 'CLSIDToClassMap'` or other random error at one point**
 try this one by one if previous not working:
 - re-run the program
 - restart the equipment
