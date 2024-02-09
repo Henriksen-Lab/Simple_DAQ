@@ -76,7 +76,7 @@ def filter_nan(x, y):
 
 
 def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag', avgtype=None, yerrbar=False,
-                      inside_plot_flag=True, timestamp=None, digit =5):
+                      inside_plot_flag=True, timestamp=None, digit=5):
     if timestamp is None:
         if 'timestamp' in data.keys():
             timestamp = min(data['timestamp'])
@@ -149,8 +149,6 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     if inside_plot_flag:
         fg = plt.figure(figsize=fig_size, dpi=300)
     legend = []
-    vg = []
-    slope = []
 
     if baseline is not None and baseline != 'difference':
         if isinstance(baseline, float) or isinstance(baseline, int):  # baseline is constant
@@ -163,7 +161,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
 
     newdata = {}
     for i in range(0, len(sweep_list)):
-        current_mask = sweep == sweep_list[i]
+        current_mask = abs(sweep-sweep_list[i]) < 10**(-digit)
         x, y = calc_average_spectrum(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask], type=avgtype)
         x = np.array(x)
         y = np.array(y)
@@ -255,7 +253,7 @@ def get_xyz(data,plot_tag_x,plot_tag_y,plot_tag_z,avgtype='logmag',normalized=No
     z = np.array(z)
     return x,y,z
 
-def plot_fill_matrix(x,y,z):
+def plot_fill_matrix(x,y,z,cmap='coolwarm'):
     # Assuming x, y, and z are your 1D arrays
     # Create a 2D grid of x and y values using meshgrid
     x_unique = np.unique(x)
@@ -272,4 +270,4 @@ def plot_fill_matrix(x,y,z):
         z_grid[j, i] = zi
 
     # Create a colormap plot using imshow
-    plt.imshow(z_grid, cmap='viridis', extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')
+    plt.imshow(z_grid, cmap=cmap, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')

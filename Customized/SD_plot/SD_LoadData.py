@@ -10,6 +10,7 @@ from io import StringIO
 import numpy as np
 from collections import OrderedDict
 from operator import getitem
+from scipy import interpolate
 import copy
 
 
@@ -30,6 +31,23 @@ def my_data_dict(data, read_data, axis):
                     data[key] = np.append(np.zeros(max(length) - len(data[key])), data[key])
     return data
 
+def add_data(data,newdict):
+    axis = newdict.keys()
+    if len(list(data)) == 0:
+        for column in axis:
+            data.update({column: np.array(newdict[column])})
+    else:
+        for column in axis:
+            if column in data.keys():
+                data[column] = np.append(data[column], np.array(newdict[column]))
+            else:
+                data.update({column: np.array(newdict[column])})
+        length = [len(item) for key, item in data.items()]
+        if min(length) != max(length):
+            for key in data.keys():
+                if len(data[key]) < max(length):
+                    data[key] = np.append(np.zeros(max(length) - len(data[key])), data[key])
+    return data
 
 def load_data_from_file(name):
     readout = np.loadtxt(name)
@@ -46,6 +64,21 @@ def load_data_from_file(name):
     data = my_data_dict(data, readout, axis)
     return data
 
+def load_matrix_axis_from_file(file):
+    matrix = []
+    # dummy way of getting axis
+    with open(file, 'rb') as f:
+        file_content = f.readlines()
+    for i in range(0, len(file_content)):
+        if b'#' not in file_content[i]:
+            break
+    axis = str(file_content[i - 1][1:].decode('utf-8')).split()
+    axis = ['_'.join(x.split('_')[:-1]) for x in axis]
+    readout = np.loadtxt(file)
+    [matrix.append(x) for x in readout]
+    matrix = np.array(matrix)
+    return matrix, axis
+
 def load_data_CZlab(path):
     with open(path, 'r') as f:
         data = f.read()
@@ -61,21 +94,10 @@ def load_data_from_folder(folder_path):
     data = {}
     for name in ordered_file_name_dict.keys():
         if ".DS_Store" not in name:
-            matrix = []
             order += 1
             file = ordered_file_name_dict[name]['path']
-            # dummy way of getting axis
-            with open(file, 'rb') as f:
-                file_content = f.readlines()
-            for i in range(0, len(file_content)):
-                if b'#' not in file_content[i]:
-                    break
-            axis = str(file_content[i - 1][1:].decode('utf-8')).split()
-            axis = ['_'.join(x.split('_')[:-1]) for x in axis]
+            matrix, axis = load_matrix_axis_from_file(file)
             print(' ', order, ". ", ordered_file_name_dict[name]['name'])
-            readout = np.loadtxt(file)
-            [matrix.append(x) for x in readout]
-            matrix = np.array(matrix)
             data = my_data_dict(data, matrix, axis)
             print('done')
     return data
@@ -150,13 +172,10 @@ def calculate_R(data, tag_I='I_x', tag_V='V_x'):
     return data
 
 
-def add_column(file_path, column_name='new_para', value=0):
-    data = load_data_from_file(file_path)
-    folder_path = os.path.dirname(file_path)
+def add_column(data, column_name='new_para', value=0):
     random_name = list(data.keys())[0]
     data.update({column_name: np.full(len(data[random_name]), value)})
-    save_data(folder_path, data)
-
+    return data
 
 def save_data(folder_path, data):
     file_path = folder_path + '\\' + 'reformatted_data'
@@ -171,17 +190,20 @@ def save_data(folder_path, data):
                )
 
 def get_sweep(data, tag, digit=5):
-    data[tag] = np.array(
+    sweep = np.array(
         [round(x, digit) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
-    sweep = data[tag]
     sweep_list = sorted(list(dict.fromkeys(sweep)))
+    func = interpolate.interp1d(
+        sweep,
+        data[tag],
+        kind='nearest',
+        bounds_error=False,
+        fill_value="extrapolate")
+    sweep_list = func(sweep_list)
     return sweep_list
 
-def get_sweep_info(data, tag):
-    data[tag] = np.array(
-        [round(x, 5) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
-    sweep = data[tag]
-    sweep_list = sorted(list(dict.fromkeys(sweep)))
+def get_sweep_info(data, tag, digit=5):
+    sweep_list = get_sweep(data, tag, digit)
     i = str(min(sweep_list))
     f = str(max(sweep_list))
     num = len(sweep_list)
