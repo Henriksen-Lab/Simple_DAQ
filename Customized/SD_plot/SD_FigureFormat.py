@@ -98,7 +98,7 @@ def import_fig(path):
     return arr.astype(float)
 
 
-def vertical_stack(fig_width, heights, figs, labels, sharex=False):
+def vertical_stack(fig_width, heights, figs, labels=None, sharex=False):
     gs = gridspec.GridSpec(ncols=1, nrows=len(heights), height_ratios=heights)
     fig = plt.figure(figsize=(fig_width, np.sum(heights)))
     # create the axes objects for each subplot
@@ -150,7 +150,11 @@ def add_vline(vlines, y, label='', position=None, color='grey', ls='--', fontsiz
     for i, x in enumerate(vlines):
         if position is None:
             position = min(y)
-        plt.text(x, position, f'{label}:{(x / 1e9)}', rotation=90, verticalalignment='bottom', fontsize=fontsize,
+        if isinstance(label, list):
+            plt.text(x, position, f'{label[i]}', rotation=90, verticalalignment='bottom', fontsize=fontsize,
+                     color=color)
+        else:
+            plt.text(x, position, f'{label}:{x}', rotation=90, verticalalignment='bottom', fontsize=fontsize,
                  color=color)
 
 

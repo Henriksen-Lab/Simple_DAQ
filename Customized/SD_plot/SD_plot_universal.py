@@ -159,7 +159,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
     else:
         y0 = 0
 
-    newdata = {}
+    new_data_set = {}
     for i in range(0, len(sweep_list)):
         current_mask = abs(sweep-sweep_list[i]) < 10**(-digit)
         x, y = calc_average_spectrum(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask], type=avgtype)
@@ -179,12 +179,12 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
         plt.plot(x, difference + i * offset, ls='-', marker='o', ms=0, mfc='none',
                  c=get_color_cycle(len(sweep_list))[i])
         legend += [f'{round(sweep_list[i], 2)}']
-        newdata.update({f'{round(sweep_2[i], 2)}': (x, difference)})
+        # new_data_set.update({f'{round(sweep_2[i], 2)}': (x, difference)})
         y_previous = y
     plt.xlim(min(x), max(x) + abs(max(x) - min(x)) / 5)
     if save:
         with open('temp', 'wb') as f:
-            pickle.dump(newdata, f)
+            pickle.dump(new_data_set, f)
     plt.legend(legend)
     plt.xlabel(plot_tag_x)
     plt.ylabel(plot_tag_y)
@@ -215,7 +215,7 @@ def plot_cmap(data, plot_tag_x='VNA_freqs', plot_tag_y='r_ruox', plot_tag_z='VNA
     note = f'{plot_tag_y} vs {plot_tag_x}\n colormap {plot_tag_z}'
     plot_fig(note, inside_plot_flag=inside_plot_flag, timestamp=timestamp)
 
-def get_xyz(data,plot_tag_x,plot_tag_y,plot_tag_z,avgtype='logmag',normalized=None):
+def get_xyz(data,plot_tag_x,plot_tag_y,plot_tag_z,avgtype='logmag',normalized=None,digit=5):
     flag = None
     if normalized is not None:
         if normalized['axis'] == plot_tag_x:
@@ -224,8 +224,8 @@ def get_xyz(data,plot_tag_x,plot_tag_y,plot_tag_z,avgtype='logmag',normalized=No
             flag = 'y'
         else:
             print('Can not normalize, axis not included in plot para')
-    sweep_1 = get_sweep(data, plot_tag_x)
-    sweep_2 = get_sweep(data, plot_tag_y)
+    sweep_1 = get_sweep(data, plot_tag_x,digit=digit)
+    sweep_2 = get_sweep(data, plot_tag_y,digit=digit)
     x = []
     y = []
     z = []
@@ -253,7 +253,7 @@ def get_xyz(data,plot_tag_x,plot_tag_y,plot_tag_z,avgtype='logmag',normalized=No
     z = np.array(z)
     return x,y,z
 
-def plot_fill_matrix(x,y,z,cmap='coolwarm'):
+def plot_fill_matrix(x,y,z,cmap='coolwarm',ax=None):
     # Assuming x, y, and z are your 1D arrays
     # Create a 2D grid of x and y values using meshgrid
     x_unique = np.unique(x)
@@ -270,4 +270,8 @@ def plot_fill_matrix(x,y,z,cmap='coolwarm'):
         z_grid[j, i] = zi
 
     # Create a colormap plot using imshow
-    plt.imshow(z_grid, cmap=cmap, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')
+    if ax is not None:
+        ax.imshow(z_grid, cmap=cmap, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')
+    else:
+        plt.imshow(z_grid, cmap=cmap, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')
+

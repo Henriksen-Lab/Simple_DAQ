@@ -190,8 +190,12 @@ def save_data(folder_path, data):
                )
 
 def get_sweep(data, tag, digit=5):
-    sweep = np.array(
-        [round(x, digit) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
+    if digit >=0:
+        sweep = np.array(
+            [round(x, digit) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
+    else:
+        sweep = np.array(
+            [10**(digit)*round(x/10**(digit), 0) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
     sweep_list = sorted(list(dict.fromkeys(sweep)))
     func = interpolate.interp1d(
         sweep,
