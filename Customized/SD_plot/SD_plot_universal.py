@@ -275,7 +275,7 @@ def plot_fill_matrix(x,y,z,cmap='coolwarm',ax=None):
     x_grid, y_grid = np.meshgrid(x_unique, y_unique)
 
     # Initialize z_grid with NaN values
-    z_grid = np.full_like(x_grid, fill_value=np.nan, dtype=float)
+    z_grid = np.full((len(y_unique), len(x_unique)), fill_value=np.nan, dtype=float)
 
     # Fill z_grid with actual z values where data exists
     for xi, yi, zi in zip(x, y, z):
@@ -284,8 +284,12 @@ def plot_fill_matrix(x,y,z,cmap='coolwarm',ax=None):
         z_grid[j, i] = zi
 
     # Create a colormap plot using imshow
+    # if ax is not None:
+    #     ax.imshow(z_grid, cmap=cmap, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')
+    # else:
+    #     plt.imshow(z_grid, cmap=cmap, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')
+    # Create a colormap plot using pcolormesh
     if ax is not None:
-        ax.imshow(z_grid, cmap=cmap, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')
+        mesh = ax.pcolormesh(x_grid, y_grid, z_grid, cmap=cmap, shading='auto')
     else:
-        plt.imshow(z_grid, cmap=cmap, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='auto')
-
+        mesh = plt.pcolormesh(x_grid, y_grid, z_grid, cmap=cmap, shading='auto')
