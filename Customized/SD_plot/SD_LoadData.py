@@ -201,21 +201,25 @@ def save_data(folder_path, data):
                header=axis
                )
 
-def get_sweep(data, tag, digit=5):
-    if digit >=0:
-        sweep = np.array(
-            [round(x, digit) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
+def get_sweep(data, tag, digit=None):
+    if digit is None:
+        sweep = np.array(data[tag])
+        sweep_list = sorted(list(dict.fromkeys(sweep)))
     else:
-        sweep = np.array(
-            [10**(digit)*round(x/10**(digit), 0) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
-    sweep_list = sorted(list(dict.fromkeys(sweep)))
-    func = interpolate.interp1d(
-        sweep,
-        data[tag],
-        kind='nearest',
-        bounds_error=False,
-        fill_value="extrapolate")
-    sweep_list = func(sweep_list)
+        if digit >=0:
+            sweep = np.array(
+                [round(x, digit) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
+        else:
+            sweep = np.array(
+                [10**(digit)*round(x/10**(digit), 0) for x in data[tag]])  # round sweep para, avoiding multiple value at same sweep value
+        sweep_list = sorted(list(dict.fromkeys(sweep)))
+        func = interpolate.interp1d(
+            sweep,
+            data[tag],
+            kind='nearest',
+            bounds_error=False,
+            fill_value="extrapolate")
+        sweep_list = func(sweep_list)
     return sweep_list
 
 def get_sweep_info(data, tag, digit=5):
