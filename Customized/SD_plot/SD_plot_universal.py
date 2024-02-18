@@ -76,7 +76,7 @@ def filter_nan(x, y):
 
 
 def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag', avgtype=None, yerrbar=False,
-                      inside_plot_flag=True, timestamp=None, digit=5):
+                      inside_plot_flag=True, timestamp=None, digit=5, ax=None):
     if timestamp is None:
         if 'timestamp' in data.keys():
             timestamp = min(data['timestamp'])
@@ -97,23 +97,29 @@ def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA
         x += [calc_average(xx)]
         y += [calc_average(yy, type=avgtype)]
         yerr += [np.std(yy)]
-    plt.xlabel(plot_tag_x)
-    plt.ylabel(plot_tag_y)
-    plt.plot(x, y, ls='-', ms=0.5, mfc='none')
+    if ax is not None:
+        ax.plot(x, y, ls='-', ms=0.5, mfc='none')
+    else:
+        plt.xlabel(plot_tag_x)
+        plt.ylabel(plot_tag_y)
+        plt.plot(x, y, ls='-', ms=0.5, mfc='none')
     data.update({f'avg_{plot_tag_x}_x': x})
     data.update({f'avg_{plot_tag_y}_y': y})
     data.update({f'avg_{plot_tag_y}_yerr': yerr})
     if yerrbar:
         y = np.array(y)
         yerr = np.array(yerr)
-        plt.fill_between(x, y - yerr, y + yerr, alpha=0.4, ls='--')
+        if ax is not None:
+            ax.fill_between(x, y - yerr, y + yerr, alpha=0.4, ls='--')
+        else:
+            plt.fill_between(x, y - yerr, y + yerr, alpha=0.4, ls='--')
     note = f'{plot_tag_y} vs {plot_tag_x}\n sweeping {sweep_tag_1}: {sweep_1_info}'
     plot_fig(note, inside_plot_flag=inside_plot_flag, timestamp=timestamp)
     return data
 
 
 def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp', plot_tag_y='r_ruox', avgtype=None,
-                      baseline=None, offset=0, type='-', save=False, inside_plot_flag=True, timestamp=None, digit=5):
+                      baseline=None, offset=0, type='-', save=False, inside_plot_flag=True, timestamp=None, digit=5, ax=None):
     if timestamp is None:
         if 'timestamp' in data.keys():
             timestamp = min(data['timestamp'])
@@ -176,18 +182,26 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
             elif type == '/':
                 difference = y/y0
         x, difference = filter_nan(x, difference)
-        plt.plot(x, difference + i * offset, ls='-', marker='o', ms=0, mfc='none',
+        if ax is not None:
+            ax.plot(x, difference + i * offset, ls='-', marker='o', ms=0, mfc='none',
+                     c=get_color_cycle(len(sweep_list))[i])
+        else:
+            plt.plot(x, difference + i * offset, ls='-', marker='o', ms=0, mfc='none',
                  c=get_color_cycle(len(sweep_list))[i])
         legend += [f'{round(sweep_list[i], 2)}']
         # new_data_set.update({f'{round(sweep_2[i], 2)}': (x, difference)})
         y_previous = y
-    plt.xlim(min(x), max(x) + abs(max(x) - min(x)) / 5)
     if save:
         with open('temp', 'wb') as f:
             pickle.dump(new_data_set, f)
-    plt.legend(legend)
-    plt.xlabel(plot_tag_x)
-    plt.ylabel(plot_tag_y)
+    if ax is not None:
+        ax.xlim(min(x), max(x) + abs(max(x) - min(x)) / 5)
+        ax.legend(legend)
+    else:
+        plt.xlim(min(x), max(x) + abs(max(x) - min(x)) / 5)
+        plt.legend(legend)
+        plt.xlabel(plot_tag_x)
+        plt.ylabel(plot_tag_y)
 
     note = f'{plot_tag_y} vs {plot_tag_x}\n sweeping {sweep_tag_1}: {sweep_1_info}'
     plot_fig(note, inside_plot_flag=inside_plot_flag, timestamp=timestamp)

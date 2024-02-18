@@ -49,20 +49,6 @@ def add_data(data,newdict):
                     data[key] = np.append(np.zeros(max(length) - len(data[key])), data[key])
     return data
 
-def load_data_from_file(name):
-    readout = np.loadtxt(name)
-    # dummy way of getting axis
-    file = name
-    data = {}
-    with open(file, 'rb') as f:
-        file_content = f.readlines()
-    for i in range(0, len(file_content)):
-        if b'#' not in file_content[i]:
-            break
-    axis = str(file_content[i - 1][1:].decode('utf-8')).split()
-    axis = ['_'.join(x.split('_')[:-1]) for x in axis]
-    data = my_data_dict(data, readout, axis)
-    return data
 
 def load_matrix_axis_from_file(file):
     matrix = []
@@ -79,6 +65,12 @@ def load_matrix_axis_from_file(file):
     matrix = np.array(matrix)
     return matrix, axis
 
+def load_data_from_file(name):
+    data = {}
+    matrix, axis = load_matrix_axis_from_file(file=name)
+    data = my_data_dict(data, matrix, axis)
+    return data
+
 def load_data_CZlab(path):
     with open(path, 'r') as f:
         data = f.read()
@@ -86,6 +78,27 @@ def load_data_CZlab(path):
     data = result.groups()[1]
     with StringIO(data) as data_io:
         data = np.genfromtxt(data_io)
+    return data
+
+def load_data_s2p(path):
+    data = {}
+    matrix = []
+
+    with open(path, encoding="utf8") as f:
+        lines = (line for line in f if not line.startswith('#') and not line.startswith('!'))
+        readout = np.loadtxt(lines)
+    [matrix.append(x) for x in readout]
+    matrix = np.array(matrix)
+    if matrix.shape[1] == 9:
+        axis = ['freq', 'S11_mag', 'S11_angle', 'S21_mag', 'S21_angle', 'S12_mag', 'S12_angle', 'S22_mag', 'S22_angle']
+    elif matrix.shape[1] == 3:
+        axis = ['freq', 'S21_mag', 'S21_angle']
+    data = my_data_dict(data, matrix, axis)
+    tags = ['S11','S21','S12','S22']
+    for tag in tags:
+        if f'{tag}_mag' in data.keys():
+            mag = np.array(data[f'{tag}_mag'])
+            data.update({f'{tag}_logmag': 20*np.log10(mag)})
     return data
 
 def load_data_from_folder(folder_path):
@@ -101,7 +114,6 @@ def load_data_from_folder(folder_path):
             data = my_data_dict(data, matrix, axis)
             print('done')
     return data
-
 
 def get_ordered_file_name_dict(folder_path):
     file_name_dict = {}
