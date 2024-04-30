@@ -167,7 +167,7 @@ def plot_double_sweep(data, sweep_tag_1='amp', sweep_tag_2='f', plot_tag_x='amp'
 
     new_data_set = {}
     for i in range(0, len(sweep_list)):
-        current_mask = abs(sweep-sweep_list[i]) < 10**(-digit)
+        current_mask = sweep==sweep_list[i]
         x, y = calc_average_spectrum(data[plot_tag_x][current_mask], data[plot_tag_y][current_mask], type=avgtype)
         x = np.array(x)
         y = np.array(y)

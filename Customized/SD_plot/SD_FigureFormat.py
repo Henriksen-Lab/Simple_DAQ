@@ -53,13 +53,13 @@ mpl.rcParams['axes.titlepad'] = 15
 
 # color
 # colorcycle = ["#DF9E9B","#99BADF","#D8E7CA","#99CDCE","#999ACD","#FFD0E9"] # 6 light
-colorcycle = ["#354e97", "#70a3c4", "#c7e5ec", "#f5b46f", "#df5b3f"]  # 5 Blue->red
+# colorcycle = ["#354e97", "#70a3c4", "#c7e5ec", "#f5b46f", "#df5b3f"]  # 5 Blue->red
 # colorcycle = ["#fbf49a","#eeb5ba","#7e5874","#ffe2b5","#edb073","#ce223d","#aeadd6","#91adb9","#d1d1d1","#c48ab6"]
 # colorcycle = ["#7b7b7c","#28a8de","#fff300","#f3835e","#ef5a29","#f1eee8"]
 # colorcycle = ["#8ecfc9", "#ffbe7a", "#fa7f6f", "#82b0d2", "#beb8dc", "#e7dad2"]
 
-# colorcycle = get_color_cycle(8, cmap='coolwarm')
-# mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colorcycle)
+colorcycle = get_color_cycle(20, cmap='coolwarm')
+mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colorcycle)
 
 # layout
 
