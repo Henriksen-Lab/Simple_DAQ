@@ -21,6 +21,7 @@ instrument_dict = {'get':{},
 
 instrument_dict['get'].update({'keithley2000': ['ohm_4pt', 'ohm_2pt', 'volt']})
 instrument_dict['get'].update({'keithley2400': ['ohm_4pt', 'ohm_2pt', 'sur_current', 'sur_volt']})
+instrument_dict['get'].update({'keithley2450': ['ohm_4pt','sur_curr', 'sur_volt','meas_curr','meas_volt']})
 instrument_dict['get'].update({'keithley2230': ['Ch1_fetch_volt', 'Ch1_fetch_curr', 'Ch2_fetch_volt', 'Ch2_fetch_curr', 'Ch3_fetch_volt', 'Ch3_fetch_curr']})
 instrument_dict['get'].update({'SR830': ['x', 'y', 'R', 'theta', 'freq','amplitude']})
 instrument_dict['get'].update({'hp34461A': ['volt', 'ohm_4pt']})
@@ -33,6 +34,7 @@ instrument_dict['get'].update({'SR124': ['sur_AC_Vrms', 'sur_AC_freq', 'sur_DC_b
 instrument_dict['get'].update({'U2741A': ['volt', 'ohm_4pt']})
 
 instrument_dict['set'].update({'keithley2400': ['current', 'voltage']})
+instrument_dict['set'].update({'keithley2450': ['current', 'voltage']})
 instrument_dict['set'].update({'keithley2230': ['Ch1_volt', 'Ch2_volt', 'Ch3_volt']})
 instrument_dict['set'].update({'SR830': ['amplitude', 'freqency','harmonic']})
 instrument_dict['set'].update({'keysight N6700c': ['volt @ channel 2']})
@@ -65,6 +67,17 @@ def get_value(address='', name='', func='', **kwargs):
             value = keithley2400_get_sour_currrent_A(address)
         elif func == 'sur_volt':
             value = keithley2400_get_sour_voltage_V(address)
+    elif name == 'keithley2450':
+        if func == 'ohm_4pt':
+            value = keithley2450_get_ohm_4pt(address)
+        if func == 'sur_curr':
+            value = keithley2450_get_sour_currrent_A(address)
+        elif func == 'sur_volt':
+            value = keithley2450_get_sour_voltage_V(address)
+        elif func == 'meas_volt':
+            value = keithley2450_get_meas_voltage_V(address)
+        elif func == 'meas_curr':
+            value = keithley2450_get_meas_currrent_A(address)
     elif name == 'keithley2230':
         if func == 'Ch1_fetch_volt':
             value = keithley2230_CH1_Fetch_voltage(address)
@@ -157,6 +170,11 @@ def set_value(value, address='', name='', func='', **kwargs):
             keithley2400_set_sour_currrent_A(address, value)
         elif func == 'voltage':
             keithley2400_set_sour_voltage_V(address, value)
+    if name == 'keithley2450':
+        if func == 'current':
+            keithley2450_set_sour_currrent_A(address, value)
+        elif func == 'voltage':
+            keithley2450_set_sour_voltage_V(address, value)
     elif name == 'keithley2230':
         if func == 'Ch1_volt':
             keithley2230_CH1_Set_voltage(address,value)
