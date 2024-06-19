@@ -167,3 +167,63 @@ def keithley2000_get_ohm_2pt(address):
         keithley.close()
     return numerical_data
 
+def keithley2450_get_sour_currrent_A(address):
+    try:
+        keithley = rm.open_resource(address)            
+        last_value_A = float(keithley.query("sour:curr?") )
+    finally:     
+        keithley.close()       
+    return last_value_A
+
+def keithley2450_get_sour_voltage_V(address):
+    try:
+        keithley = rm.open_resource(address)
+        last_value_V = float(keithley.query("sour:volt?"))
+    finally:
+        keithley.close()
+    return last_value_V
+
+def keithley2450_get_meas_currrent_A(address):
+    try:
+        keithley = rm.open_resource(address)  
+        keithley.write("SENS:CURR:RSEN OFF") #Switch to 2-wire  sensing current  
+        last_value_A = float(keithley.query("MEAS:CURR?"))
+    finally:     
+        keithley.close()       
+    return last_value_A
+
+def keithley2450_get_meas_voltage_V(address):
+    try:
+        keithley = rm.open_resource(address)
+        keithley.write("SENS:VOLT:RSEN OFF") #Switch to 2-wire  sensing voltage   
+        last_value_V = float(keithley.query("MEAS:VOLT?"))
+    finally:
+        keithley.close()
+    return last_value_V
+
+def keithley2450_set_sour_currrent_A(address, target_value_A):
+    try:
+        keithley = rm.open_resource(address)
+        keithley.write("sour:func curr")
+        keithley.write("sour:curr:rang:auto 1")
+        keithley.write(f"sour:curr {target_value_A}")
+    finally:
+        keithley.close()
+
+def keithley2450_set_sour_voltage_V(address, target_value_V):
+    try:
+        keithley = rm.open_resource(address)
+        keithley.write("sour:func volt")
+        keithley.write("sour:volt:rang:auto 1")
+        keithley.write(f"sour:volt {target_value_V}")
+    finally:
+        keithley.close()
+
+def keithley2450_get_ohm_4pt(address):
+    try:
+        keithley = rm.open_resource(address)
+        keithley.write("SENS:RES:RSEN ON") #Switch to 4-wire  sensing resistance 
+        numerical_data = float(keithley.query("MEAS:RES?"))
+    finally:
+        keithley.close()
+    return numerical_data
