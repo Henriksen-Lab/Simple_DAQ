@@ -39,7 +39,7 @@ instrument_dict['set'].update({'keithley2400': ['current', 'voltage']})
 instrument_dict['set'].update({'keithley2450': ['current', 'voltage']})
 instrument_dict['set'].update({'keithley2230': ['Ch1_volt', 'Ch2_volt', 'Ch3_volt']})
 instrument_dict['set'].update({'SR830': ['amplitude', 'freqency','harmonic']})
-instrument_dict['set'].update({'SR830': ['amplitude', 'freqency','harmonic']})
+instrument_dict['set'].update({'SR865': ['amplitude', 'freqency','harmonic']})
 instrument_dict['set'].update({'keysight N6700c': ['volt @ channel 2']})
 instrument_dict['set'].update({'DC205': ['voltage']})
 instrument_dict['set'].update({'SR124': ['AC_Vrms', 'AC_freq', 'DC_bias']})
@@ -205,6 +205,17 @@ def set_value(value, address='', name='', func='', **kwargs):
         if func == 'Ch3_volt':
             keithley2230_CH3_Set_voltage(address, value)
     elif name == 'SR830':
+        if func == 'amplitude':
+            SR830_set_amplitude(address, value)
+        elif func == 'freqency':
+            SR830_set_frequency(address, value)
+        elif func == 'harmonic':
+            SR830_set_harmonic(address, value)
+        elif func == 'time_constant':
+            SR830_set_timeconstant(address, value)
+        elif func == 'sensitivity':
+            SR830_set_sensitivity(address, value)
+    elif name == 'SR865':
         if func == 'amplitude':
             SR830_set_amplitude(address, value)
         elif func == 'freqency':

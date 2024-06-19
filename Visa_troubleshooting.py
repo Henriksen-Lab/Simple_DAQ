@@ -20,7 +20,6 @@ onetime_dict['combobox'].update({'SR830':{}})
 onetime_dict['combobox']['SR830'].update({'time_constant': SR830_timeconstant,
                                           'sensitivity': SR830_sensitivity})
 
-
 q = queue.Queue()
 reply = None
 
