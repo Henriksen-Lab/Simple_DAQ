@@ -1,6 +1,7 @@
 import time
 from Instrument_Drivers.vna_analysis import *
 from Instrument_Drivers.SR830 import *
+from Instrument_Drivers.SR865 import *
 from Instrument_Drivers.keithley import *
 from Instrument_Drivers.hp34461A import *
 # from Instrument_Drivers.PicoVNA108 import *
@@ -23,6 +24,7 @@ instrument_dict['get'].update({'keithley2000': ['ohm_4pt', 'ohm_2pt', 'volt']})
 instrument_dict['get'].update({'keithley2400': ['ohm_4pt', 'ohm_2pt', 'sur_current', 'sur_volt']})
 instrument_dict['get'].update({'keithley2230': ['Ch1_fetch_volt', 'Ch1_fetch_curr', 'Ch2_fetch_volt', 'Ch2_fetch_curr', 'Ch3_fetch_volt', 'Ch3_fetch_curr']})
 instrument_dict['get'].update({'SR830': ['x', 'y', 'R', 'theta', 'freq','amplitude']})
+instrument_dict['get'].update({'SR865': ['x', 'y', 'R', 'theta', 'freq','amplitude']})
 instrument_dict['get'].update({'hp34461A': ['volt', 'ohm_4pt']})
 instrument_dict['get'].update({'PicoVNA108': ['S21', 'S12', 'S11', 'S22']})
 instrument_dict['get'].update({'vna': ['please input the VNA_settings']})
@@ -34,6 +36,7 @@ instrument_dict['get'].update({'U2741A': ['volt', 'ohm_4pt']})
 
 instrument_dict['set'].update({'keithley2400': ['current', 'voltage']})
 instrument_dict['set'].update({'keithley2230': ['Ch1_volt', 'Ch2_volt', 'Ch3_volt']})
+instrument_dict['set'].update({'SR830': ['amplitude', 'freqency','harmonic']})
 instrument_dict['set'].update({'SR830': ['amplitude', 'freqency','harmonic']})
 instrument_dict['set'].update({'keysight N6700c': ['volt @ channel 2']})
 instrument_dict['set'].update({'DC205': ['voltage']})
@@ -87,6 +90,25 @@ def get_value(address='', name='', func='', **kwargs):
             value = SR830_get_R(address)
         elif func == 'theta':
             value = SR830_get_Theta(address)
+        elif func == 'freq':
+            value = SR830_get_frequency(address)
+        elif func == 'amplitude':
+            value = SR830_get_amplitude(address)
+        elif func == 'harmonic':
+            value = SR830_get_harmonic(address)
+        elif func == 'time_constant':
+            value = SR830_get_timeconstant(address)
+        elif func == 'sensitivity':
+            value = SR830_get_sensitivity(address)
+    elif name == 'SR865':
+        if func == 'x':
+            value = SR865_get_x(address)
+        elif func == 'y':
+            value = SR865_get_y(address)
+        elif func == 'R':
+            value = SR865_get_R(address)
+        elif func == 'theta':
+            value = SR865_get_Theta(address)
         elif func == 'freq':
             value = SR830_get_frequency(address)
         elif func == 'amplitude':

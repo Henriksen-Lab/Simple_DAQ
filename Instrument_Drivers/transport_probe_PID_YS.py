@@ -8,11 +8,11 @@ folder_path = os.getcwd()
 if folder_path not in sys.path:
     sys.path.append(
         folder_path)  # easier to open driver files as long as Simple_DAQ.py is in the same folder with drivers
-from Instrument_Drivers.thermometer.Cernox import get_T_cernox_3#!!!!
-from Instrument_Drivers.hp34461A import hp34461a_get_ohm_4pt#!!!!
+from Instrument_Drivers.thermometer.Cernox import get_T_cernox_2
+# from Instrument_Drivers.keithley2230G_30_1 import hp34461a_get_ohm_4pt#!!!!
 from Instrument_Drivers.keithley2230G_30_1 import *
-from Instrument_Drivers.keithley import keithley2000_get_ohm_4pt
-'''-------------------------------------------------------Main------------------------------------------------------'''
+from Instrument_Drivers.keithley import keithley2000_get_ohm_2pt
+# '''-------------------------------------------------------Main------------------------------------------------------'''
 
 def output_cal(setpoint_value, now_value, time_interval, kp, ki, kd, lastErr, lastErr_2):
     err = float(setpoint_value) - float(now_value)
@@ -21,12 +21,12 @@ def output_cal(setpoint_value, now_value, time_interval, kp, ki, kd, lastErr, la
     return (output, err, lastErr)
 
 def run_r_vs_T():
-    address = 'GPIB::17::INSTR'#!!!!
+    address = 'GPIB::18::INSTR'
     address2 = 'GPIB::1::INSTR'
     err = 0.0 #initial error(0)
     lastErr = 0. #initial err(-1)
     lastErr_2 = 0.0 #initial err(-2)
-    now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address)) #current temp #!!!!
+    now_value = get_T_cernox_2(keithley2000_get_ohm_2pt(address))
     time_interval = 1 #change input voltage every ...s
     kp = [0, 0.2, 0.2, 0.4, 0.4, 7, 7, 15, 15, 25, 25, 25, 25, 25, 25, 25, 25]
     ki = [0, 1, 1.5, 1.5, 15, 15, 15, 15, 20, 25, 25, 25, 25, 25, 25, 25, 25] # ki for 5-100 K#!!!!
@@ -62,7 +62,7 @@ def run_r_vs_T():
             lastErr_2 = values[2]
             keithley2230_CH1_Set_voltage(address2, V_in[i]*p)
             time.sleep(time_interval)
-            now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address))
+            now_value = get_T_cernox_2(keithley2000_get_ohm_2pt(address))
             print(p, lastErr, lastErr_2, now_value)
             j += 1
             reach_temp_total.append(now_value)
@@ -83,20 +83,20 @@ def run_r_vs_T():
     print(timestamp)
 
 def run_one_temp():
-    address = 'GPIB::17::INSTR'
-    #address = 'GPIB::18::INSTR'
+    # address = 'GPIB::17::INSTR'
+    address = 'GPIB::18::INSTR'
     address2 = 'GPIB::1::INSTR'
     err = 0.0  # initial error(0)
     lastErr = 0.0  # initial err(-1)
     lastErr_2 = 0.0  # initial err(-2)
-    now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address))  # current temp
+    now_value = get_T_cernox_2(keithley2000_get_ohm_2pt(address))  # current temp
     time_interval = 1  # change input voltage every ...s
     n = 0
     kp = [0, 0.4, 7, 7, 15, 15, 25, 25, 25, 25, 25, 25, 25, 25]
-    ki = [0, 1.5, 15, 15, 15, 20, 25, 25, 25, 25, 25, 25, 25, 25] #ki for 5-100 K
+    ki = [0, 1.5, 15, 15, 15, 20, 25, 25, 25, 25, 25, 25, 25, 25] #ki for 5-10A0 K
     kd = [0, 3.5, 4.5, 4.5, 4.5, 5, 5, 5, 5, 5, 5, 5, 5, 5]  # kd for 20-100 K
-    V_in = [0, 1.6, 2.5, 4, 4.25, 4.5, 4.75, 5.25, 6, 7.5, 8.5, 9, 10]
-    setpoint = [0, 10, 20, 30, 40, 50, 60, 70, 80, 100, 120, 150, 200]
+    V_in = [0, 1.6, 2.5, 4, 4.25, 4.5, 4.75, 5.25, 6, 7.5, 8.5, 9]
+    setpoint = [0, 10, 20, 30, 40, 50, 60, 70, 80, 100, 120, 150]
     setpoint_value = setpoint[n]
     while True:
         values = output_cal(setpoint_value, now_value, time_interval, kp[n], ki[n], kd[n], lastErr, lastErr_2)
@@ -105,11 +105,13 @@ def run_one_temp():
         lastErr_2 = values[2]
         keithley2230_CH1_Set_voltage(address2, V_in[n] * p)
         time.sleep(time_interval)
-        now_value = get_T_cernox_3(hp34461a_get_ohm_4pt(address))
-        #now_value = get_T_cernox_3(keithley2000_get_ohm_4pt(address))
+        now_value = get_T_cernox_2(keithley2000_get_ohm_2pt(address))
         print(p, lastErr, lastErr_2, now_value)
-
 '''-------------------------------------------------------Run------------------------------------------------------'''
-run_one_temp()
-#run_r_vs_T()
-#print(get_T_cernox_3(hp34461a_get_ohm_4pt('GPIB::17::INSTR'))) #current temp
+# run_one_temp()
+print(get_T_cernox_2(keithley2000_get_ohm_2pt('GPIB::18::INSTR')))
+# run_r_vs_T()
+
+
+
+

@@ -128,6 +128,7 @@ def set(value, delay=0.9):
             keithley2400_set_sour_voltage_V(keithley2400_gpib, value)
         if msmt_flag == 'DC sweep Gate, 2230':
             keithley2230_CH2_Set_voltage(keithley2230_gpib, value)
+            # keithley2230_CH3_Set_voltage(keithley2230_gpib, value)
         if msmt_flag == 'DC sweep Gate, DC205':
             dc205_set_sour_voltage_V(dc205_address, value)
         if msmt_flag =='DC+AC sweep gate':
@@ -147,8 +148,10 @@ def read(*arg):
     if msmt_flag =='DC sweep Gate, 2400':
         read.update({'v_sur': keithley2400_get_sour_voltage_V(keithley2400_gpib)})
     if msmt_flag == 'DC sweep Gate, 2230':
-        read.update({'v_sur': (-1) * keithley2230_CH2_Fetch_voltage(keithley2230_gpib)})
-        read.update({'i_sur': (-1) * keithley2230_CH2_Fetch_current(keithley2230_gpib)})
+        # read.update({'v_sur': (-1) * keithley2230_CH3_Fetch_voltage(keithley2230_gpib)})
+        # read.update({'i_sur': (-1) * keithley2230_CH3_Fetch_current(keithley2230_gpib)})
+        read.update({'v_sur': keithley2230_CH2_Fetch_voltage(keithley2230_gpib)})
+        read.update({'i_sur': keithley2230_CH2_Fetch_current(keithley2230_gpib)})
     if msmt_flag == 'DC sweep Gate, DC205':
         read.update({'v_sur': dc205_get_sour_voltage_V(dc205_address)})
     if msmt_flag =='DC+AC sweep gate':
@@ -216,27 +219,27 @@ def read(*arg):
 # print('done')
 
 '''DC sweep Gate'''
-# msmt_flag ='DC sweep Gate, 2400'
+# # msmt_flag ='DC sweep Gate, 2400'
 # msmt_flag ='DC sweep Gate, 2230'
-msmt_flag ='DC sweep Gate, DC205'
-data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231222_SD013\DC_gate_sweep_broad_fine'
-my_note = "2023.11.22 Icet sd013"
-last_v = 1.5
-order = 0
-title = f"1c" # some unique feature you want to add in title
-last_v = dry_sweep(last_v,0)
-last_v = wet_sweep(start=last_v,
-                   stop=-2,
-                   step_size=0.05,
-                   order=order,
-                   last_v=last_v,
-                   f_min=3000,
-                   f_max=8500,
-                   average=50,
-                   dry_step_size=0.01,
-                   dry_delay=1)
-last_v = dry_sweep(last_v,0)
-print('done')
+# # msmt_flag ='DC sweep Gate, DC205'
+# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20240407_SD013_Compare_ICET\DC_gate_sweep_broad_fine'
+# my_note = "2024.04.09 Icet sd013"
+# last_v = 0
+# order = 0
+# title = f"1c" # some unique feature you want to add in title
+# last_v = dry_sweep(last_v,0.03)
+# last_v = wet_sweep(start=last_v,
+#                    stop=0.73,
+#                    step_size=0.1,
+#                    order=order,
+#                    last_v=last_v,
+#                    f_min=6.210e3,
+#                    f_max=6.710e3,
+#                    average=250,
+#                    dry_step_size=0.01,
+#                    dry_delay=1)
+# last_v = dry_sweep(last_v,0)
+# print('done')
 
 # last_v = 0
 # order = 0
@@ -297,11 +300,13 @@ print('done')
 
 '''Take trace_manual'''
 # msmt_flag = 'manual'
-# data_dir = r'C:\Users\ICET\Desktop\Data\SD\20231222_SD013\DC_gate_sweep'
-# my_note = "2024.1.7 SD_013, sweep vg"
-# order = 1
-# title = "DC_gate_sweep" # some unique feature you want to add in title
-# run_single(sweep=None,order=order,f_min=6460-250,f_max=6460+250,average=250,power=-5)
+data_dir = r'C:\Users\ICET\Desktop\Data\SD\20240412_Empty_CheckCavityMode\WarmUp'
+my_note = "2024.4.14 Empty_check cavity mode"
+order = 1
+title = "3G_8p5G_noCirculator" # some unique feature you want to add in title
+# run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=50,power=-5,number_of_points=1001)
+while 1:
+    run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=3,power=-5)
 
 '''Take temp and field'''
 # msmt_flag = 'Read Temp and Field from PPMS'

@@ -22,43 +22,43 @@ SR830_timeconstant = ['10us','30us','100us','300us','1ms',
                       '1s','3s','10s','30s','100s',
                       '300s','1ks','3ks','10ks','30ks']
 
-def SR830_get_x(address):
+def SR865_get_x(address):
 
-    SR830_handle = rm.open_resource(address)
+    SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR830_handle.query(f"OUTP? 1")
+        string_data = SR865_handle.query(f"OUTP? 0")
         numerical_data = float(string_data)
         return numerical_data
     finally:
-        SR830_handle.close()
+        SR865_handle.close()
 
-def SR830_get_y(address):
-    SR830_handle = rm.open_resource(address)
+def SR865_get_y(address):
+    SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR830_handle.query(f"OUTP? 2")
+        string_data = SR865_handle.query(f"OUTP? 1")
         numerical_data = float(string_data)
         return numerical_data
     finally:
-        SR830_handle.close()
+        SR865_handle.close()
 
-def SR830_get_R(address):
+def SR865_get_R(address):
 
-    SR830_handle = rm.open_resource(address)
+    SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR830_handle.query(f"OUTP? 3")
+        string_data = SR865_handle.query(f"OUTP? 2")
         numerical_data = float(string_data)
         return numerical_data
     finally:
-        SR830_handle.close()
+        SR865_handle.close()
 
-def SR830_get_Theta(address):
-    SR830_handle = rm.open_resource(address)
+def SR865_get_Theta(address):
+    SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR830_handle.query(f"OUTP? 4")
+        string_data = SR865_handle.query(f"OUTP? 3")
         numerical_data = float(string_data)
         return numerical_data
     finally:
-        SR830_handle.close()
+        SR865_handle.close()
 
 def SR830_set_amplitude(address, amplitude):
     SR830_handle = rm.open_resource(address)

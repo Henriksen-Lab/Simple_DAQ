@@ -7,6 +7,7 @@ from UI_manager.DataManager import get_value,set_value
 from UI_manager.UI_subclass import *
 from Instrument_Drivers.Instrument_dict import instrument_dict
 from Instrument_Drivers.SR830 import *
+from Instrument_Drivers.SR865 import *
 from datetime import datetime
 
 global instrument_dict, onetime_dict
