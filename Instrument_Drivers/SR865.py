@@ -87,9 +87,9 @@ def SR865_set_frequency(address, frequency):
 def SR865_get_frequency(address):
     SR865_handle = rm.open_resource(address)
     try:
-        SR865_handle.write(f"OUTX 1")
-        read = float(SR865_handle.query('FREQ?'))
-        return read
+        string_data = SR865_handle.query(f"FREQDET? ")
+        numerical_data = float(string_data)
+        return numerical_data
     finally:
         SR865_handle.close()
 
