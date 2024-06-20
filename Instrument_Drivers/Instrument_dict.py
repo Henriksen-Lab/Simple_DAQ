@@ -123,15 +123,15 @@ def get_value(address='', name='', func='', **kwargs):
         elif func == 'theta':
             value = SR865_get_Theta(address)
         elif func == 'freq':
-            value = SR830_get_frequency(address)
+            value = SR865_get_frequency(address)
         elif func == 'amplitude':
-            value = SR830_get_amplitude(address)
+            value = SR865_get_amplitude(address)
         elif func == 'harmonic':
-            value = SR830_get_harmonic(address)
+            value = SR865_get_harmonic(address)
         elif func == 'time_constant':
-            value = SR830_get_timeconstant(address)
+            value = SR865_get_timeconstant(address)
         elif func == 'sensitivity':
-            value = SR830_get_sensitivity(address)
+            value = SR865_get_sensitivity(address)
     elif name == 'hp34461A':
         if func == 'volt':
             value = hp34461a_get_voltage(address)
@@ -217,15 +217,15 @@ def set_value(value, address='', name='', func='', **kwargs):
             SR830_set_sensitivity(address, value)
     elif name == 'SR865':
         if func == 'amplitude':
-            SR830_set_amplitude(address, value)
+            SR865_set_amplitude(address, value)
         elif func == 'freqency':
-            SR830_set_frequency(address, value)
+            SR865_set_frequency(address, value)
         elif func == 'harmonic':
-            SR830_set_harmonic(address, value)
+            SR865_set_harmonic(address, value)
         elif func == 'time_constant':
-            SR830_set_timeconstant(address, value)
+            SR865_set_timeconstant(address, value)
         elif func == 'sensitivity':
-            SR830_set_sensitivity(address, value)
+            SR865_set_sensitivity(address, value)
     elif name == 'keysight N6700c':
         if func == 'volt @ channel 2':
             keysight6700c_set_voltage(address, value)
