@@ -19,7 +19,11 @@ onetime_dict['set'].update({'SR830':{'time_constant','sensitivity','harmonic'}})
 onetime_dict['combobox'].update({'SR830':{}})
 onetime_dict['combobox']['SR830'].update({'time_constant': SR830_timeconstant,
                                           'sensitivity': SR830_sensitivity})
-
+onetime_dict['get'].update({'SR865':{'time_constant','sensitivity','harmonic'}})
+onetime_dict['set'].update({'SR865':{'time_constant','sensitivity','harmonic'}})
+onetime_dict['combobox'].update({'SR865':{}})
+onetime_dict['combobox']['SR865'].update({'time_constant': SR865_timeconstant,
+                                          'sensitivity': SR865_sensitivity})
 q = queue.Queue()
 reply = None
 

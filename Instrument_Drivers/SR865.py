@@ -10,14 +10,37 @@ import time
 import pyvisa
 rm = pyvisa.ResourceManager()
 
-SR865_sensitivity = ['2nV/fA','5nV/fA','10nV/fA','20nV/fA','50nV/fA',
-                '100nV/fA','200nV/fA','500nV/fA','1uV/pA','2uV/pA',
-                '5uV/pA','10uV/pA','20uV/pA','50uV/pA','100uV/pA',
-                '200uV/pA','500uV/pA','1mV/nA','2mV/nA','5mV/nA',
-                '10mV/nA','20mV/nA','50mV/nA','100mV/nA','200mV/nA',
-                '500mV/nA','1V/uA']
+SR865_sensitivity = ['1 V [μA]',
+                     '500 mV [nA]',
+                     '200 mV [nA]',
+                     '100 mV [nA]',
+                     '50 mV [nA]',
+                     '20 mV [nA]',
+                     '10 mV [nA]',
+                     '5 mV [nA]',
+                     '2 mV [nA]',
+                     '1 mV [nA]',
+                     '500 μV [pA]',
+                     '200 μV [pA]',
+                     '100 μV [pA]',
+                     '50 μV [pA]',
+                     '20 μV [pA]',
+                     '10 μV [pA]',
+                     '5 μV [pA]',
+                     '2 μV [pA]',
+                     '1 μV [pA]',
+                     '500 nV [fA]',
+                     '200 nV [fA]',
+                     '100 nV [fA]',
+                     '50 nV [fA]',
+                     '20 nV [fA]',
+                     '10 nV [fA]',
+                     '5 nV [fA]',
+                     '2 nV [fA]',
+                     '1 nV [fA]']
 
-SR865_timeconstant = ['10us','30us','100us','300us','1ms',
+
+SR865_timeconstant = ['1us','3us','10us','30us','100us','300us','1ms',
                      '3ms','10ms','30ms','100ms','300ms',
                       '1s','3s','10s','30s','100s',
                       '300s','1ks','3ks','10ks','30ks']
@@ -26,7 +49,7 @@ def SR865_get_x(address):
 
     SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR865_handle.query(f"OUTP? 0")
+        string_data = SR865_handle.query(f"OUTP? X")
         numerical_data = float(string_data)
         return numerical_data
     finally:
@@ -35,7 +58,7 @@ def SR865_get_x(address):
 def SR865_get_y(address):
     SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR865_handle.query(f"OUTP? 1")
+        string_data = SR865_handle.query(f"OUTP? Y")
         numerical_data = float(string_data)
         return numerical_data
     finally:
@@ -45,7 +68,7 @@ def SR865_get_R(address):
 
     SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR865_handle.query(f"OUTP? 2")
+        string_data = SR865_handle.query(f"OUTP? R")
         numerical_data = float(string_data)
         return numerical_data
     finally:
@@ -54,7 +77,7 @@ def SR865_get_R(address):
 def SR865_get_Theta(address):
     SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR865_handle.query(f"OUTP? 3")
+        string_data = SR865_handle.query(f"OUTP? TH")
         numerical_data = float(string_data)
         return numerical_data
     finally:
@@ -70,7 +93,6 @@ def SR865_set_amplitude(address, amplitude):
 def SR865_get_amplitude(address):
     SR865_handle = rm.open_resource(address)
     try:
-        SR865_handle.write(f"OUTX 1")
         read = float(SR865_handle.query('SLVL?'))
         return read
     finally:
@@ -87,9 +109,8 @@ def SR865_set_frequency(address, frequency):
 def SR865_get_frequency(address):
     SR865_handle = rm.open_resource(address)
     try:
-        string_data = SR865_handle.query(f"FREQDET? ")
-        numerical_data = float(string_data)
-        return numerical_data
+        read = float(SR865_handle.query('FREQ?'))
+        return read
     finally:
         SR865_handle.close()
 
@@ -103,7 +124,6 @@ def SR865_set_harmonic(address, harm):
 def SR865_get_harmonic(address):
     SR865_handle = rm.open_resource(address)
     try:
-        SR865_handle.write(f"OUTX 1")
         read = int(SR865_handle.query("HARM?"))
         return read
     finally:
@@ -114,15 +134,14 @@ def SR865_set_sensitivity(address, sen):
     SR865_handle = rm.open_resource(address)
     index = SR865_sensitivity.index(sen)
     try:
-        SR865_handle.write(f"SENS {index}")
+        SR865_handle.write(f"SCAL {index}")
     finally:
         SR865_handle.close()
 
 def SR865_get_sensitivity(address):
     SR865_handle = rm.open_resource(address)
     try:
-        SR865_handle.write(f"OUTX 1")
-        index = int(SR865_handle.query("SENS?"))
+        index = int(SR865_handle.query("SCAL?"))
         read = SR865_sensitivity[index]
         return read
     finally:
@@ -139,8 +158,7 @@ def SR865_set_timeconstant(address, time):
 def SR865_get_timeconstant(address):
     SR865_handle = rm.open_resource(address)
     try:
-        SR865_handle.write(f"OUTX 1")
-        index = int(SR650_handle.query("OFLT?"))
+        index = int(SR865_handle.query("OFLT?"))
         read = SR865_timeconstant[index]
         return read
     finally:
