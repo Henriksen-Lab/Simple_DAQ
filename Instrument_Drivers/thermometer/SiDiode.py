@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
+from Instrument_Drivers.hp34461A import hp34461a_get_voltage
+from Instrument_Drivers.keithley import keithley2000_get_voltage_V
 
 with open(r'C:\Users\ICET\Documents\GitHub\Simple_DAQ\Instrument_Drivers\thermometer\SiDiode.txt', 'r', encoding='utf-8') as file:
     lines = file.readlines()
@@ -23,5 +25,3 @@ def get_T_SiDiode(voltage):
     t = f(voltage)
     return t
 
-print(get_T_SiDiode(0.5571))
-print(get_T_SiDiode(0.5589))
