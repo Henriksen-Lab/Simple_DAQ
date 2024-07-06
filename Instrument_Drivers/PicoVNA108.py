@@ -18,12 +18,14 @@ class Smith():
         self.freqs = np.array(freq)
 
 def get_picoVNA_smith(port='S21',f_min=0.3,f_max=8500,number_of_points=1001,power=0,bandwidth=1000,Average=1):
-    picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3_2")  # Icet
+    # picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3_2")  # Icet
     # picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3") # PPMS PC Iridium
+    picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3") # Crow108
     try:
         findVNA = picoVNA.FND()
         # ans = picoVNA.LoadCal(r'C:\Users\Henriksen Lab\Documents\Pico Technology\PicoVNA3\FacCal.cal') # PPMS PC Iridium
-        ans = picoVNA.LoadCal(r'C:\Users\ICET\Documents\Pico Technology\PicoVNA3\FacCal.cal') # Icet PC
+        # ans = picoVNA.LoadCal(r'C:\Users\ICET\Documents\Pico Technology\PicoVNA3\FacCal.cal') # Icet PC
+        ans = picoVNA.LoadCal(r'C:\Users\Crow108\Documents\Pico Technology\PicoVNA3\FacCal.cal') #Crow108 PC
         freq_step = np.ceil((f_max-f_min)/number_of_points*1E5)/1E5
         flag = picoVNA.SetFreqPlan(f_min,freq_step,number_of_points,power,bandwidth)
         #print(flag)
@@ -55,11 +57,11 @@ def get_picoVNA_smith(port='S21',f_min=0.3,f_max=8500,number_of_points=1001,powe
 
 
 
-# data = get_picoVNA_smith()
+data = get_picoVNA_smith()
 # print(data)
-# plt.plot(data.freqs, data.log_mag)
-# plt.ylabel("S21 LogMag")
-# plt.xlabel("Frequency")
-# plt.show()
+plt.plot(data.freqs, data.log_mag)
+plt.ylabel("S21 LogMag")
+plt.xlabel("Frequency")
+plt.show()
 
 

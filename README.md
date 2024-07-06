@@ -395,9 +395,9 @@ The step is required even if you don't want to use the software built by manufac
 #### **2. Run python warpper**
 For PicoVNA 3 usage, run 
 ```~\Instrument_Drivers\PicoVNA_InitialSetup\PICOVNA_pythonWarpper\9B7C3137-F2BB-4D8E-9FDB-450B6D527E5Ex0x1x0.py```
-under **Python 32bit** environment with `pywin32` pre-installed. No error should show up at this step if python installed correctly.
+under **Python 32bit** environment with `pywin32` pre-installed(or use the embeded python 32 bit package at `~\Instrument_Drivers\PicoVNA108\pywin32-env`). No error should show up at this step if python installed correctly.
 
-#### **3. Find Picovna in registry**
+#### **3. Find Picovna in registry(Not necessary if no error pops)**
 Bring the registry up by press `win + R` on keyboard and type in `regedit` in the pop-up window at bottom left.
 Look for items with format `Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3[].PicoVNA_3[]` like the following:
 
@@ -407,17 +407,8 @@ Look for items with format `Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoCon
 `Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3_1.PicoVNA_3_1`
 `Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\PicoControl3_2.PicoVNA_3_2`
 
-Now go to the driver at `~\Instrument_Drivers\PicoVNA108.py`, look for two lines that ought to be changed:
-```python
-ans = picoVNA.LoadCal(r'C:\Users\Henriksen Lab\Documents\Pico Technology\PicoVNA3\FacCal.cal') # PPMS PC Iridium
-```
-Change the **file path** with your PicoVNA 3 calibration file path installed in the new PC.
-and 
-```python
-picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3") # PPMS PC Iridium
-```
-
-Change `"PicoControl3.PicoVNA_3"` bytesting the conbination of in your registry and see which one gave you response `PicoControl3[].PicoVNA_3[]`. Usually one of them would work out.
+Now go to the function you call for smith data `get_picoVNA_smith` (details of the function in `~\Instrument_Drivers\PicoVNA108.py`), change the arg `picoVNA="PicoControl3.PicoVNA_3"`.
+Change `"PicoControl3.PicoVNA_3"` by testing the conbination of in your registry and see which one gave you response `PicoControl3[].PicoVNA_3[]`. Usually one of them would work out.
 
 #### **4. If you encounter `has no attribute 'CLSIDToClassMap'` or other random error at one point**
 try this one by one if previous not working:
