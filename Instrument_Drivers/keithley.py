@@ -184,9 +184,10 @@ def keithley2450_get_sour_voltage_V(address):
     return last_value_V
 
 def keithley2450_get_meas_currrent_A(address):
+    # returns the 2 wire soursing current
     try:
         keithley = rm.open_resource(address)  
-        keithley.write("SENS:CURR:RSEN OFF") #Switch to 2-wire  sensing current  
+        keithley.write("SENS:CURR:RSEN OFF") #Switch to 2-wire sensing current  
         last_value_A = float(keithley.query("MEAS:CURR?"))
     finally:     
         keithley.close()       
@@ -195,7 +196,7 @@ def keithley2450_get_meas_currrent_A(address):
 def keithley2450_get_meas_voltage_V(address):
     try:
         keithley = rm.open_resource(address)
-        keithley.write("SENS:VOLT:RSEN OFF") #Switch to 2-wire  sensing voltage   
+        keithley.write("SENS:VOLT:RSEN OFF") #Switch to 2-wire sensing voltage   
         last_value_V = float(keithley.query("MEAS:VOLT?"))
     finally:
         keithley.close()

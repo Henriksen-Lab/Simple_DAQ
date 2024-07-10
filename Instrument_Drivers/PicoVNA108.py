@@ -1,13 +1,41 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-#
-# author: Shilling Du, revised from https://github.com/picotech/picosdk-picovna-python-examples
-# Feb 22, 2022
-
-import win32com.client
+import socket
+import subprocess
+import pathlib
+import pickle
+import os, time
 import numpy as np
-# import matplotlib.pyplot as plt
 
+
+def start_32_bit_program():
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    exe_path = os.path.join(current_directory,'PicoVNA108','pywin32-env','dist', "PicoVNA108_server.exe")
+    # print(exe_path)
+    # exe_path = pathlib.PureWindowsPath(exe_path).as_posix()
+    # print(exe_path)
+    subprocess.Popen([exe_path])
+
+def recv_full_message(client_socket, length):
+    data = b''
+    while len(data) < length:
+        packet = client_socket.recv(length - len(data))
+        if not packet:
+            break
+        data += packet
+    return data
+
+def call_32bit_program(params):
+    start_32_bit_program()
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect(('localhost', 65432))
+    client_socket.send(pickle.dumps(params))
+
+    response_length = int.from_bytes(client_socket.recv(4), 'big')
+    response = recv_full_message(client_socket, response_length)
+    data = pickle.loads(response)
+    client_socket.close()
+    if 'error' in data:
+        raise Exception(data['error'])
+    return data
 
 class Smith():
     def __init__(self,real,imag,logmag,phase,freq):
@@ -17,51 +45,21 @@ class Smith():
         self.phase_rad = np.array(phase)
         self.freqs = np.array(freq)
 
-def get_picoVNA_smith(port='S21',f_min=0.3,f_max=8500,number_of_points=1001,power=0,bandwidth=1000,Average=1):
-    # picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3_2")  # Icet
-    # picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3") # PPMS PC Iridium
-    picoVNA = win32com.client.gencache.EnsureDispatch("PicoControl3.PicoVNA_3") # Crow108
-    try:
-        findVNA = picoVNA.FND()
-        # ans = picoVNA.LoadCal(r'C:\Users\Henriksen Lab\Documents\Pico Technology\PicoVNA3\FacCal.cal') # PPMS PC Iridium
-        # ans = picoVNA.LoadCal(r'C:\Users\ICET\Documents\Pico Technology\PicoVNA3\FacCal.cal') # Icet PC
-        ans = picoVNA.LoadCal(r'C:\Users\Crow108\Documents\Pico Technology\PicoVNA3\FacCal.cal') #Crow108 PC
-        freq_step = np.ceil((f_max-f_min)/number_of_points*1E5)/1E5
-        flag = picoVNA.SetFreqPlan(f_min,freq_step,number_of_points,power,bandwidth)
-        #print(flag)
-        picoVNA.SetEnhance('Aver',Average)
+def get_picoVNA_smith(port='S21',f_min=0.3,f_max=8500,number_of_points=1001,power=0,bandwidth=1000,Average=1,picoVNA_id="PicoControl3.PicoVNA_3"):
+    params = {
+    'port': port,
+    'f_min': f_min,
+    'f_max': f_max,
+    'number_of_points': number_of_points,
+    'power': power,
+    'bandwidth': bandwidth,
+    'Average': Average,
+    'picoVNA_id':picoVNA_id
+    }
+    dict = call_32bit_program(params)
+    data = Smith(dict['real'],dict['imag'],dict['log_mag'],dict['phase_rad'],dict['freqs'])
+    return data
 
-        picoVNA.Measure('ALL');
-
-        raw_logmag = picoVNA.GetData(port,"logmag",0)
-        splitdata_logmag = raw_logmag.split(',')
-        freq =  np.float64(np.array(splitdata_logmag))[: : 2]
-        logmag = np.float64(np.array(splitdata_logmag))[1 : : 2]
-
-        raw_real = picoVNA.GetData(port, "real", 0)
-        splitdata_real = raw_real.split(',')
-        real = np.float64(np.array(splitdata_real))[1 : : 2]
-
-        raw_imag = picoVNA.GetData(port, "imag", 0)
-        splitdata_imag = raw_imag.split(',')
-        imag = np.float64(np.array(splitdata_imag))[1:: 2]
-
-        raw_phase = picoVNA.GetData(port, "phase", 0)
-        splitdata_phase = raw_phase.split(',')
-        phase = np.float64(np.array(splitdata_phase))[1:: 2]
-
-        data = Smith(real,imag,logmag,phase,freq)
-        return data
-    finally:
-        picoVNA.CloseVNA()
-
-
-
-data = get_picoVNA_smith()
-# print(data)
-plt.plot(data.freqs, data.log_mag)
-plt.ylabel("S21 LogMag")
-plt.xlabel("Frequency")
-plt.show()
-
-
+# start = time.time()
+# print(get_picoVNA_smith(Average=1).log_mag)
+# print(time.time()-start)

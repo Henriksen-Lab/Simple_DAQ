@@ -15,20 +15,25 @@ import time, sys, os, pyvisa, subprocess
 # import matplotlib as mpl
 # import matplotlib.pyplot as plt
 
-folder_path = os.getcwd()
-if folder_path not in sys.path:
-    sys.path.append(folder_path) # easier to open driver files as long as Simple_DAQ.py is in the same folder with drivers
+current_directory = os.path.dirname(os.path.abspath(__file__))
+main_directory = os.path.dirname(current_directory) 
+if main_directory not in sys.path:
+    sys.path.append(main_directory)
 from Instrument_Drivers.PicoVNA108 import get_picoVNA_smith
 from Instrument_Drivers.Instrument_dict import *
 rm = pyvisa.ResourceManager()
 
 # subprocess.call(['sh','SD_pywin32error.sh'])
 # this command delete r'C:\Users\<username>\AppData\Local\Temp\2\gen_py' to solve a potential pywin32 error that usually happens after you use the PICOVNA 3 program
-global msmt_flag
+global msmt_flag, my_note
 msmt_flag = None
+my_note = ''
 
 def my_form(kwargs):
-    lens = len(kwargs['smith'].freqs)
+    if 'smith' in kwargs.keys():
+        lens = len(kwargs['smith'].freqs)
+    else:
+        lens = 1
     list = []
     dataToSave = []
     for key in kwargs:
@@ -50,12 +55,13 @@ def my_form(kwargs):
     return data, axis
 
 
-'''---------------------Run func---------------------'''
+'''---------------------Run funcs---------------------'''
 def get_sweep(start,stop,step_size):
     num_steps = int((abs(float(start) - float(stop)) / float(step_size))) + 1
     return np.linspace(float(start), float(stop), num_steps)
 
 def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None,number_of_points=1001,bandwidth=1000):
+    global my_note
     set(sweep)
     value = read()
     avg = f"\n average for {average} times"
@@ -78,9 +84,10 @@ def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None,number_of_
         file_name = ''.join(file_name.split('.')[:-1]) + f'.{order}'
         file_real_path = data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" + title + "\\" + file_name
     os.makedirs(data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" +title, exist_ok=True)
+    my_note += avg + ', power=' + f'{power}' + ', bandwidth=' + f'{bandwidth}' + '\n'
     np.savetxt(file_real_path, data, delimiter='\t',
                header=f"{datetime.now().strftime('%Y%m%d')}" + " " + f"{datetime.now().strftime('%H%M%S')}" + '\n' + \
-                      my_note + '\n' + avg + '\n' + f"{axis}")
+                      my_note + f"{axis}")
 
 def dry_sweep(start, stop, step_size=0.01, delay=0.9):
     print(f"{datetime.now().strftime('%Y.%m.%d')}", " ", f"{datetime.now().strftime('%H:%M:%S')} ", 'Sweep started from:')
@@ -88,31 +95,43 @@ def dry_sweep(start, stop, step_size=0.01, delay=0.9):
     for sweep in get_sweep(start=start, stop=stop, step_size=step_size):
         sweep = round(sweep,ndigits=4)
         set(sweep,delay=delay)
+        value = read(printable=False)
+        data, axis = my_form(value)
+        os.makedirs(data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" +title, exist_ok=True)
+        dry_sweep_real_path = data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" + title + "\\" + title + '_dry_sweep'
+        if not os.path.exists(dry_sweep_real_path):
+            np.savetxt(dry_sweep_real_path,data,delimiter='\t',
+                       header=f"{datetime.now().strftime('%Y.%m.%d')}" + " " + f"{datetime.now().strftime('%H:%M:%S')}" +
+                              '\n' + f"{axis}")
+        else:
+            with open(dry_sweep_real_path, "ab") as f:
+                np.savetxt(f, data, delimiter='\t')
     print(f"{datetime.now().strftime('%Y.%m.%d')}", " ", f"{datetime.now().strftime('%H:%M:%S')} ", 'Sweep ended at :')
     read()
     return sweep
 
-def wet_sweep(start, stop, step_size, order, last_v, f_min, f_max, power=-5, average=250, dry_step_size=0.01, dry_delay=0.9):
+def wet_sweep(start, stop, step_size, order, last_v, f_min, f_max, number_of_points=1001, power=-5, average=250, dry_step_size=0.01, dry_delay=0.9, wet_delay =0.01, duplicate=1):
     for sweep in get_sweep(start=start, stop=stop, step_size=step_size):
         last_v = dry_sweep(last_v, sweep, step_size=dry_step_size, delay=dry_delay)
-        for i in range(1):
+        time.sleep(wet_delay)
+        for i in range(duplicate):
             order += 1
-            run_single(sweep, order, f_min=f_min, f_max=f_max, average=average, power=power)
+            run_single(sweep, order, f_min=f_min, f_max=f_max, average=average, power=power, number_of_points=number_of_points)
             last_v = sweep
     return last_v
 
-
 '''---------------------INPUT BEFORE RUN---------------------'''
 
-keithley2400_gpib = 'GPIB0::25::INSTR'
-keithley2000_gpib = 'GPIB0::18::INSTR'
-keithley2230_gpib = 'GPIB0::1::INSTR'
-dc205_address = 'COM3'
-hp34461a = 'GPIB0::17::INSTR'
+# keithley2400_gpib = 'GPIB0::25::INSTR'
+# keithley2000_gpib = 'GPIB0::18::INSTR'
+# keithley2230_gpib = 'GPIB0::1::INSTR'
+# dc205_address = 'COM3'
+hp34461a = 'GPIB0::22::INSTR'
 SR830 = 'GPIB0::7::INSTR'
-SR124 = 'ASRL5::INSTR'
-multi_Temp = 'USB0::0x0957::0x4918::MY59170002::INSTR'
-multi_Field = 'USB0::0x0957::0x4918::MY60480007::INSTR'
+# SR124 = 'ASRL5::INSTR'
+# multi_Temp = 'USB0::0x0957::0x4918::MY59170002::INSTR'
+# multi_Field = 'USB0::0x0957::0x4918::MY60480007::INSTR'
+keithley2450_gpib = 'GPIB0::18::INSTR'
 
 port ='S21'
 
@@ -126,6 +145,8 @@ def set(value, delay=0.9):
             SR830_set_amplitude(SR830, value)
         if msmt_flag =='DC sweep Gate, 2400':
             keithley2400_set_sour_voltage_V(keithley2400_gpib, value)
+        if msmt_flag =='DC sweep Gate, 2450':
+            keithley2450_set_sour_voltage_V(keithley2450_gpib, value)
         if msmt_flag == 'DC sweep Gate, 2230':
             keithley2230_CH2_Set_voltage(keithley2230_gpib, value)
             # keithley2230_CH3_Set_voltage(keithley2230_gpib, value)
@@ -136,7 +157,7 @@ def set(value, delay=0.9):
         time.sleep(delay)
     time.sleep(0.1)
 
-def read(*arg):
+def read(printable=True,*arg):
     global msmt_flag
     read = {}
     read.update({'timestamp': time.time()})
@@ -163,12 +184,20 @@ def read(*arg):
     if msmt_flag == 'Read Temp and Field from PPMS':
         read.update({'V_T': U2741A_get_voltage(multi_Temp)})
         read.update({'V_B': U2741A_get_voltage(multi_Field)})
+    if msmt_flag == 'DC sweep Gate, 2450':
+        read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
+        read.update({'Vbg':keithley2450_get_sour_voltage_V(keithley2450_gpib)})
+        read.update({'I_leak':keithley2450_get_meas_currrent_A(keithley2450_gpib)})
+        read.update({'V_x':SR830_get_x(SR830)})
+        read.update({'V_y':SR830_get_y(SR830)})
     if msmt_flag == 'manual':
-        read.update({'Vtg': 0.73})
-    msg = ''
-    for key, item in read.items():
-        msg += f'{key}={item}, '
-    print(msg)
+        # read.update({'Vtg': 0.73})
+        pass
+    if printable:
+        msg = ''
+        for key, item in read.items():
+            msg += f'{key}={item}, '
+        print(msg)
     return read
 
 
@@ -299,14 +328,14 @@ def read(*arg):
 #     order += 1
 
 '''Take trace_manual'''
-# msmt_flag = 'manual'
-data_dir = r'C:\Users\ICET\Desktop\Data\SD\20240412_Empty_CheckCavityMode\WarmUp'
-my_note = "2024.4.14 Empty_check cavity mode"
-order = 1
-title = "3G_8p5G_noCirculator" # some unique feature you want to add in title
-# run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=50,power=-5,number_of_points=1001)
-while 1:
-    run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=3,power=-5)
+# # msmt_flag = 'manual'
+# data_dir = r'C:\Users\Crow108\Documents\Data\SD\20240707_SDgPD003_ICET\1_Calibration'
+# my_note = "2024.7.07 VNA1-20db-SScable-DCbiasT(R/G)-0dB-OPEN-0dB-ecosorb filter-DCbiasT(G/Y)-Circulator-3dB-VNA2"
+# order = 1
+# title = "till_0dB_short" # some unique feature you want to add in title
+# run_single(sweep=None,order=order,f_min=1000,f_max=8000,average=50,power=0,number_of_points=1001)
+# # while 1:
+# #     run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=3,power=-5)
 
 '''Take temp and field'''
 # msmt_flag = 'Read Temp and Field from PPMS'
@@ -318,3 +347,53 @@ while 1:
 #     run_single(sweep=None,order=order,f_min=0.3,f_max=8500,average=5,power=0,number_of_points=1001,bandwidth=300)
 #     time.sleep(15)
 #     order += 1
+
+'''Take temp and S21 and sweep gate'''
+msmt_flag = 'DC sweep Gate, 2450'
+data_dir = r'C:\Users\Crow108\Documents\Data\SD\20240707_SDgPD003_ICET\4_warmup'
+my_note = "2024.07.09 Icet SDgPD002 basetemp, 0.1V on 1Mohm measure voltage drop on graphene, sweep gate[-11V,11V], 10mV/1s"
+last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
+order = 0
+title = f"warmup_dp_Symmetrical" # some unique feature you want to add in title
+last_v = dry_sweep(start=last_v, stop=0, step_size=0.01, delay=1)
+runs = 0
+message = ''
+while runs<1:
+    now = time.time()
+    last_v = wet_sweep(start=last_v,
+                    stop=-11,
+                    step_size=0.5,
+                    order=order,
+                    last_v=last_v,
+                    f_min=1000,
+                    f_max=8000,
+                    number_of_points=101,
+                    average=1,
+                    dry_step_size=0.01,
+                    dry_delay=1)
+    last_v = wet_sweep(start=last_v,
+                    stop=11,
+                    step_size=0.5,
+                    order=order,
+                    last_v=last_v,
+                    f_min=1000,
+                    f_max=8000,
+                    number_of_points=101,
+                    average=1,
+                    dry_step_size=0.01,
+                    dry_delay=1)
+    last_v = wet_sweep(start=last_v,
+                    stop=0,
+                    step_size=0.5,
+                    order=order,
+                    last_v=last_v,
+                    f_min=1000,
+                    f_max=8000,
+                    number_of_points=101,
+                    average=1,
+                    dry_step_size=0.01,
+                    dry_delay=1)
+    then = time.time()
+    message += f'cycle: {int(then-now)} sec\n'
+    runs += 1
+print(message)
