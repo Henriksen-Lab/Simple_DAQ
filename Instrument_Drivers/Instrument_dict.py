@@ -48,6 +48,9 @@ global read_write_lock
 read_write_lock = False
 
 def get_value(address='', name='', func='', **kwargs):
+    address = str(address)
+    name = str(name)
+    func = str(func)
     global read_write_lock
     while read_write_lock:
         time.sleep(0.001)
@@ -73,7 +76,7 @@ def get_value(address='', name='', func='', **kwargs):
     elif name == 'keithley2450':
         if func == 'ohm_4pt':
             value = keithley2450_get_ohm_4pt(address)
-        if func == 'sur_curr':
+        elif func == 'sur_curr':
             value = keithley2450_get_sour_currrent_A(address)
         elif func == 'sur_volt':
             value = keithley2450_get_sour_voltage_V(address)
@@ -177,12 +180,15 @@ def get_value(address='', name='', func='', **kwargs):
             value = U2741A_get_ohm_4pt(address)
     else:
         value = 0
-        print('Please input correct instrument name or function name')
+        print(f'Please input correct instrument name or function name for GET {address},{name},{func}')
     read_write_lock = False
     return value
 
 
 def set_value(value, address='', name='', func='', **kwargs):
+    address = str(address)
+    name = str(name)
+    func = str(func)
     global read_write_lock
     while read_write_lock:
         time.sleep(0.001)
@@ -192,7 +198,7 @@ def set_value(value, address='', name='', func='', **kwargs):
             keithley2400_set_sour_currrent_A(address, value)
         elif func == 'voltage':
             keithley2400_set_sour_voltage_V(address, value)
-    if name == 'keithley2450':
+    elif name == 'keithley2450':
         if func == 'current':
             keithley2450_set_sour_currrent_A(address, value)
         elif func == 'voltage':
@@ -265,7 +271,8 @@ def set_value(value, address='', name='', func='', **kwargs):
         if func == 'DC_bias':
             SR124_set_DCbias(address, value)
     else:
-        print('Please input correct instrument name or function name')
+        print(f'Please input correct instrument name or function name for SET {address},{name},{func}')
+        print(name=='keithley2400',func=='voltage')
     read_write_lock = False
     return value
 
