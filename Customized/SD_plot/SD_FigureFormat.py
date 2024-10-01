@@ -6,6 +6,12 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+def path(path,key='\wustl\HLab'):
+    relative = path.split(key)[-1]
+    current = os.path.abspath(os.path.dirname(__file__))
+    absolute = current.split(key)[0]
+    path = absolute + key + relative
+    return path
 
 def get_color_cycle(NUM_COLORS, cmap='coolwarm'):
     cm = plt.get_cmap(cmap)
@@ -13,16 +19,16 @@ def get_color_cycle(NUM_COLORS, cmap='coolwarm'):
     return custom_cycler
 
 
-fontsize = 8
+fontsize = 6
 # Font
 font = {
-    # 'family': "Helvetica",
+    'family': "Arial",
     "weight": 'normal',
     "size": fontsize}
 mpl.rc("font", **font)
 mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['mathtext.bf'] = 'sans:italic:bold'
-mpl.rcParams['figure.dpi'] = 300
+mpl.rcParams['figure.dpi'] = 600
 mpl.rcParams['figure.autolayout'] = True
 
 # Linewidth
@@ -57,13 +63,14 @@ mpl.rcParams['axes.titlepad'] = 15
 # colorcycle = ["#fbf49a","#eeb5ba","#7e5874","#ffe2b5","#edb073","#ce223d","#aeadd6","#91adb9","#d1d1d1","#c48ab6"]
 # colorcycle = ["#7b7b7c","#28a8de","#fff300","#f3835e","#ef5a29","#f1eee8"]
 # colorcycle = ["#8ecfc9", "#ffbe7a", "#fa7f6f", "#82b0d2", "#beb8dc", "#e7dad2"]
-
-colorcycle = get_color_cycle(20, cmap='coolwarm')
+# colorcycle = get_color_cycle(8, cmap='coolwarm')
+colorcycle = ["#2A2C52","#424371", "#6C6BA4","#9A9ECB","#93BCC0","#91AE82","#7B9A61"]
+customized_cmap = mpl.colors.LinearSegmentedColormap.from_list("", colorcycle)
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colorcycle)
 
 # layout
 
-fig_size = np.asarray([10, 7])
+fig_size = np.asarray([8.5, 8.5])
 fig_size = fig_size / 2.54
 
 
@@ -159,10 +166,8 @@ def add_vline(vlines, y, label='', position=None, color='grey', ls='--', fontsiz
 
 
 def get_path(filename):
-    figure_folder = r'/Users/chellybone/Library/CloudStorage/Box-Box/N15_Figs/Methods:Supp/Sensitivity/3_17'
-    # figure_folder = r'/Users/chellybone/Library/CloudStorage/OneDrive-WashingtonUniversityinSt.Louis/wustl/2023 Spring/ESR_cal/fg'
-    # figure_folder = r'C:\Users\duxin\OneDrive - Washington University in St. Louis\wustl\2023 Spring\ESR_cal\fg\convolution'
-    full_path = os.path.join(figure_folder, filename)
+    figure_folder = r"C:\Users\simpl\OneDrive - Washington University in St. Louis (1)\wustl\HLab\Project_MLGM\Paper\figures"
+    full_path = os.path.join(path(figure_folder), filename)
     return full_path
 
 def offset(myFig,myAx,n=1,yOff=60):

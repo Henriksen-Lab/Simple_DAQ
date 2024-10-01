@@ -1164,7 +1164,7 @@ def plot_window():
                         ax2.set_xlabel(self.x2_name)
                         ax2.plot(self.x2[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.g')
                         ax2.xaxis.label.set_color('g')
-                plt.tight_layout()
+                fg.tight_layout()
                 canvas.draw()
                 if temp_save_flag:
                     dataToSave = []

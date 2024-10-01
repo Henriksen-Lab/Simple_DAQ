@@ -328,14 +328,14 @@ def read(printable=True,*arg):
 #     order += 1
 
 '''Take trace_manual'''
-# # msmt_flag = 'manual'
-# data_dir = r'C:\Users\Crow108\Documents\Data\SD\20240707_SDgPD003_ICET\1_Calibration'
-# my_note = "2024.7.07 VNA1-20db-SScable-DCbiasT(R/G)-0dB-OPEN-0dB-ecosorb filter-DCbiasT(G/Y)-Circulator-3dB-VNA2"
-# order = 1
-# title = "till_0dB_short" # some unique feature you want to add in title
-# run_single(sweep=None,order=order,f_min=1000,f_max=8000,average=50,power=0,number_of_points=1001)
-# # while 1:
-# #     run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=3,power=-5)
+# msmt_flag = 'manual'
+data_dir = r'C:\Users\Crow108\Documents\Data\SD\20240815_SamplePuckTest_VNA_rmtemp'
+my_note = "2024.8.15 VNA1-exposed sample stage-VNA2"
+order = 1
+title = "AnotherPCB" # some unique feature you want to add in title
+run_single(sweep=None,order=order,f_min=1000,f_max=8000,average=50,power=-5,number_of_points=1001)
+# while 1:
+#     run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=3,power=-5)
 
 '''Take temp and field'''
 # msmt_flag = 'Read Temp and Field from PPMS'
@@ -349,51 +349,87 @@ def read(printable=True,*arg):
 #     order += 1
 
 '''Take temp and S21 and sweep gate'''
-msmt_flag = 'DC sweep Gate, 2450'
-data_dir = r'C:\Users\Crow108\Documents\Data\SD\20240707_SDgPD003_ICET\4_warmup'
-my_note = "2024.07.09 Icet SDgPD002 basetemp, 0.1V on 1Mohm measure voltage drop on graphene, sweep gate[-11V,11V], 10mV/1s"
-last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
-order = 0
-title = f"warmup_dp_Symmetrical" # some unique feature you want to add in title
-last_v = dry_sweep(start=last_v, stop=0, step_size=0.01, delay=1)
-runs = 0
-message = ''
-while runs<1:
-    now = time.time()
-    last_v = wet_sweep(start=last_v,
-                    stop=-11,
-                    step_size=0.5,
-                    order=order,
-                    last_v=last_v,
-                    f_min=1000,
-                    f_max=8000,
-                    number_of_points=101,
-                    average=1,
-                    dry_step_size=0.01,
-                    dry_delay=1)
-    last_v = wet_sweep(start=last_v,
-                    stop=11,
-                    step_size=0.5,
-                    order=order,
-                    last_v=last_v,
-                    f_min=1000,
-                    f_max=8000,
-                    number_of_points=101,
-                    average=1,
-                    dry_step_size=0.01,
-                    dry_delay=1)
-    last_v = wet_sweep(start=last_v,
-                    stop=0,
-                    step_size=0.5,
-                    order=order,
-                    last_v=last_v,
-                    f_min=1000,
-                    f_max=8000,
-                    number_of_points=101,
-                    average=1,
-                    dry_step_size=0.01,
-                    dry_delay=1)
-    then = time.time()
-    message += f'cycle: {int(then-now)} sec\n'
-    runs += 1
-print(message)
+# msmt_flag = 'DC sweep Gate, 2450'
+# data_dir = r'C:\Users\Crow108\Documents\Data\SD\20240707_SDgPD003_ICET\1_basetemp'
+# my_note = "2024.08.13 Icet SDgPD003 basetemp, 0.1V on 1Mohm measure voltage drop on graphene, sweep gate[-10V,10V] on 10Mohm, 10mV/1s"
+# last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
+# order = 0
+# title = f"Basetemp_10mvs" # some unique feature you want to add in title
+# last_v = dry_sweep(start=last_v, stop=0, step_size=0.01, delay=1)
+# # runs = 0
+# message = ''
+# # while hp34461a_get_ohm_4pt(hp34461a)>1010:
+# now = time.time()
+# last_v = wet_sweep(start=last_v,
+#                 stop=10,
+#                 step_size=0.1,
+#                 order=order,
+#                 last_v=last_v,
+#                 f_min=1000,
+#                 f_max=8000,
+#                 number_of_points=101,
+#                 average=1,
+#                 dry_step_size=0.01,
+#                 dry_delay=1)
+# last_v = wet_sweep(start=last_v,
+#                 stop=-10,
+#                 step_size=0.1,
+#                 order=order,
+#                 last_v=last_v,
+#                 f_min=1000,
+#                 f_max=8000,
+#                 number_of_points=101,
+#                 average=1,
+#                 dry_step_size=0.01,
+#                 dry_delay=1)
+# last_v = wet_sweep(start=last_v,
+#                 stop=0,
+#                 step_size=0.1,
+#                 order=order,
+#                 last_v=last_v,
+#                 f_min=1000,
+#                 f_max=8000,
+#                 number_of_points=101,
+#                 average=1,
+#                 dry_step_size=0.01,
+#                 dry_delay=1)
+# then = time.time()
+# message += f'cycle: {int(then-now)} sec\n'
+#     # runs += 1
+# print(message)
+
+# my_note = '2024.07.14 Icet SDgPD002 basetemp, 0.1V on 1Mohm measure voltage drop on graphene, at -9.1V warm up'
+# order = 0
+# title = f"Warmup_VDP_compressorOFF_prepare_1" # some unique feature you want to add in title
+# # last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
+# # last_v = dry_sweep(start=last_v, stop=0, step_size=0.01, delay=1)
+# # last_v = wet_sweep(start=last_v,
+# #                 stop=10,
+# #                 step_size=0.1,
+# #                 order=order,
+# #                 last_v=last_v,
+# #                 f_min=1000,
+# #                 f_max=8000,
+# #                 number_of_points=101,
+# #                 average=1,
+# #                 dry_step_size=0.01,
+# #                 dry_delay=1)
+# # last_v = wet_sweep(start=last_v,
+# #                 stop=-9,
+# #                 step_size=0.1,
+# #                 order=order,
+# #                 last_v=last_v,
+# #                 f_min=1000,
+# #                 f_max=8000,
+# #                 number_of_points=101,
+# #                 average=1,
+# #                 dry_step_size=0.01,
+# #                 dry_delay=1)
+# print('Turn off Compressor now')
+# # time.sleep(30)
+# title = f"Warmup_VDP_compressorOFF_1" # some unique feature you want to add in title
+# while hp34461a_get_ohm_4pt(hp34461a)>1010:
+#     run_single(sweep=None,order=order,f_min=1000,f_max=8000,average=3,power=-5,number_of_points=1001)
+# # last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
+# # last_v = dry_sweep(start=last_v, stop=0, step_size=0.01, delay=1)
+# print('done')

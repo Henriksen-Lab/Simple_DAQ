@@ -14,19 +14,19 @@ from matplotlib import cm
 import numpy as np
 import scipy
 from scipy.optimize import curve_fit
-
 import pickle
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(script_dir)
-parent_parent_dir = os.path.dirname(parent_dir)
-if parent_parent_dir not in sys.path:
-    sys.path.append(parent_parent_dir)
-from Instrument_Drivers.thermometer.Cernox import *
-from Instrument_Drivers.thermometer.RuOx import *
+# script_dir = os.path.dirname(os.path.abspath(__file__))
+# parent_dir = os.path.dirname(script_dir)
+# parent_parent_dir = os.path.dirname(parent_dir)
+# if parent_parent_dir not in sys.path:
+#     sys.path.append(parent_parent_dir)
+# # from Instrument_Drivers.thermometer.Cernox import *
+# # from Instrument_Drivers.thermometer.RuOx import *
 from SD_FigureFormat import *
 from SD_LoadData import *
 from SD_Func import *
+
 
 """ To use this Plotter, below is an example: Example .py
 import sys
@@ -74,6 +74,43 @@ def filter_nan(x, y):
 
 """------------------Plot configs-----------------------------------"""
 
+def get_xyz(data,plot_tag_x,plot_tag_y,plot_tag_z,avgtype='logmag',normalized=None,digit=5):
+    flag = None
+    if normalized is not None:
+        if normalized['axis'] == plot_tag_x:
+            flag = 'x'
+        elif normalized['axis'] == plot_tag_y:
+            flag = 'y'
+        else:
+            print('Can not normalize, axis not included in plot para')
+    sweep_1 = get_sweep(data, plot_tag_x,digit=digit)
+    sweep_2 = get_sweep(data, plot_tag_y,digit=digit)
+    x = []
+    y = []
+    z = []
+    z0 = []
+    for sweep2 in sweep_2:
+        for sweep1 in sweep_1:
+            x += [sweep1]
+            y += [sweep2]
+            mask = np.logical_and(data[plot_tag_x] == sweep1, data[plot_tag_y] == sweep2)
+            if flag == 'x':
+                zeromask = np.logical_and(data[plot_tag_x] == normalized['value'], data[plot_tag_y] == sweep2)
+                z0 = calc_average(data[plot_tag_z][zeromask], type=avgtype)
+            elif flag == 'y':
+                zeromask = np.logical_and(data[plot_tag_x] == sweep1, data[plot_tag_y] == normalized['value'])
+                z0 = calc_average(data[plot_tag_z][zeromask], type=avgtype)
+            if normalized is not None:
+                if normalized['type']=='/':
+                    z += [calc_average(data[plot_tag_z][mask], type=avgtype)/z0]
+                elif normalized['type']=='-':
+                    z += [calc_average(data[plot_tag_z][mask], type=avgtype)-z0]
+            else:
+                z += [calc_average(data[plot_tag_z][mask], type=avgtype)]
+    x = np.array(x)
+    y = np.array(y)
+    z = np.array(z)
+    return x,y,z
 
 def plot_single_sweep(data, sweep_tag_1, plot_tag_x='VNA_freqs', plot_tag_y='VNA_log_mag', avgtype=None, yerrbar=False,
                       inside_plot_flag=True, timestamp=None, digit=5, ax=None):

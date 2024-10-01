@@ -101,9 +101,9 @@ def load_data_s2p(path):
             data.update({f'{tag}_logmag': 20*np.log10(mag)})
     return data
 
-def load_data_from_folder(folder_path):
+def load_data_from_folder(folder_path, sortmethod='time'):
     order = 0
-    ordered_file_name_dict = get_ordered_file_name_dict(folder_path)
+    ordered_file_name_dict = get_ordered_file_name_dict(folder_path, sortmethod=sortmethod)
     data = {}
     for name in ordered_file_name_dict.keys():
         if ".DS_Store" not in name:
@@ -115,24 +115,27 @@ def load_data_from_folder(folder_path):
             print('done')
     return data
 
-def get_ordered_file_name_dict(folder_path):
+def get_ordered_file_name_dict(folder_path, sortmethod='time'):
     file_name_dict = {}
     for root, dirs, files in os.walk(folder_path, topdown=False):
-        # go through every file inside the folder, even inside subfolders
+        # Go through every file inside the folder, even inside subfolders
         for name in files:
             if '.' in name and ".DS_Store" not in name:
                 path = os.path.join(root, name)
-                file_name_dict.update({path: {}})
-                file_name_dict[path].update({'path': os.path.join(root, name),
-                                             'name': name,
-                                             'time': os.path.getctime(os.path.join(root, name)),
-                                             'dir': root,
-                                             })
-
+                file_name_dict[path] = {
+                    'path': path,
+                    'name': name,
+                    'time': os.path.getctime(path),
+                    'dir': root,
+                }
+                # Extract the numeric part of the filename if it exists
+                try:
+                    numeric_part = int(name.split('.')[-1])
+                except ValueError:
+                    numeric_part = float('inf')  # Place non-numeric files at the end
+                file_name_dict[path]['order'] = numeric_part
     # Reorder the file name dict with the modified time
-    # if want to use the created time order, change the getmtime -> getctime
-    ordered_file_name_dict = OrderedDict(sorted(file_name_dict.items(),
-                                                key=lambda x: getitem(x[1], 'time')))
+    ordered_file_name_dict = OrderedDict(sorted(file_name_dict.items(), key=lambda x: x[1][sortmethod])) 
     return ordered_file_name_dict
 
 
