@@ -89,7 +89,7 @@ def keithley2400_set_sour_currrent_A(address, target_value_A):
         keithley.write("sour:curr:rang:auto 1")
         keithley.write(f"sour:curr {target_value_A}")
         keithley.write("SYST:KEY 23")  # press local
-        time.sleep(0.01)
+        time.sleep(0.001)
     finally:
         keithley.close()
 
@@ -100,6 +100,7 @@ def keithley2400_set_sour_voltage_V(address, target_value_V):
         keithley.write("sour:volt:rang:auto 1")
         keithley.write(f"sour:volt {target_value_V}")
         keithley.write("SYST:KEY 23")  # press local key
+        time.sleep(0.001)
     finally:
         keithley.close()
 

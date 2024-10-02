@@ -14,10 +14,11 @@ from Instrument_Drivers.DC205 import *
 from Instrument_Drivers.SR124 import *
 from Instrument_Drivers.keithley2230G_30_1 import *
 from Instrument_Drivers.Keysight_U2741A import *
+from Instrument_Drivers.Opus import *
 global instrument_dict
 instrument_dict = {'get':{},
                    'set':{},
-                   'vna':['vna', 'PicoVNA108', 'E4405B'],
+                   'vna':['vna', 'PicoVNA108', 'E4405B','Opus'],
                    'pid_noise':['keithley', 'SR830', 'hp34461A']} #the instrument for temp acq
 
 instrument_dict['get'].update({'keithley2000': ['ohm_4pt', 'ohm_2pt', 'volt']})
@@ -34,6 +35,7 @@ instrument_dict['get'].update({'E4405B': ['please input the VNA_settings']})
 instrument_dict['get'].update({'DC205': ['sur_volt']})
 instrument_dict['get'].update({'SR124': ['sur_AC_Vrms', 'sur_AC_freq', 'sur_DC_bias']})
 instrument_dict['get'].update({'U2741A': ['volt', 'ohm_4pt']})
+instrument_dict['get'].update({'Opus': ['please input the settings in opus']})
 
 instrument_dict['set'].update({'keithley2400': ['current', 'voltage']})
 instrument_dict['set'].update({'keithley2450': ['current', 'voltage']})
@@ -143,6 +145,8 @@ def get_value(address='', name='', func='', **kwargs):
     elif name == 'Agilent infiniiVision':
         if func == 'counter':
             value = infiniVision_get_counter(address)
+    elif name == 'Opus':
+        value = get_opus_data()
     # elif name == 'PicoVNA108':
     #     value = get_picoVNA_smith(
     #                     port=func,
