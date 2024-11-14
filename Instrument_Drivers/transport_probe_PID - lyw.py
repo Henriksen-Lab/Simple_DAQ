@@ -9,11 +9,12 @@ if folder_path not in sys.path:
     sys.path.append(
         folder_path)  # easier to open driver files as long as Simple_DAQ.py is in the same folder with drivers
 from Instrument_Drivers.thermometer.SiDiode import get_T_SiDiode#!!!!
+from Instrument_Drivers.thermometer.CernoxET import get_T_cernoxCT
 from Instrument_Drivers.thermometer.Cernox import get_T_cernox_3
 from Instrument_Drivers.hp34461A import hp34461a_get_ohm_4pt#!!!!
 from Instrument_Drivers.hp34461A import hp34461a_get_voltage
 from Instrument_Drivers.keithley2230G_30_1 import *
-from Instrument_Drivers.keithley import keithley2000_get_ohm_4pt
+from Instrument_Drivers.keithley import keithley2000_get_ohm_2pt
 '''-------------------------------------------------------Main------------------------------------------------------'''
 
 def output_cal(setpoint_value, now_value, time_interval, kp, ki, kd, lastErr, lastErr_2):
@@ -122,16 +123,19 @@ def run_one_temp_SiDiode_on_stage():
     time_interval = 0.5 # change input voltage every ...s
     n = 13
     kp = [0, 20, 20, 20, 20, 20, 25, 25, 25, 25, 25, 25, 25, 25]
-    ki = [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100] #ki for 5-100 K
+    ki = [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]  # ki for 5-100 K
     kd = [0, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25, 25]  # kd for 20-100 K
-    V_in = [0, 8, 9, 10, 10.5, 11, 11.5, 15, 15, 15, 15, 16.5, 19.5, 22]
+    V_in = [0, 7.75, 9.5, 10.5, 11, 11.5, 12.5, 14.5, 14.5, 14.5, 15, 16.5, 17, 17.5]
     setpoint = [0, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 200]
-    a = [0, 0.5, 0.5, 0.7, 0.6, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.6, 0.5, 0.5]
+    a = [0, 0.7, 0.8, 0.9, 0.85, 0.8, 0.7, 0.5, 0.2, 0, 0.5, 0.5, 0.5, 0.5]
     setpoint_value = setpoint[n]
     print(setpoint_value)
     while True:
         values = output_cal(setpoint_value, now_value, time_interval, kp[n], ki[n], kd[n], lastErr, lastErr_2)
-        p = max(values[0],a[n])
+        if now_value - 2 > setpoint_value:
+            p = 0
+        else:
+            p = max(values[0],a[n])
         lastErr = values[1]
         lastErr_2 = values[2]
         keithley2230_CH1_Set_voltage(address2, V_in[n] * p)
@@ -151,13 +155,13 @@ def run_r_vs_T_SiDiode_on_stage():
     kp = [0, 20, 20, 20, 20, 20, 25, 25, 25, 25, 25, 25, 25, 25]
     ki = [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]  # ki for 5-100 K
     kd = [0, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25, 25]  # kd for 20-100 K
-    V_in = [0, 8, 9, 10, 10.5, 11, 11.5, 15, 15, 15, 15, 16.5, 19.5, 22]
+    V_in = [0, 7.75, 9.5, 10.5, 11, 11.5, 12.5, 14.5, 14.5, 14.5, 15, 16.5, 17, 17.5]
     setpoint = [0, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 200]
-    a = [0, 0.5, 0.5, 0.7, 0.6, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.6, 0.5, 0.5]
+    a = [0, 0.7, 0.8, 0.9, 0.85, 0.8, 0.7, 0.5, 0.2, 0, 0.5, 0.5, 0.5, 0.5]
     timestamp = [] #record time of set temp change
     set_temp = [] #record set temp
     reach_temp = []
-    data_path_init = r'C:\Users\ICET\Desktop\Data\lyw\20240626\r_vs_t_temp'#!!!
+    data_path_init = r'C:\Users\ICET\Desktop\Data\lyw\20240807\r_vs_t_temp'#!!!
     for i in range(0,len(setpoint)):
         time_temp = []
         reach_temp_total = []
@@ -169,13 +173,13 @@ def run_r_vs_T_SiDiode_on_stage():
         print('!!!!')
         print(setpoint_value)
         if i < 6:
-            Time_wait = 1800
+            Time_wait = 2400
         elif i < 10:
             Time_wait = 3600
         elif i < 13:
-            Time_wait = 5400
+            Time_wait = 4800
         else :
-            Time_wait = 9000
+            Time_wait = 6000
         while j < Time_wait:
             values = output_cal(setpoint_value, now_value, time_interval, kp[i], ki[i], kd[i], lastErr, lastErr_2)
             p = max(values[0], a[i])
@@ -184,7 +188,7 @@ def run_r_vs_T_SiDiode_on_stage():
             keithley2230_CH1_Set_voltage(address2, V_in[i]*p)
             time.sleep(time_interval)
             now_value = get_T_SiDiode(hp34461a_get_voltage(address))
-            print(p, lastErr, lastErr_2, now_value)
+            print(p, lastErr, lastErr_2, now_value, j)
             j += 1
             reach_temp_total.append(now_value)
             time_temp.append(time.time())
@@ -202,6 +206,107 @@ def run_r_vs_T_SiDiode_on_stage():
     print(set_temp)
     print(reach_temp)
     print(timestamp)
+
+def run_r_vs_T_cernoxET_on_stage():
+    address = 'GPIB::27::INSTR'#!!!!
+    address2 = 'GPIB::1::INSTR'
+    err = 0.0 #initial error(0)
+    lastErr = 0. #initial err(-1)
+    lastErr_2 = 0.0 #initial err(-2)
+    now_value = get_T_cernoxCT(keithley2000_get_ohm_2pt(address)-11.8) #current temp #!!!!
+    time_interval = 0.5 #change input voltage every ...s
+    kp = [0, 30, 20, 20, 20, 20, 25, 25, 25, 25, 25, 25, 25, 25,25]
+    ki = [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,100]  # ki for 5-100 K
+    kd = [0, 10, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25, 25,25]  # kd for 20-100 K
+    V_in = [0, 8.5, 10.25, 11.75, 12.5, 13, 14.5, 16, 16, 16, 16.5, 18, 18.5, 19.25,20.5]
+    setpoint = [0, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 200,250]
+    a = [0, 0.8, 0.8, 0.9, 0.85, 0.8, 0.7, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, 0.7,0.7]
+    timestamp = [] #record time of set temp change
+    set_temp = [] #record set temp
+    reach_temp = []
+    data_path_init = r'C:\Users\ICET\Desktop\Data\lyw\20241011\r_vs_t_temp'#!!!
+    for i in range(0, 1):
+        time_temp = []
+        reach_temp_total = []
+        reach_temp_temp = []
+        cernox_r = []
+        cernox_r_temp = []
+        timestamp.append(time.time())
+        setpoint_value = setpoint[i]
+        set_temp.append(setpoint_value)
+        j = 0  # record time
+        print('!!!!')
+        print(setpoint_value)
+        if i < 6:
+            Time_wait = 1200
+        elif i < 10:
+            Time_wait = 1200
+        elif i < 13:
+            Time_wait = 1200
+        else :
+            Time_wait = 1200
+        while j < Time_wait:
+            values = output_cal(setpoint_value, now_value, time_interval, kp[i], ki[i], kd[i], lastErr, lastErr_2)
+            if now_value - 2 > setpoint_value:
+                p = 0
+            else:
+                p = max(values[0], a[i])
+            lastErr = values[1]
+            lastErr_2 = values[2]
+            keithley2230_CH1_Set_voltage(address2, V_in[i]*p)
+            time.sleep(time_interval)
+            now_value = get_T_cernoxCT(keithley2000_get_ohm_2pt(address)-11.8)
+            print(p, lastErr, lastErr_2, now_value, j)
+            j += 1
+            reach_temp_total.append(now_value)
+            cernox_r.append(keithley2000_get_ohm_2pt(address))
+            time_temp.append(time.time())
+            if j > Time_wait*0.75:
+                reach_temp_temp.append(now_value)
+                cernox_r_temp.append(keithley2000_get_ohm_2pt(address))
+        data_path=data_path_init+'_'+str(setpoint_value)+'.txt'
+        with open(data_path,'w') as f:
+            f.write('{:<20}{:<20}{:<20}\n'.format('temp', 'r_cernox','time'))
+            for i in range(0,len(reach_temp_total)):
+                f.write('{:<20}{:<20}{:<20}\n'.format(reach_temp_total[i],  cernox_r[i], time_temp[i]))
+            f.close()
+        reach_temp.append(sum(reach_temp_temp)/len(reach_temp_temp))
+        timestamp.append(time.time())
+    keithley2230_CH1_Set_voltage(address2, 0)
+    print(set_temp)
+    print(reach_temp)
+    print(timestamp)
+
+def run_one_temp_cernoxET_on_stage():
+    address = 'GPIB::27::INSTR'
+    address2 = 'GPIB::1::INSTR'
+    err = 0.0  # initial error(0)
+    lastErr = 0.0  # initial err(-1)
+    lastErr_2 = 0.0  # initial err(-2)
+    now_value = get_T_cernoxCT(keithley2000_get_ohm_2pt(address)-11.8) #current temp #!!!!
+    time_interval = 0.5 # change input voltage every ...s
+    n = 3
+    kp = [0, 30, 20, 20, 20, 20, 25, 25, 25, 25, 25, 25, 25, 25,25,25,25,25,25,25]
+    ki = [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,100, 100, 100,100,100,100,100,100]  # ki for 5-100 K
+    kd = [0, 10, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25,25, 25, 25, 25,25,25]  # kd for 20-100 K
+    V_in = [0, 8.5, 10.25, 11.75, 12.5, 13, 14.5, 16, 16, 16, 16.5, 18,18.25, 18.5,18.5, 19.25,19.25,19.25,20.5,20.5]
+    setpoint = [0, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140,150, 160,180, 200,220,240,250]
+    a = [0, 0.8, 0.8, 0.9, 0.85, 0.8, 0.7, 0.5, 0.5, 0.5, 0.7, 0.7,0.7, 0.7, 0.7,0.7,0.7,0.7,0.7]
+    setpoint_value = setpoint[n]
+    print(setpoint_value)
+    while True:
+        values = output_cal(setpoint_value, now_value, time_interval, kp[n], ki[n], kd[n], lastErr, lastErr_2)
+        if now_value - 2 > setpoint_value:
+            p = 0
+        else:
+            p = max(values[0],a[n])
+        lastErr = values[1]
+        lastErr_2 = values[2]
+        keithley2230_CH1_Set_voltage(address2, V_in[n] * p)
+        time.sleep(time_interval)
+        now_value = get_T_cernoxCT(keithley2000_get_ohm_2pt(address)-11.8)
+        #now_value = get_T_cernox_3(keithley2000_get_ohm_4pt(address))
+        print(p, lastErr, lastErr_2, now_value)
 '''-------------------------------------------------------Run------------------------------------------------------'''
-run_r_vs_T_SiDiode_on_stage()
-#run_one_temp_SiDiode_on_stage()
+#run_r_vs_T_cernoxET_on_stage()
+run_one_temp_cernoxET_on_stage()
