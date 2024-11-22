@@ -229,3 +229,21 @@ def keithley2450_get_ohm_4pt(address):
     finally:
         keithley.close()
     return numerical_data
+
+def keithley2450_get_curr_4pt(address):
+    try:
+        keithley = rm.open_resource(address)
+        keithley.write("SENS:CURR:RSEN ON") #Switch to 4-wire sensing current 
+        numerical_data = float(keithley.query("MEAS:CURR?"))
+    finally:
+        keithley.close()
+    return numerical_data
+
+def keithley2450_get_volt_4pt(address):
+    try:
+        keithley = rm.open_resource(address)
+        keithley.write("SENS:VOLT:RSEN ON") #Switch to 4-wire sensing voltage 
+        numerical_data = float(keithley.query("MEAS:VOLT?"))
+    finally:
+        keithley.close()
+    return numerical_data

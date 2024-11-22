@@ -11,7 +11,7 @@ import queue
 from tkinter.filedialog import askdirectory, askopenfilename
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 folder_path = os.getcwd()
 if folder_path not in sys.path:
@@ -25,7 +25,6 @@ global instrument_dict
 q = queue.Queue()
 reply = None
 reply_1 = None
-start_time = time.time()
 last_datalength = 0
 
 
@@ -54,7 +53,7 @@ def background():
         msg_handler(msg)
 
 def pop_window(measurements=9):
-    global q, reply, profile,start_time,last_datalength
+    global q, reply, profile,last_datalength
     # Window
     window = tk.Tk()
     window.title('Specify your measurement below')
@@ -488,8 +487,7 @@ def pop_window(measurements=9):
             self.mynote = tk.Text(master=self.content,height=5,width=1)
             self.mynote.grid(row=6, column=0, sticky='new',padx=frame_padx,pady=frame_pady, columnspan=2)
             def run():
-                global profile, start_time
-                start_time = time.time()
+                global profile
                 save_config()
                 start_measurement()
             def stop():
@@ -1107,12 +1105,13 @@ def plot_window():
                 sticky='w'
             )
             self.grid_propagate(True)
+            # Store the current axis limits
+            self.xlim = None
+            self.x1lim = None
+            self.ylim = None
+            self.y1lim = None
 
-            self.rowconfigure(0, weight=1)
-            self.rowconfigure(1, weight=9)
-            self.rowconfigure(2, weight=2)
-
-            fg = plt.figure(figsize=(7.5,5), dpi=100)
+            fg = plt.figure(figsize=(12,12), dpi=100)
             gs = fg.add_gridspec(1, 2, width_ratios=[1, 0])
             global ax,ax1,ax2
             ax = fg.add_subplot(gs[0])
@@ -1120,9 +1119,35 @@ def plot_window():
             ax1 = ax.twinx()
             ax2 = ax.twiny()
 
+            
             canvas = FigureCanvasTkAgg(fg, master=self)  # A tk.DrawingArea.
+            toolbar = NavigationToolbar2Tk(canvas, self)
+            toolbar.update()
+            toolbar.grid(row=0, column=0, sticky='ew', pady=5)  # Adjust padding as needed
             canvas.draw()
-            canvas.get_tk_widget().grid()
+            canvas.get_tk_widget().grid(row=1, column=0, columnspan=2, sticky='nsew')
+            self.label = tk.Label(self, text="'Zoom' to froze axis/ 'Pan' to unfroze axis", height=1, bg=box_color)
+            self.label.grid(row=0, column=1, sticky='e')
+            # Ensure the grid layout stretches properly
+            self.rowconfigure(1, weight=1)  # Let the canvas expand
+            self.columnconfigure(0, weight=1)  # Let the canvas expand horizontally
+            
+            def update_limits(event):
+                # print(toolbar.mode)
+                if toolbar.mode == 'zoom rect':  # Check if the user is in zoom mode
+                    self.xlim = ax.get_xlim()
+                    self.ylim = ax.get_ylim()
+                    self.x1lim = ax2.get_xlim()
+                    self.y1lim = ax1.get_ylim()
+                    # print(f'Called {ax.get_xlim()} {ax.get_ylim()}')
+                elif  toolbar.mode == 'pan/zoom':
+                    self.xlim = None
+                    self.ylim = None
+                    self.x1lim = None
+                    self.y1lim = None
+            # Connect toolbar events to track limits
+            fg.canvas.mpl_connect('button_release_event', update_limits)
+            # # Track limits on zoom/pan
             self.x1 = np.array([None])
             self.x1_name = ''
             self.x2 = np.array([None])
@@ -1134,36 +1159,50 @@ def plot_window():
             self.path = ''
             self.all_data = {}
             def drawimg():
-                global ax,ax1,ax2, start_time, last_datalength, temp_save_flag
+                global ax,ax1,ax2, last_datalength, temp_save_flag
                 ax.clear()
                 ax1.clear()
                 ax2.clear()
                 def normalize_timestamp(x,x_name):
-                    global start_time
                     x = np.array(x)
                     if 'timestamp' in x_name and x.any() != None:
-                        for i in range(0,len(x)):
-                            x[i] = x[i] - start_time
-                normalize_timestamp(self.x1, self.x1_name)
-                normalize_timestamp(self.x2, self.x2_name)
-                normalize_timestamp(self.y1, self.y1_name)
-                normalize_timestamp(self.y2, self.y2_name)
+                        x -= min(x)
+                    return x
+                self.x1 = normalize_timestamp(self.x1, self.x1_name)
+                self.x2 = normalize_timestamp(self.x2, self.x2_name)
+                self.y1 = normalize_timestamp(self.y1, self.y1_name)
+                self.y2 = normalize_timestamp(self.y2, self.y2_name)
                 if self.x1.any() != None and self.y1.any() != None:
                     data_length = min(len(self.x1), len(self.y1))
                     ax.set_xlabel(self.x1_name)
-                    ax.set_ylabel(self.y1_name)
+                    ax.set_ylabel(self.y1_name, color='r')
                     ax.plot(self.x1[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.r')
-                    ax.yaxis.label.set_color('r')
+                    ax.grid(True,color='r',alpha=0.2)
+                    ax.tick_params(axis='y',labelcolor='r')
+                    if self.xlim is not None:
+                        ax.set_xlim(self.xlim)
+                    if self.ylim is not None:
+                        ax.set_ylim(self.ylim)
                     if self.y2.any() != None:
+                        ax1.remove()
+                        ax1 = ax.twinx()
                         data_length = min(len(self.x1),len(self.y2))
-                        ax1.set_ylabel(self.y2_name)
+                        ax1.set_ylabel(self.y2_name, color='b')
                         ax1.plot(self.x1[last_datalength:data_length-1], self.y2[last_datalength:data_length-1], '.b')
-                        ax1.yaxis.label.set_color('b')
+                        ax1.grid(True,color='b',alpha=0.2)
+                        ax1.tick_params(axis='y',labelcolor='b')
+                        if self.y1lim is not None:
+                            ax1.set_ylim(self.y1lim)
                     if self.x2.any() != None:
+                        ax2.remove()
+                        ax2 = ax.twiny()
                         data_length = min(len(self.x2), len(self.y1))
-                        ax2.set_xlabel(self.x2_name)
+                        ax2.set_xlabel(self.x2_name,color='g')
                         ax2.plot(self.x2[last_datalength:data_length-1], self.y1[last_datalength:data_length-1], '.g')
-                        ax2.xaxis.label.set_color('g')
+                        ax2.grid(True,color='g',alpha=0.2)
+                        ax2.tick_params(axis='x',labelcolor='g')
+                        if self.x1lim is not None:
+                            ax2.set_xlim(self.x1lim)
                 fg.tight_layout()
                 canvas.draw()
                 if temp_save_flag:
@@ -1255,14 +1294,14 @@ def plot_window():
         selection_panel = InstrumentFrame(
             window,
             label='Plot display',
-            width= 200,
-            height= 510,
+            width= 280,
+            height= 800,
             column=0, row=0
         )
         plot_frame = PlotFrame(
             window,
-            width= 600,
-            height= 510,
+            width= 700,
+            height= 800,
             column=1, row=0
         )
 
