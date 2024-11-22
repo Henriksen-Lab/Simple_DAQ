@@ -23,7 +23,7 @@ instrument_dict = {'get':{},
 
 instrument_dict['get'].update({'keithley2000': ['ohm_4pt', 'ohm_2pt', 'volt']})
 instrument_dict['get'].update({'keithley2400': ['ohm_4pt', 'ohm_2pt', 'sur_current', 'sur_volt']})
-instrument_dict['get'].update({'keithley2450': ['ohm_4pt','sur_curr', 'sur_volt','meas_curr','meas_volt']})
+instrument_dict['get'].update({'keithley2450': ['sur_curr', 'sur_volt','meas_curr','meas_volt','ohm_4pt','meas_curr_4pt','meas_volt_4pt']})
 instrument_dict['get'].update({'keithley2230': ['Ch1_fetch_volt', 'Ch1_fetch_curr', 'Ch2_fetch_volt', 'Ch2_fetch_curr', 'Ch3_fetch_volt', 'Ch3_fetch_curr']})
 instrument_dict['get'].update({'SR830': ['x', 'y', 'R', 'theta', 'freq','amplitude']})
 instrument_dict['get'].update({'SR865': ['x', 'y', 'R', 'theta', 'freq','amplitude']})
@@ -78,6 +78,10 @@ def get_value(address='', name='', func='', **kwargs):
     elif name == 'keithley2450':
         if func == 'ohm_4pt':
             value = keithley2450_get_ohm_4pt(address)
+        elif func == 'meas_curr_4pt':
+            value = keithley2450_get_curr_4pt(address)
+        elif func == 'meas_volt_4pt':
+            value = keithley2450_get_volt_4pt(address)
         elif func == 'sur_curr':
             value = keithley2450_get_sour_currrent_A(address)
         elif func == 'sur_volt':

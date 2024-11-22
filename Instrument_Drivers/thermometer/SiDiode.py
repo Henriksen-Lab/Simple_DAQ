@@ -5,9 +5,10 @@ from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
 from Instrument_Drivers.hp34461A import hp34461a_get_voltage
 from Instrument_Drivers.keithley import keithley2000_get_voltage_V
-import time
+import time, os
 
-with open(r'C:\Users\ICET\Documents\GitHub\Simple_DAQ\Instrument_Drivers\thermometer\SiDiode.txt', 'r', encoding='utf-8') as file:
+current = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(current,'SiDiode.txt'), 'r', encoding='utf-8') as file:
     lines = file.readlines()
     data=[]
 
@@ -32,6 +33,7 @@ def read_temp():
         #print('probe '+str(get_T_SiDiode(keithley2000_get_voltage_V( 'GPIB::18::INSTR'))))
         #print(get_T_SiDiode(hp34461a_get_voltage('GPIB::17::INSTR')))
         time.sleep(1)
+
 
 #read_temp()
 #plt.plot(temps[:100],data[:100])

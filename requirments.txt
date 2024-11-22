@@ -1,7 +1,7 @@
 PyVISA>=1.11.3
 matplotlib>=3.7.0
 numpy>=1.23.5
-pywin32>=305
+brukeropus>=1.0.0
 pyserial>=3.2.1 
 
 scipy~=1.10.0
