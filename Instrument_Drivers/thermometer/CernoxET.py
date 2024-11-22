@@ -28,7 +28,7 @@ def get_T_cernoxCT(r):
 
 def read_temp():
     while True:
-        print('stage '+str(get_T_cernoxCT(keithley2000_get_ohm_2pt( 'GPIB::27::INSTR'))-11.8))
+        print('stage '+str(get_T_cernoxCT(keithley2000_get_ohm_2pt( 'GPIB::27::INSTR')-11.8)))
         #print('probe '+str(get_T_SiDiode(keithley2000_get_voltage_V( 'GPIB::18::INSTR'))))
         #print(get_T_SiDiode(hp34461a_get_voltage('GPIB::17::INSTR')))
         time.sleep(1)
