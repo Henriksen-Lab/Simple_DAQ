@@ -21,7 +21,7 @@ instrument_dict = {'get':{},
                    'vna':['vna', 'PicoVNA108', 'E4405B','Opus'],
                    'pid_noise':['keithley', 'SR830', 'hp34461A']} #the instrument for temp acq
 
-instrument_dict['get'].update({'keithley2000': ['ohm_4pt', 'ohm_2pt', 'volt']})
+instrument_dict['get'].update({'keithley2000': ['ohm_4pt', 'ohm_2pt', 'volt','diode_V']})
 instrument_dict['get'].update({'keithley2400': ['ohm_4pt', 'ohm_2pt', 'sur_current', 'sur_volt']})
 instrument_dict['get'].update({'keithley2450': ['sur_curr', 'sur_volt','meas_curr','meas_volt','ohm_4pt','meas_curr_4pt','meas_volt_4pt']})
 instrument_dict['get'].update({'keithley2230': ['Ch1_fetch_volt', 'Ch1_fetch_curr', 'Ch2_fetch_volt', 'Ch2_fetch_curr', 'Ch3_fetch_volt', 'Ch3_fetch_curr']})
@@ -66,6 +66,8 @@ def get_value(address='', name='', func='', **kwargs):
             value = keithley2000_get_ohm_2pt(address)
         elif func == 'volt':
             value = keithley2000_get_voltage_V(address)
+        elif func == 'diode_V':
+            value = keithley2000_get_diodeV(address)
     elif name == 'keithley2400':
         if func == 'ohm_4pt':
             value = keithley2400_get_ohm_4pt(address)

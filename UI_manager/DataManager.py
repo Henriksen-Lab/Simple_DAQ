@@ -276,7 +276,10 @@ class Mydata:
                 for val in sweep_up[i]:
                     if not daq_flag:
                         break
-                    set_value(address=address[i], name=name[i], func=func[i], value=val)
+                    if address[i] != 'None':
+                        set_value(address=address[i], name=name[i], func=func[i], value=val)
+                    else:
+                        print('Empty loop started')
                     time.sleep(delay[i])
                     value[i] = val
                     loop(i+1,value)
@@ -285,7 +288,10 @@ class Mydata:
                     for val in sweep_down[i]:
                         if not daq_flag:
                             break
-                        set_value(address=address[i], name=name[i], func=func[i], value=val)
+                        if address[i] != 'None':
+                            set_value(address=address[i], name=name[i], func=func[i], value=val)
+                        else:
+                            print('Empty loop started')
                         time.sleep(delayback[i])
                         value[i] = val
                         loop(i+1,value)

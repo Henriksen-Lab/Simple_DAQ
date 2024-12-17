@@ -168,6 +168,17 @@ def keithley2000_get_ohm_2pt(address):
         keithley.close()
     return numerical_data
 
+def keithley2000_get_diodeV(address):
+    try:
+        keithley = rm.open_resource(address)
+        keithley.write("SENS:FUNC \"DIOD\"") # measure diode V for 2000
+        string_data = keithley.query("FETC?")
+
+        numerical_data = float(string_data)
+    finally:
+        keithley.close()
+    return numerical_data
+
 def keithley2450_get_sour_currrent_A(address):
     try:
         keithley = rm.open_resource(address)            

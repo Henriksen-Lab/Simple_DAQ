@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-
+"""
+@author: Shilling Du
+@date: Nov 8, 2024
+"""
 
 import numpy as np
 from datetime import datetime

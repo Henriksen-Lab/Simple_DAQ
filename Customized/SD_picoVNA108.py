@@ -58,10 +58,12 @@ def my_form(kwargs):
 '''---------------------Run funcs---------------------'''
 def get_sweep(start,stop,step_size):
     num_steps = int((abs(float(start) - float(stop)) / float(step_size))) + 1
-    return np.linspace(float(start), float(stop), num_steps)
+    list = np.linspace(float(start), float(stop), num_steps)
+    return np.append(list,stop)
 
 def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None,number_of_points=1001,bandwidth=1000):
     global my_note
+    save_my_note = my_note
     set(sweep)
     value = read()
     avg = f"\n average for {average} times"
@@ -78,16 +80,16 @@ def run_single(sweep,order,f_min,f_max,average=250,power=-5,name=None,number_of_
         file_name = f"{name}.{order}"
     else:
         file_name = f"{title}.{order}"
-    file_real_path = data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" + title + "\\" + file_name
+    file_real_path = data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" + file_name
     while os.path.exists(file_real_path):
         order = order + 1
         file_name = ''.join(file_name.split('.')[:-1]) + f'.{order}'
-        file_real_path = data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" + title + "\\" + file_name
-    os.makedirs(data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" +title, exist_ok=True)
-    my_note += avg + ', power=' + f'{power}' + ', bandwidth=' + f'{bandwidth}' + '\n'
+        file_real_path = data_dir + '\\' + datetime.now().strftime('%Y%m%d') + "\\" + file_name
+    os.makedirs(data_dir + '\\' + datetime.now().strftime('%Y%m%d'), exist_ok=True)
+    save_my_note += avg + ', power=' + f'{power}' + ', bandwidth=' + f'{bandwidth}' + '\n'
     np.savetxt(file_real_path, data, delimiter='\t',
                header=f"{datetime.now().strftime('%Y%m%d')}" + " " + f"{datetime.now().strftime('%H%M%S')}" + '\n' + \
-                      my_note + f"{axis}")
+                      save_my_note + f"{axis}")
 
 def dry_sweep(start, stop, step_size=0.01, delay=0.9):
     print(f"{datetime.now().strftime('%Y.%m.%d')}", " ", f"{datetime.now().strftime('%H:%M:%S')} ", 'Sweep started from:')
@@ -126,13 +128,12 @@ def wet_sweep(start, stop, step_size, order, last_v, f_min, f_max, number_of_poi
 # keithley2000_gpib = 'GPIB0::18::INSTR'
 # keithley2230_gpib = 'GPIB0::1::INSTR'
 # dc205_address = 'COM3'
-hp34461a = 'GPIB0::22::INSTR'
 SR830 = 'GPIB0::7::INSTR'
 # SR124 = 'ASRL5::INSTR'
 # multi_Temp = 'USB0::0x0957::0x4918::MY59170002::INSTR'
 # multi_Field = 'USB0::0x0957::0x4918::MY60480007::INSTR'
+hp34461a = 'GPIB0::22::INSTR'
 keithley2450_gpib = 'GPIB0::18::INSTR'
-
 port ='S21'
 
 '''---------------------Start your sequence here---------------------'''
@@ -181,6 +182,10 @@ def read(printable=True,*arg):
         read.update({'vg_Vrms': SR124_get_amplitude(SR124)})
     if msmt_flag == 'Read RuOx':
         read.update({'R_RuOx': hp34461a_get_ohm_4pt(hp34461a)})
+    if msmt_flag == 'Read Si diode':
+        read.update({'V_diode': keithley2450_get_volt_4pt(keithley2450_gpib)})
+        read.update({'V_x':SR830_get_x(SR830)})
+        read.update({'V_y':SR830_get_y(SR830)})
     if msmt_flag == 'Read Temp and Field from PPMS':
         read.update({'V_T': U2741A_get_voltage(multi_Temp)})
         read.update({'V_B': U2741A_get_voltage(multi_Field)})
@@ -327,13 +332,23 @@ def read(printable=True,*arg):
 #     run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=3,power=-5)
 #     order += 1
 
+msmt_flag = 'Read Si diode'
+data_dir = r'C:\Users\Crow108\Documents\Data\SD\20241127_YBCO_test\1_Cooling_down'
+my_note = "sample: AFMR_YBCO_E, VNA1--20dB--3dB-DC bias tee-0dB-Cable-0dB-Ecosorb filter-DC bias Tee-Circulator-HEMT--3dB-VNA2\nsource 0.05V from sr830 on 1Mohm for V_ybco, read Si diode for temp"
+
+order = 0
+title = 'Coolingdown'
+while 1:
+    run_single(sweep=None,order=order,f_min=1000,f_max=8500,average=10,power=-5)
+    order += 1
+
 '''Take trace_manual'''
 # msmt_flag = 'manual'
-data_dir = r'C:\Users\Crow108\Documents\Data\SD\20240815_SamplePuckTest_VNA_rmtemp'
-my_note = "2024.8.15 VNA1-exposed sample stage-VNA2"
-order = 1
-title = "AnotherPCB" # some unique feature you want to add in title
-run_single(sweep=None,order=order,f_min=1000,f_max=8000,average=50,power=-5,number_of_points=1001)
+# data_dir = r'C:\Users\Crow108\Documents\Data\SD\20241127_YBCO_test\0_Calibration_rmtemp'
+# my_note = "VNA1-Sample puck(AFMR_YBCO_E)-VNA2 "
+# order = 1
+# title = "check_sample_puck" # some unique feature you want to add in title
+# run_single(sweep=None,order=order,f_min=1000,f_max=8000,average=10,power=-5,number_of_points=1001)
 # while 1:
 #     run_single(sweep=None,order=order,f_min=3000,f_max=8500,average=3,power=-5)
 
