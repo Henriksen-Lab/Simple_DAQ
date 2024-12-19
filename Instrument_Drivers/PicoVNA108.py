@@ -45,7 +45,15 @@ class Smith():
         self.phase_rad = np.array(phase)
         self.freqs = np.array(freq)
 
-def get_picoVNA_smith(port='S21',f_min=0.3,f_max=8500,number_of_points=1001,power=0,bandwidth=1000,Average=1,picoVNA_id="PicoControl3.PicoVNA_3"):
+def get_picoVNA_smith(port='S21',
+                      f_min=0.3,
+                      f_max=8500,
+                      number_of_points=1001,
+                      power=0,
+                      bandwidth=1000,
+                      Average=1,
+                      picoVNA_id="PicoControl3.PicoVNA_3",
+                      CalFilePath=r'C:\Users\Crow108\OneDrive\Documents\Pico Technology\PicoVNA3\FacCal.cal'):
     params = {
     'port': port,
     'f_min': f_min,
@@ -54,7 +62,8 @@ def get_picoVNA_smith(port='S21',f_min=0.3,f_max=8500,number_of_points=1001,powe
     'power': power,
     'bandwidth': bandwidth,
     'Average': Average,
-    'picoVNA_id':picoVNA_id
+    'picoVNA_id':picoVNA_id,
+    'CalFilePath':CalFilePath,
     }
     dict = call_32bit_program(params)
     data = Smith(dict['real'],dict['imag'],dict['log_mag'],dict['phase_rad'],dict['freqs'])

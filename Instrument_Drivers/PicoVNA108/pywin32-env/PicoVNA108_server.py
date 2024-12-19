@@ -20,13 +20,13 @@ class Smith():
         self.freqs = np.array(freq)
 
 def get_picoVNA(port='S21',f_min=0.3,f_max=8500,number_of_points=1001,power=0,bandwidth=1000,Average=1,
-                      picoVNA_id="PicoControl3.PicoVNA_3"):
+                      picoVNA_id="PicoControl3.PicoVNA_3",CalFilePath=r'~\Documents\Pico Technology\PicoVNA3\FacCal.cal'):
     # PPMS PC Iridium deFAULT
     # picoVNA = "PicoControl3.PicoVNA_3_2" # Icet
     picoVNA = win32com.client.gencache.EnsureDispatch(picoVNA_id)  
     try:
         findVNA = picoVNA.FND()
-        cal_path = os.path.expanduser(r'~\Documents\Pico Technology\PicoVNA3\FacCal.cal')
+        cal_path = os.path.expanduser(CalFilePath)
         ans = picoVNA.LoadCal(cal_path) #Crow108 PC
         freq_step = np.ceil((f_max-f_min)/number_of_points*1E5)/1E5
         flag = picoVNA.SetFreqPlan(f_min,freq_step,number_of_points,power,bandwidth)
