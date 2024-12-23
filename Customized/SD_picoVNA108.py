@@ -194,13 +194,13 @@ def read(printable=True,*arg):
         read.update({'V_T': U2741A_get_voltage(multi_Temp)})
         read.update({'V_B': U2741A_get_voltage(multi_Field)})
     if msmt_flag == 'DC sweep Gate, 2450':
-        read.update({'V_SiDiode': keithley2000_get_diodeV(keithley2000_gpib)})
+        # read.update({'V_SiDiode': keithley2000_get_diodeV(keithley2000_gpib)})
         read.update({'Vbg':keithley2450_get_sour_voltage_V(keithley2450_gpib)})
         read.update({'I_leak':keithley2450_get_meas_currrent_A(keithley2450_gpib)})
-        read.update({'V_x':SR830_get_x(SR830)})
-        read.update({'V_y':SR830_get_y(SR830)})
-        read.update({'V_heater':keithley2230_CH1_Fetch_voltage(keithley2230_gpib)})
-        read.update({'I_heater':keithley2230_CH1_Fetch_current(keithley2230_gpib)})
+        # read.update({'V_x':SR830_get_x(SR830)})
+        # read.update({'V_y':SR830_get_y(SR830)})
+        # read.update({'V_heater':keithley2230_CH1_Fetch_voltage(keithley2230_gpib)})
+        # read.update({'I_heater':keithley2230_CH1_Fetch_current(keithley2230_gpib)})
     if msmt_flag == 'manual':
         # read.update({'Vtg': 0.73})
         pass
@@ -371,12 +371,28 @@ def read(printable=True,*arg):
 
 '''Take temp and S21 and sweep gate'''
 msmt_flag = 'DC sweep Gate, 2450'
-data_dir = r'C:\Users\Crow108\OneDrive\Documents\Data\SD\20241216_SDgPD007\4_cool_lowPower\temp'
-my_note = "2024.12.17 Icet SDgPD007 basetemp, 0.05V on 1Mohm measure voltage drop on graphene, sweep gate[-0.4V,0.0V], 1mV/1s, put 20dB attenuator at input, also turned down the power from -5dB to -15dB"
+data_dir = r'C:\Users\Crow108\OneDrive\Documents\Data\SD\20241216_SDgPD007\5_Rmtemp_powerDiode_calibration\6_Try_sweep_Basetemp_Vbg\SanityCheck'
+my_note = "2024.12.21 Icet SDgPD007 basetemp, gnd all gnd lead, sweep gate[-0.4V,0.0V], 1mV/1s, put 30dB attenuator at input, also power -5dBm"
 order = 0
+title = 'Check_graphene_gnded'
+last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
+last_v = dry_sweep(start=last_v, stop=-0.4, step_size=0.001, delay=1)
+last_v = wet_sweep(start=last_v,
+                stop=0,
+                step_size=0.005,
+                order=order,
+                last_v=last_v,
+                f_min=1000,
+                f_max=8000,
+                number_of_points=1001,
+                average=1,
+                dry_step_size=0.005,
+                dry_delay=1,
+                power=-5
+                )
 
-# heater_V_list = np.linspace(14,0,15)
-# print(heater_V_list)
+# heater_V_list = np.linspace(0,45,46)
+# # print(heater_V_list)
 
 # def Check_stable():
 #     print('Start waiting')
@@ -394,31 +410,37 @@ order = 0
 #     message = ''
 #     now = time.time()
 #     keithley2230_CH1_Set_voltage(keithley2230_gpib, float(each_heater_v))
+#     Check_stable()
+#     title = f"Heatup_1mvs_{each_heater_v:0.0f}V" # some unique feature you want to add in title
+#     last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
+#     last_v = dry_sweep(start=last_v, stop=-0.25, step_size=0.001, delay=1)
+#     last_v = wet_sweep(start=last_v,
+#                     stop=-0.05,
+#                     step_size=0.005,
+#                     order=order,
+#                     last_v=last_v,
+#                     f_min=1000,
+#                     f_max=8000,
+#                     number_of_points=1001,
+#                     average=1,
+#                     dry_step_size=0.005,
+#                     dry_delay=1,
+#                     power=-15
+#                     )
+#     then = time.time()
+#     message += f'cycle: {int(then-now)} sec\n'
+#         # runs += 1
+#     print(message)
 
-    # Check_stable()
-    # title = f"Heatup_1mvs_{each_heater_v:0.0f}V" # some unique feature you want to add in title
-    # last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
-    # last_v = dry_sweep(start=last_v, stop=-0.25, step_size=0.001, delay=1)
-    # last_v = wet_sweep(start=last_v,
-    #                 stop=-0.05,
-    #                 step_size=0.005,
-    #                 order=order,
-    #                 last_v=last_v,
-    #                 f_min=1000,
-    #                 f_max=8000,
-    #                 number_of_points=1001,
-    #                 average=1,
-    #                 dry_step_size=0.005,
-    #                 dry_delay=1,
-    #                 power=-15
-    #                 )
-    # then = time.time()
-    # message += f'cycle: {int(then-now)} sec\n'
-    #     # runs += 1
-    # print(message)
-title = '0'
-last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
-last_v = dry_sweep(start=last_v, stop=0, step_size=0.001, delay=1)
+# data_dir = r'C:\Users\Crow108\OneDrive\Documents\Data\SD\20241216_SDgPD007\4_cool_lowPower\temp'
+# title = '0'
+# last_v = keithley2450_get_sour_voltage_V(keithley2450_gpib)
+# last_v = dry_sweep(start=last_v, stop=0, step_size=0.001, delay=1)
+# current_v = keithley2230_CH1_Fetch_voltage(keithley2230_gpib)
+# for each_heater_v in np.linspace(current_v,0,101):
+#     keithley2230_CH1_Set_voltage(keithley2230_gpib, float(each_heater_v))
+#     time.sleep(10)
+# print('done')
 
 # my_note = '2024.07.14 Icet SDgPD002 basetemp, 0.1V on 1Mohm measure voltage drop on graphene, at -9.1V warm up'
 # order = 0
