@@ -287,7 +287,7 @@ def run_one_temp_cernoxET_on_stage():
     lastErr_2 = 0.0  # initial err(-2)
     now_value = get_T_cernoxCT(keithley2000_get_ohm_2pt(address)-11.8) #current temp #!!!!
     time_interval = 0.5 # change input voltage every ...s
-    n = 15
+    n = 19
     kp = [0, 30, 20, 20, 20, 20, 25, 25, 25, 25, 25, 25, 25, 25,25,25,25,25,25,25]
     ki = [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,100, 100, 100,100,100,100,100,100]  # ki for 5-100 K
     kd = [0, 10, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 25, 25,25, 25, 25, 25,25,25]  # kd for 20-100 K
